@@ -1,16 +1,16 @@
 #include "config.h"
 
-int loc_pos(int t, int x, int y, int z){
+int loc_pos(int x, int y){
 
-	return z + Nzl*y + Nzl*Nyl*x + Nzl*Nyl*Nxl*t;
+	return y + Nyl*x;
 }
 
-int buf_pos(int t, int x, int y, int z){
+int buf_pos(int x, int y){
 
-	return (z+(Nzl_buf-Nzl)/2 + Nzl_buf*(y+(Nyl_buf-Nyl)/2) + Nzl_buf*Nyl_buf*(x+(Nxl_buf-Nxl)/2) + Nzl_buf*Nyl_buf*Nxl_buf*t);
+	return ((y+(Nyl_buf-Nyl)/2) + Nyl_buf*(x+(Nxl_buf-Nxl)/2));
 }
 
-int buf_pos_ex(int t, int x, int y, int z){
+int buf_pos_ex(int x, int y){
 
-	return (z+ Nzl_buf*y + Nzl_buf*Nyl_buf*x + Nzl_buf*Nyl_buf*Nxl_buf*t);
+	return (y + Nyl_buf*x);
 }

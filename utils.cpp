@@ -6,26 +6,19 @@
 
 int print(double *u){
 	
-    int tt,xx,yy,zz;
+    int xx,yy;
 
     int rank;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    for(tt = 0; tt < Tt; tt++){
-        for(xx = 0; xx < Nxl_buf; xx++){
-            for(yy = 0; yy < Nyl_buf; yy++){
-                for(zz = 0; zz < Nzl_buf; zz++){
+    for(xx = 0; xx < Nxl_buf; xx++){
+    	for(yy = 0; yy < Nyl_buf; yy++){
 
-                    printf("b (%i, [%i,%i,%i] = %f ), ", rank, xx, yy, zz, u[zz+Nzl_buf*yy+Nzl_buf*Nyl_buf*xx+tt*Nxl_buf*Nyl_buf*Nzl_buf]);
+        	printf("b (%i, [%i,%i] = %f ), ", rank, xx, yy, u[yy+Nyl_buf*xx]);
 
-                }
-
-                printf("\n");
-            }
-
-            printf("\n\n");
         }
+        printf("\n");
     }
 
 return 1;
@@ -33,7 +26,7 @@ return 1;
 
 int print_file(double *u){
 	
-    int tt,xx,yy,zz;
+    int xx,yy;
 
     int rank;
 
@@ -47,20 +40,13 @@ int print_file(double *u){
 
     f = fopen(filename,"w+");
 
-    for(tt = 0; tt < Tt; tt++){
-        for(xx = 0; xx < Nxl_buf; xx++){
-            for(yy = 0; yy < Nyl_buf; yy++){
-                for(zz = 0; zz < Nzl_buf; zz++){
+    for(xx = 0; xx < Nxl_buf; xx++){
+	for(yy = 0; yy < Nyl_buf; yy++){
 
-                    fprintf(f, "(%i, [%i,%i,%i] = %f ), ", rank, xx, yy, zz, u[zz+Nzl_buf*yy+Nzl_buf*Nyl_buf*xx+tt*Nxl_buf*Nyl_buf*Nzl_buf]);
+        	fprintf(f, "(%i, [%i,%i] = %f ), ", rank, xx, yy, u[yy+Nyl_buf*xx]);
 
-                }
-
-                fprintf(f, "\n");
-            }
-
-            fprintf(f, "\n\n");
         }
+        fprintf(f, "\n");
     }
 
     fclose(f);

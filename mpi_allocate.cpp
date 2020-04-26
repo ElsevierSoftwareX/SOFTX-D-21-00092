@@ -11,7 +11,7 @@ int mpi_allocate( void ) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    if( Nxl == 0 || Nyl == 0 || Nzl == 0 ){
+    if( Nxl == 0 || Nyl == 0 ){
 
                 if( rank == 0 ){
 
@@ -25,7 +25,7 @@ int mpi_allocate( void ) {
                 exit(0);
     }
 
-    if( Nxl_buf == 0 || Nyl_buf == 0 || Nzl_buf == 0 ){
+    if( Nxl_buf == 0 || Nyl_buf == 0 ){
 
                 if( rank == 0 ){
 
@@ -39,8 +39,8 @@ int mpi_allocate( void ) {
                 exit(0);
     }
 
-    x = (double*) malloc(Nxl_buf*Nyl_buf*Nzl_buf*Tt*sizeof(double));
-    p = (double*) malloc(Nxl_buf*Nyl_buf*Nzl_buf*Tt*sizeof(double));
+    x = (double*) malloc(Nxl_buf*Nyl_buf*sizeof(double));
+    p = (double*) malloc(Nxl_buf*Nyl_buf*sizeof(double));
 
 return 1;
 }

@@ -1,5 +1,5 @@
 #include "config.h"
 
-int loc_pos(int t, int x, int y, int z);
-int buf_pos(int t, int x, int y, int z);
-int buf_pos_ex(int t, int x, int y, int z);
+int loc_pos(int x, int y);
+int buf_pos(int x, int y);
+int buf_pos_ex(int x, int y);

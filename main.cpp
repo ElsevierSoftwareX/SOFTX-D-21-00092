@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <mpi.h>
 
+#include <complex.h>
+
+#include "su3_complex.h"
+#include "su3_matrix.h"
+
 #include "config.h"
 #include "mpi_init.h"
 #include "mpi_allocate.h"
@@ -11,6 +16,9 @@
 #include "mpi_split.h"
 #include "mpi_gather.h"
 #include "utils.h"
+
+#include <fftw3.h>
+#include <fftw3-mpi.h>
 
 int main(int argc, char *argv[]) {
 
@@ -27,50 +35,41 @@ int main(int argc, char *argv[]) {
     int proc_grid[3];
     proc_grid[0] = atoi(argv[1]);
     proc_grid[1] = atoi(argv[2]);
-    proc_grid[2] = atoi(argv[3]);
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    mpi_init(proc_grid[0], proc_grid[1], proc_grid[2]);
+    mpi_init(proc_grid[0], proc_grid[1]);
 
     mpi_exchange_grid();
 
-    printf("Local variables set: Nxl = %i, Nyl = %i, Nzl = %i\n", Nxl, Nyl, Nzl);
+    printf("Local variables set: Nxl = %i, Nyl = %i\n", Nxl, Nyl);
 
     mpi_allocate();
 
-    double XX[Nx*Ny*Nz*Tt];
-    double YY[Nx*Ny*Nz*Tt];
+    double XX[Nx*Ny];
+    double YY[Nx*Ny];
 
     int ii;
-    for(ii = 0; ii < Nx*Ny*Nz*Tt; ii++){
+    for(ii = 0; ii < Nx*Ny; ii++){
 	XX[ii] = 0;
     }
-    for(ii = 0; ii < Nx*Ny*Nz*Tt; ii++){
+    for(ii = 0; ii < Nx*Ny; ii++){
 	YY[ii] = 0;
     }
 
-    int tt, xx, yy, zz;
+    int xx, yy;
 
-    for(tt = 0; tt < Tt; tt++){
-        for(xx = 0; xx < Nxl; xx++){
-            for(yy = 0; yy < Nyl; yy++){
-    	        for(zz = 0; zz < Nzl; zz++){
+    for(xx = 0; xx < Nxl; xx++){
+    	for(yy = 0; yy < Nyl; yy++){
 
-		    x[buf_pos(tt, xx, yy, zz)] = rank*100+loc_pos(tt, xx, yy, zz) + 1;
-		}
-	    }
+		x[buf_pos(xx, yy)] = rank*100+loc_pos(xx, yy) + 1;
 	}
     }
 
-    for(tt = 0; tt < Tt; tt++){
-        for(xx = 0; xx < Nx; xx++){
-            for(yy = 0; yy < Ny; yy++){
-    	        for(zz = 0; zz < Nz; zz++){
+    for(xx = 0; xx < Nx; xx++){
+    	for(yy = 0; yy < Ny; yy++){
 
-		    XX[zz + Nz*yy + Nz*Ny*xx + Nz*Ny*Nx*tt] = zz + Nz*yy + Nz*Ny*xx + Nz*Ny*Nx*tt + 1;
-		}
-	    }
+		XX[yy + Ny*xx] = yy + Ny*xx + 1;
 	}
     }
 
@@ -85,7 +84,7 @@ int main(int argc, char *argv[]) {
 
     mpi_gather(YY, p);
 
-
+/*
     for(tt = 0; tt < Tt; tt++){
         for(xx = 0; xx < Nx; xx++){
             for(yy = 0; yy < Ny; yy++){
@@ -96,8 +95,34 @@ int main(int argc, char *argv[]) {
 	    }
 	}
     }
+*/
 
+    const ptrdiff_t N0 = Nx, N1 = Ny;
+    fftw_plan plan;
+    fftw_complex *data;
+    ptrdiff_t alloc_local, local_n0, local_0_start, i, j;
 
+    fftw_mpi_init();
+
+    /* get local data size and allocate */
+    alloc_local = fftw_mpi_local_size_2d(N0, N1, MPI_COMM_WORLD,
+                                         &local_n0, &local_0_start);
+    data = fftw_alloc_complex(alloc_local);
+
+    /* create plan for in-place forward DFT */
+    plan = fftw_mpi_plan_dft_2d(N0, N1, data, data, MPI_COMM_WORLD,
+                                FFTW_FORWARD, FFTW_ESTIMATE);    
+
+    /* initialize data to some function my_function(x,y) */
+    for (i = 0; i < local_n0; ++i) for (j = 0; j < N1; ++j){
+       data[i*N1 + j][0] = 1.0*(local_0_start + i);
+       data[i*N1 + j][1] = 1.0*j;
+    }
+
+    /* compute transforms, in-place, as many times as desired */
+    fftw_execute(plan);
+
+    fftw_destroy_plan(plan);
 
     MPI_Finalize();
 

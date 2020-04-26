@@ -23,21 +23,15 @@ int mpi_split(double* global, double* local){
     printf("rank %i has grid position (%i, %i, %i)\n", rank, pos_x, pos_y, pos_z);
 */
 
-    double tmp[Nxl*Nyl*Nzl*Tt];
+    double tmp[Nxl*Nyl];
 
-    MPI_Scatter(global, Nxl*Nyl*Nzl*Tt, MPI_DOUBLE, tmp, Nxl*Nyl*Nzl*Tt, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+//    MPI_Scatter(global, Nxl*Nyl*Nzl*Tt, MPI_DOUBLE, tmp, Nxl*Nyl*Nzl*Tt, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    int tt, xx, yy, zz;
+    int xx, yy;
 
-    for(tt = 0; tt < Tt; tt++){
-        for(xx = 0; xx < Nxl; xx++){
-            for(yy = 0; yy < Nyl; yy++){
-                for(zz = 0; zz < Nzl; zz++){
-
-                        local[buf_pos(tt,xx,yy,zz)] = tmp[zz+Nzl*yy+Nzl*Nyl*xx+Nzl*Nyl*Nxl*tt];
-
-                }
-            }
+    for(xx = 0; xx < Nxl; xx++){
+	    for(yy = 0; yy < Nyl; yy++){
+                   local[buf_pos(xx,yy)] = tmp[yy+Nyl*xx];
         }
     }
 
