@@ -1,147 +1,35 @@
-#ifndef H_SU3_MATRIX
-#define H_SU3_MATRIX
-
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <iostream>
-
-//#include "zheevh3.h"
-
+// ----------------------------------------------------------------------------
+// Numerical diagonalization of 3x3 matrcies
+// Copyright (C) 2006  Joachim Kopp
+// ----------------------------------------------------------------------------
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+// ----------------------------------------------------------------------------
 #include <stdio.h>
 #include <math.h>
 #include <complex.h>
 #include <float.h>
 #include "zheevc3.h"
 #include "zheevq3.h"
-//#include "zheevh3.h"
+#include "zheevv3.h"
 
 // Macros
 #define SQR(x)      ((x)*(x))                        // x^2 
-#define SQR_ABS(x)  (SQR(x.real()) + SQR(x.imag()))  // |x|^2
-
-
-
-//#include "su3_complex.h"
-
-template <class T> int function_zheevh3(std::complex<T> A[3][3], std::complex<T> Q[3][3], T w[3]);
-
-template <class T>
-class su3_matrix {
-	public:
-		std::complex<T> m[9];
-
-		su3_matrix() {
-			m[0] = 0.0;
-			m[1] = 0.0;
-			m[2] = 0.0;
-			m[3] = 0.0;
-			m[4] = 0.0;
-			m[5] = 0.0;
-			m[6] = 0.0;
-			m[7] = 0.0;
-			m[8] = 0.0;	
-		}
-
-		int zheevh3(double *w){
-
-			std::complex<T> A[3][3];
-			std::complex<T> Q[3][3];
-			double ww[3];
-
-			A[0][0] = m[0];
-			A[0][1] = m[1];
-			A[0][2] = m[2];
-			A[1][0] = m[3];
-			A[1][1] = m[4]; 
-			A[1][2] = m[5];
-			A[2][0] = m[6];
-			A[2][1] = m[7];
-			A[2][2] = m[8];
-
-			int st;
-			st = function_zheevh3(A, Q, ww);
-
-			w[0] = ww[0];
-			w[1] = ww[1];
-			w[2] = ww[2];
-
-			return st;
-		}
-
-		void print() {
-				for (int i = 0; i < 9; i++) {
-					std::cerr<<"m["<<i<<"].r = "<<m[i].real()<<std::endl;
-					std::cerr<<"m["<<i<<"].i = "<<m[i].imag()<<std::endl;
-				}
-		}
-
-		void toVector(T* r) {
-			for (int i = 0; i < 9; i++) {
-				r[2 * i] = m[i].real();
-				r[2 * i + 1] = m[i].imag();
-			}
-		}
-
-
-		su3_matrix<T> operator*(T alpha) {
-
-			int i;
-			for(i=0;i<9;i++){
-				this->m[i] *= alpha;
-			}
-
-			return *this;
-		}
-
-		su3_matrix<T> operator=(const su3_matrix<T>& a) {
-
-			int i;
-			for(i=0;i<9;i++){
-				this->m[i] = a.m[i];
-			}
-			return *this;
-		}
-
-		su3_matrix<T> operator+(const su3_matrix<T>& b) {
-
-			su3_matrix<T> c;
-			int i;
-			for(i=0;i<9;i++){
-				c.m[i] = this->m[i] + b.m[i];
-			}
-			return c;
-		}
-
-		su3_matrix<T> operator-(const su3_matrix<T> &b) {
-			su3_matrix<T> c;
-			int i;
-			for(i=0;i<9;i++){
-				c.m[i] = this->m[i] - b.m[i];
-			}
-			return c;
-		}
-
-		su3_matrix<T> operator*(const su3_matrix<T> &b) {
-
-			su3_matrix<T> c;
-			int i,j,k;
-			for(i=0;i<3;i++){
-				for(j=0;j<3;j++){
-					for(k=0;k<3;k++){
-						c.m[i*3+j] += this->m[i*3+k] + b.m[k*3+j];
-					}
-				}
-			}
-
-			return c;
-		}
-
-
-};
+#define SQR_ABS(x)  (SQR(creal(x)) + SQR(cimag(x)))  // |x|^2
 
 // ----------------------------------------------------------------------------
-template<class T> int function_zheevh3(std::complex<T> A[3][3], std::complex<T> Q[3][3], T w[3])
+int zheevh3(double complex A[3][3], double complex Q[3][3], double w[3])
 // ----------------------------------------------------------------------------
 // Calculates the eigenvalues and normalized eigenvectors of a hermitian 3x3
 // matrix A using Cardano's method for the eigenvalues and an analytical
@@ -195,16 +83,16 @@ template<class T> int function_zheevh3(std::complex<T> A[3][3], std::complex<T> 
   error = 256.0 * DBL_EPSILON * SQR(u);
 //  error = 256.0 * DBL_EPSILON * (n0 + u) * (n1 + u);
 
-  Q[0][1] = A[0][1]*A[1][2] - A[0][2]*A[1][1].real();
-  Q[1][1] = A[0][2]*conj(A[0][1]) - A[1][2]*A[0][0].real();
+  Q[0][1] = A[0][1]*A[1][2] - A[0][2]*creal(A[1][1]);
+  Q[1][1] = A[0][2]*conj(A[0][1]) - A[1][2]*creal(A[0][0]);
   Q[2][1] = SQR_ABS(A[0][1]);
 
   // Calculate first eigenvector by the formula
   //   v[0] = conj( (A - w[0]).e1 x (A - w[0]).e2 )
   Q[0][0] = Q[0][1] + A[0][2]*w[0];
   Q[1][0] = Q[1][1] + A[1][2]*w[0];
-  Q[2][0] = ((A[0][0].real()) - w[0]) * ((A[1][1].real()) - w[0]) - Q[2][1];
-  norm    = SQR_ABS(Q[0][0]) + SQR_ABS(Q[1][0]) + SQR(Q[2][0].real());
+  Q[2][0] = (creal(A[0][0]) - w[0]) * (creal(A[1][1]) - w[0]) - Q[2][1];
+  norm    = SQR_ABS(Q[0][0]) + SQR_ABS(Q[1][0]) + SQR(creal(Q[2][0]));
 
   // If vectors are nearly linearly dependent, or if there might have
   // been large cancellations in the calculation of A(I,I) - W(1), fall
@@ -225,8 +113,8 @@ template<class T> int function_zheevh3(std::complex<T> A[3][3], std::complex<T> 
   //   v[1] = conj( (A - w[1]).e1 x (A - w[1]).e2 )
   Q[0][1]  = Q[0][1] + A[0][2]*w[1];
   Q[1][1]  = Q[1][1] + A[1][2]*w[1];
-  Q[2][1]  = ((A[0][0].real()) - w[1]) * ((A[1][1].real()) - w[1]) - (Q[2][1].real());
-  norm     = SQR_ABS(Q[0][1]) + SQR_ABS(Q[1][1]) + SQR((Q[2][1].real()));
+  Q[2][1]  = (creal(A[0][0]) - w[1]) * (creal(A[1][1]) - w[1]) - creal(Q[2][1]);
+  norm     = SQR_ABS(Q[0][1]) + SQR_ABS(Q[1][1]) + SQR(creal(Q[2][1]));
   if (norm <= error)
     return zheevq3(A, Q, w);
   else
@@ -245,25 +133,4 @@ template<class T> int function_zheevh3(std::complex<T> A[3][3], std::complex<T> 
 
   return 0;
 }
-
-
-#endif
-// ----------------------------------------------------------------------------
-// Numerical diagonalization of 3x3 matrcies
-// Copyright (C) 2006  Joachim Kopp
-// ----------------------------------------------------------------------------
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
-// ----------------------------------------------------------------------------
 

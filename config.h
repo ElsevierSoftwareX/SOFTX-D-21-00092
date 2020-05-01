@@ -1,5 +1,5 @@
-#define Nx 16
-#define Ny 16
+#define Nx 64
+#define Ny 64
 
 extern int Nxl;
 extern int Nyl;
