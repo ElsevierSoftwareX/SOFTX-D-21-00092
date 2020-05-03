@@ -23,12 +23,15 @@
 
 #include "momenta.h"
 
+#include "rand_class.h"
+
+#include "MV_class.h"
+
 int main(int argc, char *argv[]) {
 
+    printf("STARTING CLASS PROGRAM\n");
 
     config* cnfg = new config;
-
-    printf("STARTING CLASS PROGRAM\n");
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -38,6 +41,66 @@ int main(int argc, char *argv[]) {
 
     mpi->mpi_exchange_groups();
 
+    momenta* momtable = new momenta(cnfg, mpi);
+
+    momtable->set();
+
+    rand_class* random_generator = new rand_class(mpi,cnfg);
+
+    MV_class* MVmodel = new MV_class(1.0, 0.12, 5);
+
+    fftw1D* fourier = new fftw1D(cnfg);
+
+    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+
+
+    //construct initial state
+    lfield<double> f(cnfg->Nxl,cnfg->Nyl);
+    lfield<double> uf(cnfg->Nxl,cnfg->Nyl);
+
+    for(int i = 0; i < MVmodel->Ny_parameter; i++){
+	
+	f.setMVModel(MVmodel, random_generator);
+
+	fourier->execute1D(&f, 0);
+
+	f.solvePoisson(0.00001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
+
+    	fourier->execute1D(&f, 1);
+
+	f.exponentiate();
+
+	uf *= f;
+    }
+
+    gfield<double> gf(Nx, Ny);
+
+    gf.allgather(&uf);
+
+    //perform evolution
+    lfield<double> xi_local_x(cnfg->Nxl,cnfg->Nyl);
+    lfield<double> xi_local_y(cnfg->Nxl,cnfg->Nyl);
+
+    for(int langevin = 0; langevin < 10; langevin++){
+
+	xi_local_x.setGaussian(random_generator);
+	xi_local_y.setGaussian(random_generator);
+
+	fourier->execute1D(&xi_local_x, 0);
+	fourier->execute1D(&xi_local_y, 0);
+
+    }
+
+    delete fourier;
+
+    delete mpi;
+
+    MPI_Finalize();
+
+return 1;
+}
+
+/*
     printf("TESTING PROGRAM\n");
 
     double XX[Nx*Ny];
@@ -67,69 +130,19 @@ int main(int argc, char *argv[]) {
 	}
     }
 
+    printf("FIELD ALLOCATION AND BOUNDARY EXCHANGE\n");
+
+    gfield<double> gf(Nx,Ny);
 
 //    mpi_split(XX, p);
 
 //    mpi_gather(YY, p);
 
-    printf("FIELD ALLOCATION AND BOUNDARY EXCHANGE\n");
-
-    gfield<double> gf(Nx,Ny);
-
-    lfield<double> f(cnfg->Nxl,cnfg->Nyl);
-
-    f.setMVModel();
-
-    f.mpi_exchange_boundaries(mpi);
+//    f.mpi_exchange_boundaries(mpi);
 
     printf("FFTW TEST\n");
 
-    fftw1D* fourier = new fftw1D(cnfg);
-
-    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
-
-    fourier->execute1D(&f);
 
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf("DIAGONALIZATION\n");
-
-su3_matrix<double> AA;
-
-double w[3];
-
-
-AA.m[0] = 2.0;
-AA.m[4] = 3.0;
-AA.m[8] = 4.0;
-
-AA.zheevh3(&w[0]);
-
-printf("eigenvalues: %e %e %e\n", w[0], w[1], w[2]);
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf("TABLE OF MOMENTA\n");
-
-    momenta* momtable = new momenta(cnfg, mpi);
-
-    momtable->set();
-
-
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    printf("FINALIZE\n");
-
-
-//    delete &f;
-
-//    delete &gf;
-
-    delete fourier;
-
-    delete mpi;
-
-    MPI_Finalize();
-
-return 1;
-}
+*/ 
 

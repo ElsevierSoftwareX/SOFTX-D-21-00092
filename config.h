@@ -20,6 +20,8 @@ int YNeighbourNext = 0, YNeighbourPrevious = 0;
 
 int proc_x, proc_y;
 
+int seed;
+
 };
 
 #endif

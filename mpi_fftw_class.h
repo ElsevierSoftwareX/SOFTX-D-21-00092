@@ -35,7 +35,8 @@ class fftw {
 
     int Nxl, Nyl;
 
-    fftw_plan plan;
+    fftw_plan planX2K;
+    fftw_plan planK2X;
     fftw_complex *data_local;
 
     ptrdiff_t alloc_local, local_n0, local_n0_start;
@@ -57,7 +58,8 @@ class fftw {
     ~fftw(void){
 
 	fftw_free(data_local);
- 	fftw_destroy_plan(plan);
+ 	fftw_destroy_plan(planK2X);
+ 	fftw_destroy_plan(planX2K);
 
         fftw_cleanup_threads();
     }
@@ -71,7 +73,9 @@ class fftw1D : public fftw {
 
 //    fftw_plan planX;
 //    fftw_complex *data_localX;
-    fftw_plan planY;
+    fftw_plan planYK2X;
+    fftw_plan planYX2K;
+
     fftw_complex *data_localY;
 
 //    ptrdiff_t alloc_localX, local_n0X, local_n0_startX;
@@ -84,7 +88,9 @@ class fftw1D : public fftw {
     ~fftw1D(void){
 
 	fftw_free(data_localY);
- 	fftw_destroy_plan(planY);
+
+ 	fftw_destroy_plan(planYX2K);
+ 	fftw_destroy_plan(planYK2X);
 
     }
 
@@ -98,8 +104,12 @@ class fftw1D : public fftw {
    	data_localY = fftw_alloc_complex(alloc_localY);
 
     	// create plan for in-place forward DFT 
-    	planY = fftw_mpi_plan_dft_1d(N0, data_localY, data_localY, col_comm,
+    	planYX2K = fftw_mpi_plan_dft_1d(N0, data_localY, data_localY, col_comm,
                                 FFTW_FORWARD, FFTW_ESTIMATE);    
+
+
+    	planYK2X = fftw_mpi_plan_dft_1d(N0, data_localY, data_localY, col_comm,
+                                FFTW_BACKWARD, FFTW_ESTIMATE);    
 
 
      	// get local data size and allocate 
@@ -109,32 +119,20 @@ class fftw1D : public fftw {
    	data_local = fftw_alloc_complex(alloc_local);
 
     	// create plan for in-place forward DFT 
-    	plan = fftw_mpi_plan_dft_1d(N1, data_local, data_local, row_comm,
+    	planX2K = fftw_mpi_plan_dft_1d(N1, data_local, data_local, row_comm,
                                 FFTW_FORWARD, FFTW_ESTIMATE);    
+
+    	planK2X = fftw_mpi_plan_dft_1d(N1, data_local, data_local, row_comm,
+                                FFTW_BACKWARD, FFTW_ESTIMATE);    
+
     }
 
-   int execute1D(lfield<double>* f){
-
-    printf("STARTING TRUE FFTW 1D\n");
+    int execute1D(lfield<double>* f, int dir){
 
     int i,j,k;
 
     int pos_x = 0;
     int pos_y = 0;
-
-//    fftw_complex data_global[N0*N1];
-//    double data_global_re[N0*N1];
-//    double data_global_im[N0*N1];
-
-
-//    fftw_complex data_global_tmp[N0*N1];
-
-//    fftw_complex* data_localX;
-//    fftw_complex* data_localY;
-
-//    double data_local_re[Nxl*Nyl];
-//    double data_local_im[Nxl*Nyl];
-
 
 for(k = 0; k < 9; k++){
 
@@ -148,7 +146,11 @@ for(k = 0; k < 9; k++){
 	}
 
     	// compute transforms, in-place, as many times as desired 
-	fftw_mpi_execute_dft(planY, data_localY, data_localY);
+	if( dir ){
+		fftw_mpi_execute_dft(planYX2K, data_localY, data_localY);
+	}else{
+		fftw_mpi_execute_dft(planYK2X, data_localY, data_localY);
+	}
 
     	for (i = 0; i < Nxl; ++i) {
 			f->u[k][i*Nyl+j] = data_localY[i][0] + I*data_localY[i][1];
@@ -169,7 +171,11 @@ for(k = 0; k < 9; k++){
 	}
 
     	// compute transforms, in-place, as many times as desired 
-    	fftw_mpi_execute_dft(plan, data_local, data_local);
+	if( dir ){
+	    	fftw_mpi_execute_dft(planX2K, data_local, data_local);
+	}else{
+	    	fftw_mpi_execute_dft(planK2X, data_local, data_local);
+	}
 
     	for (j = 0; j < Nyl; ++j) {
 
@@ -203,14 +209,14 @@ class fftw2D : public fftw {
         data_local = fftw_alloc_complex(alloc_local);
 
         /* create plan for in-place forward DFT */
-        plan = fftw_mpi_plan_dft_2d(N0, N1, data_local, data_local, MPI_COMM_WORLD,
+        planX2K = fftw_mpi_plan_dft_2d(N0, N1, data_local, data_local, MPI_COMM_WORLD,
                                 FFTW_FORWARD, FFTW_ESTIMATE);
     }
 
    int execute2d(void){
 
        /* compute transforms, in-place, as many times as desired */
-       fftw_execute(plan);
+       fftw_execute(planX2K);
 
     }
 

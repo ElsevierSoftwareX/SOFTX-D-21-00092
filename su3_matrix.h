@@ -43,6 +43,8 @@ class su3_matrix {
 			m[8] = 0.0;	
 		}
 
+		int exponentiate();
+
 		int zheevh3(double *w){
 
 			std::complex<T> A[3][3];
@@ -67,6 +69,7 @@ class su3_matrix {
 			w[2] = ww[2];
 
 			return st;
+
 		}
 
 		void print() {
@@ -139,6 +142,54 @@ class su3_matrix {
 
 
 };
+
+template<class T> int su3_matrix<T>::exponentiate(void){
+
+			std::complex<T> A[3][3];
+			std::complex<T> Q[3][3];
+			double ww[3];
+			std::complex<T> eig[3];
+
+			A[0][0] = m[0];
+			A[0][1] = m[1];
+			A[0][2] = m[2];
+			A[1][0] = m[3];
+			A[1][1] = m[4]; 
+			A[1][2] = m[5];
+			A[2][0] = m[6];
+			A[2][1] = m[7];
+			A[2][2] = m[8];
+
+			int st;
+			st = function_zheevh3(A, Q, ww);
+
+//			w[0] = ww[0];
+//			w[1] = ww[1];
+//			w[2] = ww[2];
+
+			eig[0] = exp(std::complex<double>(0.0, ww[0]));
+			eig[1] = exp(std::complex<double>(0.0, ww[1]));
+			eig[2] = exp(std::complex<double>(0.0, ww[2]));
+
+			for(int i = 0; i < 3; i++){
+				for(int j = 0; j < 3; j++){
+					
+					m[i*3+j] = 0.0;
+					
+					for(int k = 0; k < 3; k++){
+
+						m[i*3+j] += Q[i][k] * eig[k] * std::conj(Q[j][k]); 
+					}
+				}
+			}
+
+//                        u(ind,eo)%su3(icol1,icol2) = &
+//                        & u(ind,eo)%su3(icol1,icol2) + Q(icol1,eig) * &
+//                        & exp(cmplx(0.0,1.0,kind=CMPLXKND)*W(eig)) * conjg(Q(icol2,eig))
+
+			return st;
+
+}
 
 // ----------------------------------------------------------------------------
 template<class T> int function_zheevh3(std::complex<T> A[3][3], std::complex<T> Q[3][3], T w[3])

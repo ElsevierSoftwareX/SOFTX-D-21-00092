@@ -10,10 +10,14 @@
 #include <omp.h>
 
 #include <mpi.h>
+#include <math.h>
 
 #include "mpi_class.h"
 
-#include <random>
+#include "MV_class.h"
+#include "rand_class.h"
+
+#include "momenta.h"
 
 template<class T> class field {
 
@@ -61,13 +65,15 @@ template<class T> class lfield;
 
 template<class T> class gfield: public field<T> {
 
+	int Nxg, Nyg;
+
 	public:
 
 		//T getZero(void){ return this.u[0][0]; }
 
-		int allgather(lfield<T> ulocal);
+		int allgather(lfield<T>* ulocal);
 
-		gfield(int NNx, int NNy) : field<T>{NNx, NNy} {};
+		gfield(int NNx, int NNy) : field<T>{NNx, NNy} { Nxg = NNx; Nyg = NNy;};
 
 		friend class fftw2D;
 };
@@ -80,7 +86,7 @@ template<class T> class lfield: public field<T> {
 
 	public:
 
-		lfield(int NNx, int NNy) : field<T>{NNx, NNy} {};
+		lfield(int NNx, int NNy) : field<T>{NNx, NNy} { Nxl = NNx; Nyl = NNy; };
 
 		friend class fftw1D;
 
@@ -103,35 +109,63 @@ template<class T> class lfield: public field<T> {
 			return (y + Nyl_buf*x);
 		}
 
-		int setMVModel(void);
+		int setMVModel(MV_class* MVconfig, rand_class* rr);
 
+		int setGaussian(rand_class* rr);
+
+		int solvePoisson(double mass, double g, momenta* momtable);
+
+		int exponentiate();
+
+		int operator *= ( lfield<T> &f ){
+
+			for(int i = 0; i < Nxl*Nyl; i ++){
+			
+				su3_matrix<double> A,B,C;
+
+				for(int k = 0; k < 9; k++){
+
+					A.m[k] = this->u[k][i];
+					B.m[k] = f.u[k][i];
+				}
+		
+				C = A*B;
+
+				for(int k = 0; k < 9; k++){
+
+					this->u[k][i] = C.m[k];
+				}
+			}
+
+		return 1;
+		}
 };
 
 
-template<class T> int gfield<T>::allgather(lfield<T> ulocal){
+template<class T> int gfield<T>::allgather(lfield<T>* ulocal){
 
 
-	static T data_local_re[ulocal.Nxl*ulocal.Nyl];
-	static T data_local_im[ulocal.Nxl*ulocal.Nyl];
+	T* data_local_re = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
+	T* data_local_im = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
 
-	static T data_global_re[Nx*Ny];
-	static T data_global_im[Nx*Ny];
+	T* data_global_re = (T*)malloc(Nxg*Nyg*sizeof(T));
+	T* data_global_im = (T*)malloc(Nxg*Nyg*sizeof(T));
 
 	int i,k;
 
 	for(k = 0; k < 9; k++){
 
-		for(i = 0; i < ulocal.Nxl*ulocal.Nyl; i++){
+		for(i = 0; i < ulocal->Nxl*ulocal->Nyl; i++){
 
-			data_local_re[i] = ulocal.u[k][i].real();
-			data_local_im[i] = ulocal.u[k][i].imag();
+			data_local_re[i] = ulocal->u[k][i].real();
+			data_local_im[i] = ulocal->u[k][i].imag();
 
 		}
 
-   		MPI_Allgather(data_local_re, ulocal.Nxl*ulocal.Nyl, MPI_DOUBLE, data_global_re, ulocal.Nxl*ulocal.Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
-	   	MPI_Allgather(data_local_im, ulocal.Nxl*ulocal.Nyl, MPI_DOUBLE, data_global_im, ulocal.Nxl*ulocal.Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
+   		MPI_Allgather(data_local_re, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, data_global_re, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
+	   	MPI_Allgather(data_local_im, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, data_global_im, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
 
-		for(i = 0; i < Nx*Ny; i++){
+		for(i = 0; i < Nxg*Nyg; i++){
 
 			this->u[k][i] = data_global_re[i] + I*data_global_im[i];
 	
@@ -231,16 +265,206 @@ template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
 return 1;
 }
 
-template<class T> int lfield<T>::setMVModel(){
+template<class T> int lfield<T>::setMVModel(MV_class* MVconfig, rand_class* rr){
 
-	std::ranlux48 rgenerator(1);
-	std::uniform_real_distribution<double> distribution(0,1);
+	printf("SETTING MV MODEL: Nxl = %i, Nyl = %i\n", Nxl, Nyl);
 
-	std::vector<double> n[Nxl];
-	for(int i : n)
-		n[i] = distribution(rgenerator);
+	int myrank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-	std::cout << n << std::endl;
+	const double EPS = 10e-12;
 
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+        double n[8];
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+
+//				hh=sqrt(real(1.0*g_parameter**2*mu_parameter**2/Ny_parameter, kind=REALKND)) * &
+//                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
+//                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
+
+		for(int k = 0; k < 8; k++)
+                	n[k] = sqrt( pow(MVconfig->g_parameter,2.0) * pow(MVconfig->mu_parameter,2.0) / MVconfig->Ny_parameter ) * sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+		
+	 //these are the LAMBDAs and not the generators t^a = lambda/2.
+
+            //lambda_nr(1)%su3(1,2) =  runit
+            //lambda_nr(1)%su3(2,1) =  runit
+		this->u[1][i] += std::complex<double>(n[0],0.0);
+		this->u[3][i] += std::complex<double>(n[0],0.0);
+
+
+            //lambda_nr(2)%su3(1,2) = -iunit
+            //lambda_nr(2)%su3(2,1) =  iunit
+		this->u[1][i] -= std::complex<double>(0.0,n[1]);
+		this->u[3][i] += std::complex<double>(0.0,n[1]);
+
+
+            //lambda_nr(3)%su3(1,1) =  runit
+            //lambda_nr(3)%su3(2,2) = -runit
+		this->u[0][i] += std::complex<double>(n[2],0.0);
+		this->u[4][i] -= std::complex<double>(n[2],0.0);
+
+
+            //lambda_nr(4)%su3(1,3) =  runit
+            //lambda_nr(4)%su3(3,1) =  runit
+		this->u[2][i] += std::complex<double>(n[3],0.0);
+		this->u[6][i] += std::complex<double>(n[3],0.0);
+
+
+            //lambda_nr(5)%su3(1,3) = -iunit
+            //lambda_nr(5)%su3(3,1) =  iunit
+		this->u[2][i] -= std::complex<double>(0.0,n[4]);
+		this->u[6][i] += std::complex<double>(0.0,n[4]);
+
+
+            //lambda_nr(6)%su3(2,3) =  runit
+            //lambda_nr(6)%su3(3,2) =  runit
+		this->u[5][i] += std::complex<double>(n[5],0.0);
+		this->u[7][i] += std::complex<double>(n[5],0.0);
+
+
+            //lambda_nr(7)%su3(2,3) = -iunit
+            //lambda_nr(7)%su3(3,2) =  iunit
+		this->u[5][i] -= std::complex<double>(0.0,n[6]);
+		this->u[7][i] += std::complex<double>(0.0,n[6]);
+
+
+            //lambda_nr(8)%su3(1,1) =  cst8
+            //lambda_nr(8)%su3(2,2) =  cst8
+            //lambda_nr(8)%su3(3,3) =  -(two*cst8)
+
+		this->u[0][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[4][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[8][i] += std::complex<double>(2.0*n[7]/sqrt(3.0),0.0);
+	}
+
+return 1;
 }
+
+template<class T> int lfield<T>::setGaussian(rand_class* rr){
+
+	const double EPS = 10e-12;
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+        double n[8];
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+
+		double coupling_constant = 1.0;
+
+//				hh=sqrt(real(coupling_constant, kind=REALKND)) * &
+//                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
+//                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
+
+		for(int k = 0; k < 8; k++)
+                	n[k] = sqrt( coupling_constant ) * sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+		
+	 //these are the LAMBDAs and not the generators t^a = lambda/2.
+
+            //lambda_nr(1)%su3(1,2) =  runit
+            //lambda_nr(1)%su3(2,1) =  runit
+		this->u[1][i] += std::complex<double>(n[0],0.0);
+		this->u[3][i] += std::complex<double>(n[0],0.0);
+
+
+            //lambda_nr(2)%su3(1,2) = -iunit
+            //lambda_nr(2)%su3(2,1) =  iunit
+		this->u[1][i] -= std::complex<double>(0.0,n[1]);
+		this->u[3][i] += std::complex<double>(0.0,n[1]);
+
+
+            //lambda_nr(3)%su3(1,1) =  runit
+            //lambda_nr(3)%su3(2,2) = -runit
+		this->u[0][i] += std::complex<double>(n[2],0.0);
+		this->u[4][i] -= std::complex<double>(n[2],0.0);
+
+
+            //lambda_nr(4)%su3(1,3) =  runit
+            //lambda_nr(4)%su3(3,1) =  runit
+		this->u[2][i] += std::complex<double>(n[3],0.0);
+		this->u[6][i] += std::complex<double>(n[3],0.0);
+
+
+            //lambda_nr(5)%su3(1,3) = -iunit
+            //lambda_nr(5)%su3(3,1) =  iunit
+		this->u[2][i] -= std::complex<double>(0.0,n[4]);
+		this->u[6][i] += std::complex<double>(0.0,n[4]);
+
+
+            //lambda_nr(6)%su3(2,3) =  runit
+            //lambda_nr(6)%su3(3,2) =  runit
+		this->u[5][i] += std::complex<double>(n[5],0.0);
+		this->u[7][i] += std::complex<double>(n[5],0.0);
+
+
+            //lambda_nr(7)%su3(2,3) = -iunit
+            //lambda_nr(7)%su3(3,2) =  iunit
+		this->u[5][i] -= std::complex<double>(0.0,n[6]);
+		this->u[7][i] += std::complex<double>(0.0,n[6]);
+
+
+            //lambda_nr(8)%su3(1,1) =  cst8
+            //lambda_nr(8)%su3(2,2) =  cst8
+            //lambda_nr(8)%su3(3,3) =  -(two*cst8)
+
+		this->u[0][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[4][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[8][i] += std::complex<double>(2.0*n[7]/sqrt(3.0),0.0);
+	}
+
+return 1;
+}
+
+
+template<class T> int lfield<T>::solvePoisson(double mass, double g, momenta* mom){
+
+		//u(ind,eo)%su3 = cmplx(-1.0*g_parameter, 0.0, kind=CMPLXKND)*&
+                //&u(ind,eo)%su3/(-phat2(z+1,t+1) + mass_parameter**2)
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+	
+		for(int k = 0; k < 9; k++){
+
+			this->u[k][i] *= std::complex<double>(-1.0*g/(mom->phat2(i) + mass*mass), 0.0);
+
+		}
+	}
+
+return 1;
+}
+
+
+template<class T> int lfield<T>::exponentiate(){
+
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+	
+		su3_matrix<double> A;
+
+		for(int k = 0; k < 9; k++){
+
+			A.m[k] = this->u[k][i];
+		}
+		
+		A.exponentiate();
+
+		for(int k = 0; k < 9; k++){
+
+			this->u[k][i] = A.m[k];
+		}
+
+	}
+
+return 1;
+}
+
 #endif
