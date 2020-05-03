@@ -2,17 +2,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "mpi_class.h"
+
 #include "config.h"
 
-int mpi_init( int proc_x, int proc_y ) {
+int mpi_class::mpi_init(void) {
 
-    int size, rank;
+    int proc_x = proc_grid[0];
+    int proc_y = proc_grid[1];
 
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    procx = proc_x;
-    procy = proc_y;
+    //proc_grid = y + procy * x
+    pos_x = rank/(proc_y);
+    pos_y = rank - pos_x * (proc_y);
+
 
     if( proc_x * proc_y != size ){
 

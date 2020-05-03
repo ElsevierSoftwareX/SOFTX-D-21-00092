@@ -4,17 +4,11 @@
 
 #include "config.h"
 
-int mpi_exchange_grid(void) {
+#include "mpi_class.h"
 
-    int size, rank, tmprank;
+int mpi_class::mpi_exchange_grid(void) {
 
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    //proc_grid = y + procy * x
-    int pos_x = rank/(procy);
-    tmprank = rank - pos_x * (procy);
-    int pos_y = tmprank;
+    int tmprank;
 
     printf("rank %i has grid position (%i, %i)\n", rank, pos_x, pos_y);
 
