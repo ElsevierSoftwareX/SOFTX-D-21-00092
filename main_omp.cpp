@@ -4,13 +4,9 @@
 
 #include <complex.h>
 
-#include "su3_complex.h"
 #include "su3_matrix.h"
 
 #include "config.h"
-#include "mpi_split.h"
-#include "mpi_gather.h"
-#include "utils.h"
 
 #include <fftw3.h>
 #include <fftw3-mpi.h>
@@ -19,13 +15,13 @@
 
 #include "mpi_fftw_class.h"
 
-//#include "zheevh3.h"
-
 #include <omp.h>
 
 #include <math.h>
 
 #include "mpi_class.h"
+
+#include "momenta.h"
 
 int main(int argc, char *argv[]) {
 
@@ -82,8 +78,9 @@ int main(int argc, char *argv[]) {
 
     lfield<double> f(cnfg->Nxl,cnfg->Nyl);
 
-    f.mpi_exchange_boundaries(mpi);
+    f.setMVModel();
 
+    f.mpi_exchange_boundaries(mpi);
 
     printf("FFTW TEST\n");
 
@@ -93,9 +90,9 @@ int main(int argc, char *argv[]) {
 
     fourier->execute1D(&f);
 
-    printf("FINALIZE\n");
 
     MPI_Barrier(MPI_COMM_WORLD);
+    printf("DIAGONALIZATION\n");
 
 su3_matrix<double> AA;
 
@@ -110,6 +107,18 @@ AA.zheevh3(&w[0]);
 
 printf("eigenvalues: %e %e %e\n", w[0], w[1], w[2]);
 
+    MPI_Barrier(MPI_COMM_WORLD);
+    printf("TABLE OF MOMENTA\n");
+
+    momenta* momtable = new momenta(cnfg, mpi);
+
+    momtable->set();
+
+
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    printf("FINALIZE\n");
+
 
 //    delete &f;
 
@@ -118,8 +127,6 @@ printf("eigenvalues: %e %e %e\n", w[0], w[1], w[2]);
     delete fourier;
 
     delete mpi;
-
-    MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Finalize();
 

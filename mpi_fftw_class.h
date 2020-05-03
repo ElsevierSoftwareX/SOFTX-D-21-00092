@@ -14,11 +14,6 @@
 
 #include "mpi_class.h"
 
-#include "mpi_pos.h"
-#include "mpi_split.h"
-#include "mpi_gather.h"
-#include "utils.h"
-
 #include <fftw3.h>
 #include <fftw3-mpi.h>
 

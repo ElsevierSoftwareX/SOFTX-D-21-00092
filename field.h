@@ -7,13 +7,13 @@
 #include <complex.h>
 #include "config.h"
 
-#include "mpi_pos.h"
-
 #include <omp.h>
 
 #include <mpi.h>
 
 #include "mpi_class.h"
+
+#include <random>
 
 template<class T> class field {
 
@@ -102,6 +102,8 @@ template<class T> class lfield: public field<T> {
 
 			return (y + Nyl_buf*x);
 		}
+
+		int setMVModel(void);
 
 };
 
@@ -229,4 +231,16 @@ template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
 return 1;
 }
 
+template<class T> int lfield<T>::setMVModel(){
+
+	std::ranlux48 rgenerator(1);
+	std::uniform_real_distribution<double> distribution(0,1);
+
+	std::vector<double> n[Nxl];
+	for(int i : n)
+		n[i] = distribution(rgenerator);
+
+	std::cout << n << std::endl;
+
+}
 #endif

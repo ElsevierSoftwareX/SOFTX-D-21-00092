@@ -4,9 +4,6 @@
 #include <stdlib.h>
 #include <iostream>
 
-//#include "mpi_init.h"
-#include "mpi_pos.h"
-
 #include "config.h"
 
 #include <mpi.h>
@@ -122,6 +119,17 @@ public:
 	return YNeighbourPrevious;
 
     }	
+
+    int getPosX(){
+
+	return pos_x;
+    }
+
+    int getPosY(){
+
+	return pos_y;
+    }
+
 };
 
 #endif
