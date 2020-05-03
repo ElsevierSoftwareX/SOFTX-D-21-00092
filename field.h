@@ -64,6 +64,7 @@ template<class T> class gfield: public field<T> {
 
 		gfield(int NNx, int NNy) : field<T>{NNx, NNy} {};
 
+		friend class fftw2D;
 };
 
 
@@ -73,7 +74,7 @@ template<class T> class lfield: public field<T> {
 
 		lfield(int NNx, int NNy) : field<T>{NNx, NNy} {};
 
-		friend class fftw;
+		friend class fftw1D;
 
 		int mpi_exchange_boundaries(mpi_class* mpi);
 

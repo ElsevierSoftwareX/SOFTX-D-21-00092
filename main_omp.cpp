@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 
     printf("FFTW TEST\n");
 
-    fftw* fourier = new fftw();
+    fftw1D* fourier = new fftw1D();
 
     fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
 
