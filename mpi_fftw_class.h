@@ -30,6 +30,8 @@
 
 #include <math.h>
 
+#include "field.h"
+
 class fftw {
 
     private:
@@ -110,77 +112,76 @@ class fftw {
         fftw_cleanup_threads();
     }
 
-    int execute1d(void){
-
-    int size;
-
-    int rank;
-
-    //proc_grid = y + procy * x
-    int pos_x = rank/(procy);
-    int pos_y = rank - pos_x * (procy);
-
+    int execute1D(lfield<double>* f){
 
     printf("STARTING TRUE FFTW 1D\n");
 
-    int i,j;
+    int i,j,k;
 
-    fftw_complex data_global[N0*N1];
-    double data_global_re[N0*N1];
-    double data_global_im[N0*N1];
+    int pos_x = 0;
+    int pos_y = 0;
 
-
-    fftw_complex data_global_tmp[N0*N1];
-
-    fftw_complex* data_localX;
-    fftw_complex* data_localY;
-
-    double data_local_re[Nxl*Nyl];
-    double data_local_im[Nxl*Nyl];
+//    fftw_complex data_global[N0*N1];
+//    double data_global_re[N0*N1];
+//    double data_global_im[N0*N1];
 
 
-    for(j = pos_y*Nyl; j < (pos_y+1)*Nyl; j++){
- 
+//    fftw_complex data_global_tmp[N0*N1];
+
+//    fftw_complex* data_localX;
+//    fftw_complex* data_localY;
+
+//    double data_local_re[Nxl*Nyl];
+//    double data_local_im[Nxl*Nyl];
+
+
+for(k = 0; k < 9; k++){
+
+//    for(j = pos_y*Nyl; j < (pos_y+1)*Nyl; j++){
+     for(j = 0; j < Nyl; j++){
+
    	// initialize data to some function my_function(x,y) 
     	for (i = 0; i < Nxl; ++i){
-         		data_localY[i][0] = data_global[(i+pos_x*Nxl)*N1+j][0];
-          		data_localY[i][1] = data_global[(i+pos_x*Nxl)*N1+j][1];
+         		data_localY[i][0] = f->u[k][i*Nyl+j].real(); //data_global[(i+pos_x*Nxl)*N1+j][0];
+          		data_localY[i][1] = f->u[k][i*Nyl+j].imag(); //data_global[(i+pos_x*Nxl)*N1+j][1];
 	}
 
     	// compute transforms, in-place, as many times as desired 
 	fftw_mpi_execute_dft(planY, data_localY, data_localY);
 
     	for (i = 0; i < Nxl; ++i) {
-	       		data_global_tmp[(i+pos_x*Nxl)*N1+j][0] = data_localY[i][0];
-	       		data_global_tmp[(i+pos_x*Nxl)*N1+j][1] = data_localY[i][1];
+			f->u[k][i*Nyl+j] = data_localY[i][0] + I*data_localY[i][1];
+
+//	       		data_global_tmp[(i+pos_x*Nxl)*N1+j][0] = data_localY[i][0];
+//	       		data_global_tmp[(i+pos_x*Nxl)*N1+j][1] = data_localY[i][1];
     	}
 
     }
 
-    for(i = pos_x*Nxl; i < (pos_x+1)*Nxl; i++){
+//    for(i = pos_x*Nxl; i < (pos_x+1)*Nxl; i++){
+    for(i = 0; i < Nxl; i++){
 
    	// initialize data to some function my_function(x,y) 
     	for (j = 0; j < Nyl; ++j){
-         		data_localX[j][0] = data_global_tmp[i*Ny+j+pos_y*Nyl][0];
-          		data_localX[j][1] = data_global_tmp[i*Ny+j+pos_y*Nyl][1];
+         		data_localX[j][0] = f->u[k][i*Nyl+j].real(); //data_global_tmp[i*Ny+j+pos_y*Nyl][0];
+          		data_localX[j][1] = f->u[k][i*Nyl+j].imag(); //data_global_tmp[i*Ny+j+pos_y*Nyl][1];
 	}
 
     	// compute transforms, in-place, as many times as desired 
     	fftw_mpi_execute_dft(planX, data_localX, data_localX);
 
     	for (j = 0; j < Nyl; ++j) {
-	       		data_global[i*Ny+j+pos_y*Nyl][0] = data_localX[j][0];
-	       		data_global[i*Ny+j+pos_y*Nyl][1] = data_localX[j][1];
+
+	       		f->u[k][i*Nyl+j] = data_localX[j][0] + I*data_localX[j][1];
+
+//	       		data_global[i*Ny+j+pos_y*Nyl][0] = data_localX[j][0];
+//	       		data_global[i*Ny+j+pos_y*Nyl][1] = data_localX[j][1];
+
     	}
-
-    	for (j = 0; j < Nyl; ++j) {
-	       		data_local_re[(i-pos_x*Nxl)*Nyl+j] = data_localX[j][0];
-	       		data_local_im[(i-pos_x*Nxl)*Nyl+j] = data_localX[j][1];
-   	}
-
-
    }
+}
 
+return 1;
 }
 
    int execute2d(void){

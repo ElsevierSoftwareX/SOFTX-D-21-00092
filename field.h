@@ -1,3 +1,6 @@
+#ifndef H_FIELD
+#define H_FIELD
+
 #include <iostream>
 #include <stdlib.h>
 #include <complex>
@@ -10,21 +13,22 @@
 
 #include <mpi.h>
 
+#include "mpi_class.h"
 
-template<class T> class field_global{
+template<class T> class field {
 
-	private:
+	protected:
 
 		std::complex<T>* u[9];		
 
 	public:
 
-		field_global(int NNx, int NNy);
+		field(int NNx, int NNy);
 
-		~field_global(void);
+		~field(void);
 };
 
-template<class T> field_global<T>::field_global(int NNx, int NNy){
+template<class T> field<T>::field(int NNx, int NNy) {
 
 	int i;
 
@@ -35,7 +39,7 @@ template<class T> field_global<T>::field_global(int NNx, int NNy){
 	}
 }
 
-template<class T> field_global<T>::~field_global(){
+template<class T> field<T>::~field() {
 
 	int i;
 
@@ -47,60 +51,45 @@ template<class T> field_global<T>::~field_global(){
 
 }
 
+template<class T> class lfield;
 
-template<class T> class field {
 
-	private:
-
-		std::complex<T>* u[9];		
+template<class T> class gfield: public field<T> {
 
 	public:
 
-		field(int NNxl, int NNyl);
+		//T getZero(void){ return this.u[0][0]; }
 
-		~field(void);
+		int allgather(lfield<T> ulocal);
+
+		gfield(int NNx, int NNy) : field<T>{NNx, NNy} {};
+
+};
+
+
+template<class T> class lfield: public field<T> {
+
+	public:
+
+		lfield(int NNx, int NNy) : field<T>{NNx, NNy} {};
 
 		friend class fftw;
 
-		int mpi_exchange_boundaries(void);
+		int mpi_exchange_boundaries(mpi_class* mpi);
 
-		int allgather(field_global<T> u);
-		
+		friend class gfield<T>;
+
 };
 
-template<class T> field<T>::field(int NNxl, int NNyl){
 
-	int i;
-
-	for(i = 0; i < 9; i++){
-
-		u[i] = (std::complex<T>*)malloc(NNxl*NNyl*sizeof(std::complex<T>));
-
-	}
-}
-
-template<class T> field<T>::~field(){
-
-	int i;
-
-	for(i = 0; i < 9; i++){
-
-		free(u[i]);
-
-	}
-
-}
+template<class T> int gfield<T>::allgather(lfield<T> ulocal){
 
 
-template<class T> int field<T>::allgather(field_global<T> u_global){
+	static T data_local_re[Nxl*Nyl];
+	static T data_local_im[Nxl*Nyl];
 
-
-	T data_local_re[Nxl*Nyl];
-	T data_local_im[Nxl*Nyl];
-
-	T data_global_re[Nx*Ny];
-	T data_global_im[Nx*Ny];
-
+	static T data_global_re[Nx*Ny];
+	static T data_global_im[Nx*Ny];
 
 	int i,k;
 
@@ -108,8 +97,8 @@ template<class T> int field<T>::allgather(field_global<T> u_global){
 
 		for(i = 0; i < Nxl*Nyl; i++){
 
-			data_local_re[i] = u[k][i].real();
-			data_local_im[i] = u[k][i].imag();
+			data_local_re[i] = ulocal.u[k][i].real();
+			data_local_im[i] = ulocal.u[k][i].imag();
 
 		}
 
@@ -118,7 +107,7 @@ template<class T> int field<T>::allgather(field_global<T> u_global){
 
 		for(i = 0; i < Nx*Ny; i++){
 
-			u_global.u[k][i] = data_global_re[i] + I*data_global_im[i];
+			this->u[k][i] = data_global_re[i] + I*data_global_im[i];
 	
 		}
 	}
@@ -126,12 +115,7 @@ template<class T> int field<T>::allgather(field_global<T> u_global){
 	return 1;
 }
 
-template<class T> int field<T>::mpi_exchange_boundaries(void){
-
-    int size, rank;
-
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
 
     double *bufor_send_n;
     double *bufor_receive_n;
@@ -148,34 +132,34 @@ template<class T> int field<T>::mpi_exchange_boundaries(void){
 	    bufor_receive_n = (double*) malloc(Nyl_buf*sizeof(double));
 
   	    for(yy = 0; yy < Nyl; yy++){
-		bufor_send_n[yy] = u[0][buf_pos(Nxl-1,yy)].real();
+		bufor_send_n[yy] = this->u[0][buf_pos(Nxl-1,yy)].real();
 	    }
 
-	    printf("X data exchange: rank %i sending to %i\n", rank, XNeighbourNext);
-	    printf("X data exchange: rank %i receiving from %i\n", rank, XNeighbourNext);
+	    printf("X data exchange: rank %i sending to %i\n", mpi->getRank(), XNeighbourNext);
+	    printf("X data exchange: rank %i receiving from %i\n", mpi->getRank(), XNeighbourNext);
 
 	    MPI_Send(bufor_send_n, Nyl_buf, MPI_DOUBLE, XNeighbourNext, 11, MPI_COMM_WORLD);
     	    MPI_Recv(bufor_receive_n, Nyl_buf, MPI_DOUBLE, XNeighbourPrevious, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   	    for(yy = 0; yy < Nyl; yy++){
-		u[0][buf_pos_ex(0,yy)] = bufor_receive_n[yy];
+		this->u[0][buf_pos_ex(0,yy)] = bufor_receive_n[yy];
 	    }
 
    	    bufor_send_p = (double*) malloc(Nyl_buf*sizeof(double));
 	    bufor_receive_p = (double*) malloc(Nyl_buf*sizeof(double));
 
 	    for(yy = 0; yy < Nyl; yy++){
-		bufor_send_p[yy] = u[0][buf_pos(0,yy)].real();
+		bufor_send_p[yy] = this->u[0][buf_pos(0,yy)].real();
 	    }
 	
- 	    printf("X data exchange: rank %i sending to %i\n", rank, XNeighbourPrevious);
-	    printf("X data exchange: rank %i receiving to %i\n", rank, XNeighbourPrevious);
+ 	    printf("X data exchange: rank %i sending to %i\n", mpi->getRank(), XNeighbourPrevious);
+	    printf("X data exchange: rank %i receiving to %i\n", mpi->getRank(), XNeighbourPrevious);
 
 	    MPI_Send(bufor_send_p, Nyl_buf, MPI_DOUBLE, XNeighbourPrevious, 12, MPI_COMM_WORLD);
     	    MPI_Recv(bufor_receive_p, Nyl_buf, MPI_DOUBLE, XNeighbourNext, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   	    for(yy = 0; yy < Nyl; yy++){
-		u[0][buf_pos_ex(Nxl+1,yy)] = bufor_receive_p[yy];
+		this->u[0][buf_pos_ex(Nxl+1,yy)] = bufor_receive_p[yy];
 	    }
     }
 
@@ -187,37 +171,38 @@ template<class T> int field<T>::mpi_exchange_boundaries(void){
 	    bufor_receive_n = (double*) malloc(Nxl_buf*sizeof(double));
 
   	    for(xx = 0; xx < Nxl; xx++){
-		bufor_send_n[xx] = u[0][buf_pos(xx,Nyl-1)].real();
+		bufor_send_n[xx] = this->u[0][buf_pos(xx,Nyl-1)].real();
 	    }
 
-	    printf("Y data exchange: rank %i sending to %i\n", rank, YNeighbourNext);
-	    printf("Y data exchange: rank %i receiving from %i\n", rank, YNeighbourNext);
+	    printf("Y data exchange: rank %i sending to %i\n", mpi->getRank(), YNeighbourNext);
+	    printf("Y data exchange: rank %i receiving from %i\n", mpi->getRank(), YNeighbourNext);
 
 	    MPI_Send(bufor_send_n, Nxl_buf, MPI_DOUBLE, YNeighbourNext, 13, MPI_COMM_WORLD);
     	    MPI_Recv(bufor_receive_n, Nxl_buf, MPI_DOUBLE, YNeighbourPrevious, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
             for(xx = 0; xx < Nxl; xx++){
-		u[0][buf_pos_ex(xx,0)] = bufor_receive_n[xx];
+		this->u[0][buf_pos_ex(xx,0)] = bufor_receive_n[xx];
 	    }
 
 	    bufor_send_p = (double*) malloc(Nxl_buf*sizeof(double));
 	    bufor_receive_p = (double*) malloc(Nxl_buf*sizeof(double));
 
 	    for(xx = 0; xx < Nxl; xx++){
-		bufor_send_p[xx] = u[0][buf_pos(xx,0)].real();
+		bufor_send_p[xx] = this->u[0][buf_pos(xx,0)].real();
 	    }
 	
- 	    printf("Y data exchange: rank %i sending to %i\n", rank, YNeighbourPrevious);
-	    printf("Y data exchange: rank %i receiving to %i\n", rank, YNeighbourPrevious);
+ 	    printf("Y data exchange: rank %i sending to %i\n", mpi->getRank(), YNeighbourPrevious);
+	    printf("Y data exchange: rank %i receiving to %i\n", mpi->getRank(), YNeighbourPrevious);
 
 	    MPI_Send(bufor_send_p, Nxl_buf, MPI_DOUBLE, YNeighbourPrevious, 14, MPI_COMM_WORLD);
     	    MPI_Recv(bufor_receive_p, Nxl_buf, MPI_DOUBLE, YNeighbourNext, 14, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   	    for(xx = 0; xx < Nxl; xx++){
-		u[0][buf_pos_ex(xx,Nyl+1)] = bufor_receive_p[xx];
+		this->u[0][buf_pos_ex(xx,Nyl+1)] = bufor_receive_p[xx];
 	    }
     }
 
 return 1;
 }
 
+#endif
