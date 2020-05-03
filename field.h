@@ -21,6 +21,8 @@ template<class T> class field {
 
 		std::complex<T>* u[9];		
 
+		int Nxl, Nyl;
+
 	public:
 
 		field(int NNx, int NNy);
@@ -37,6 +39,9 @@ template<class T> field<T>::field(int NNx, int NNy) {
 		u[i] = (std::complex<T>*)malloc(NNx*NNy*sizeof(std::complex<T>));
 
 	}
+
+	Nxl = NNx;
+	Nyl = NNy;
 }
 
 template<class T> field<T>::~field() {
@@ -70,6 +75,9 @@ template<class T> class gfield: public field<T> {
 
 template<class T> class lfield: public field<T> {
 
+	int Nxl, Nyl;
+	int Nxl_buf, Nyl_buf;
+
 	public:
 
 		lfield(int NNx, int NNy) : field<T>{NNx, NNy} {};
@@ -80,14 +88,29 @@ template<class T> class lfield: public field<T> {
 
 		friend class gfield<T>;
 
+		int loc_pos(int x, int y){
+
+			return y + Nyl*x;
+		}
+
+		int buf_pos(int x, int y){
+
+			return ((y+(Nyl_buf-Nyl)/2) + Nyl_buf*(x+(Nxl_buf-Nxl)/2));
+		}
+
+		int buf_pos_ex(int x, int y){
+
+			return (y + Nyl_buf*x);
+		}
+
 };
 
 
 template<class T> int gfield<T>::allgather(lfield<T> ulocal){
 
 
-	static T data_local_re[Nxl*Nyl];
-	static T data_local_im[Nxl*Nyl];
+	static T data_local_re[ulocal.Nxl*ulocal.Nyl];
+	static T data_local_im[ulocal.Nxl*ulocal.Nyl];
 
 	static T data_global_re[Nx*Ny];
 	static T data_global_im[Nx*Ny];
@@ -96,15 +119,15 @@ template<class T> int gfield<T>::allgather(lfield<T> ulocal){
 
 	for(k = 0; k < 9; k++){
 
-		for(i = 0; i < Nxl*Nyl; i++){
+		for(i = 0; i < ulocal.Nxl*ulocal.Nyl; i++){
 
 			data_local_re[i] = ulocal.u[k][i].real();
 			data_local_im[i] = ulocal.u[k][i].imag();
 
 		}
 
-   		MPI_Allgather(data_local_re, Nxl*Nyl, MPI_DOUBLE, data_global_re, Nxl*Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
-	   	MPI_Allgather(data_local_im, Nxl*Nyl, MPI_DOUBLE, data_global_im, Nxl*Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
+   		MPI_Allgather(data_local_re, ulocal.Nxl*ulocal.Nyl, MPI_DOUBLE, data_global_re, ulocal.Nxl*ulocal.Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
+	   	MPI_Allgather(data_local_im, ulocal.Nxl*ulocal.Nyl, MPI_DOUBLE, data_global_im, ulocal.Nxl*ulocal.Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
 
 		for(i = 0; i < Nx*Ny; i++){
 
@@ -125,7 +148,7 @@ template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
     double *bufor_receive_p;
 
 
-    if( ExchangeX == 1 ){
+    if( mpi->getExchangeX() == 1 ){
 
 	    int yy; 
 
@@ -136,11 +159,11 @@ template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
 		bufor_send_n[yy] = this->u[0][buf_pos(Nxl-1,yy)].real();
 	    }
 
-	    printf("X data exchange: rank %i sending to %i\n", mpi->getRank(), XNeighbourNext);
-	    printf("X data exchange: rank %i receiving from %i\n", mpi->getRank(), XNeighbourNext);
+	    printf("X data exchange: rank %i sending to %i\n", mpi->getRank(), mpi->getXNeighbourNext());
+	    printf("X data exchange: rank %i receiving from %i\n", mpi->getRank(), mpi->getXNeighbourNext());
 
-	    MPI_Send(bufor_send_n, Nyl_buf, MPI_DOUBLE, XNeighbourNext, 11, MPI_COMM_WORLD);
-    	    MPI_Recv(bufor_receive_n, Nyl_buf, MPI_DOUBLE, XNeighbourPrevious, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	    MPI_Send(bufor_send_n, Nyl_buf, MPI_DOUBLE, mpi->getXNeighbourNext(), 11, MPI_COMM_WORLD);
+    	    MPI_Recv(bufor_receive_n, Nyl_buf, MPI_DOUBLE, mpi->getXNeighbourPrevious(), 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   	    for(yy = 0; yy < Nyl; yy++){
 		this->u[0][buf_pos_ex(0,yy)] = bufor_receive_n[yy];
@@ -153,18 +176,18 @@ template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
 		bufor_send_p[yy] = this->u[0][buf_pos(0,yy)].real();
 	    }
 	
- 	    printf("X data exchange: rank %i sending to %i\n", mpi->getRank(), XNeighbourPrevious);
-	    printf("X data exchange: rank %i receiving to %i\n", mpi->getRank(), XNeighbourPrevious);
+ 	    printf("X data exchange: rank %i sending to %i\n", mpi->getRank(), mpi->getXNeighbourPrevious());
+	    printf("X data exchange: rank %i receiving to %i\n", mpi->getRank(), mpi->getXNeighbourPrevious());
 
-	    MPI_Send(bufor_send_p, Nyl_buf, MPI_DOUBLE, XNeighbourPrevious, 12, MPI_COMM_WORLD);
-    	    MPI_Recv(bufor_receive_p, Nyl_buf, MPI_DOUBLE, XNeighbourNext, 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	    MPI_Send(bufor_send_p, Nyl_buf, MPI_DOUBLE, mpi->getXNeighbourPrevious(), 12, MPI_COMM_WORLD);
+    	    MPI_Recv(bufor_receive_p, Nyl_buf, MPI_DOUBLE, mpi->getXNeighbourNext(), 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   	    for(yy = 0; yy < Nyl; yy++){
 		this->u[0][buf_pos_ex(Nxl+1,yy)] = bufor_receive_p[yy];
 	    }
     }
 
-    if( ExchangeY == 1 ){
+    if( mpi->getExchangeY() == 1 ){
 
 	    int xx; 
 
@@ -175,11 +198,11 @@ template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
 		bufor_send_n[xx] = this->u[0][buf_pos(xx,Nyl-1)].real();
 	    }
 
-	    printf("Y data exchange: rank %i sending to %i\n", mpi->getRank(), YNeighbourNext);
-	    printf("Y data exchange: rank %i receiving from %i\n", mpi->getRank(), YNeighbourNext);
+	    printf("Y data exchange: rank %i sending to %i\n", mpi->getRank(), mpi->getYNeighbourNext());
+	    printf("Y data exchange: rank %i receiving from %i\n", mpi->getRank(), mpi->getYNeighbourNext());
 
-	    MPI_Send(bufor_send_n, Nxl_buf, MPI_DOUBLE, YNeighbourNext, 13, MPI_COMM_WORLD);
-    	    MPI_Recv(bufor_receive_n, Nxl_buf, MPI_DOUBLE, YNeighbourPrevious, 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	    MPI_Send(bufor_send_n, Nxl_buf, MPI_DOUBLE, mpi->getYNeighbourNext(), 13, MPI_COMM_WORLD);
+    	    MPI_Recv(bufor_receive_n, Nxl_buf, MPI_DOUBLE, mpi->getYNeighbourPrevious(), 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
             for(xx = 0; xx < Nxl; xx++){
 		this->u[0][buf_pos_ex(xx,0)] = bufor_receive_n[xx];
@@ -192,11 +215,11 @@ template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
 		bufor_send_p[xx] = this->u[0][buf_pos(xx,0)].real();
 	    }
 	
- 	    printf("Y data exchange: rank %i sending to %i\n", mpi->getRank(), YNeighbourPrevious);
-	    printf("Y data exchange: rank %i receiving to %i\n", mpi->getRank(), YNeighbourPrevious);
+ 	    printf("Y data exchange: rank %i sending to %i\n", mpi->getRank(), mpi->getYNeighbourPrevious());
+	    printf("Y data exchange: rank %i receiving to %i\n", mpi->getRank(), mpi->getYNeighbourPrevious());
 
-	    MPI_Send(bufor_send_p, Nxl_buf, MPI_DOUBLE, YNeighbourPrevious, 14, MPI_COMM_WORLD);
-    	    MPI_Recv(bufor_receive_p, Nxl_buf, MPI_DOUBLE, YNeighbourNext, 14, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	    MPI_Send(bufor_send_p, Nxl_buf, MPI_DOUBLE, mpi->getYNeighbourPrevious(), 14, MPI_COMM_WORLD);
+    	    MPI_Recv(bufor_receive_p, Nxl_buf, MPI_DOUBLE, mpi->getYNeighbourNext(), 14, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   	    for(xx = 0; xx < Nxl; xx++){
 		this->u[0][buf_pos_ex(xx,Nyl+1)] = bufor_receive_p[xx];

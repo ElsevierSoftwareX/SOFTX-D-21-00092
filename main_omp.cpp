@@ -8,7 +8,6 @@
 #include "su3_matrix.h"
 
 #include "config.h"
-#include "mpi_pos.h"
 #include "mpi_split.h"
 #include "mpi_gather.h"
 #include "utils.h"
@@ -31,11 +30,13 @@
 int main(int argc, char *argv[]) {
 
 
+    config* cnfg = new config;
+
     printf("STARTING CLASS PROGRAM\n");
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
-    mpi->mpi_init();
+    mpi->mpi_init(cnfg);
 
     mpi->mpi_exchange_grid();
 
@@ -56,10 +57,10 @@ int main(int argc, char *argv[]) {
 
     int xx, yy;
 
-    for(xx = 0; xx < Nxl; xx++){
-    	for(yy = 0; yy < Nyl; yy++){
+    for(xx = 0; xx < cnfg->Nxl; xx++){
+    	for(yy = 0; yy < cnfg->Nyl; yy++){
 
-		XX[buf_pos(xx, yy)] = mpi->getRank()*100+loc_pos(xx, yy) + 1;
+		XX[xx*cnfg->Nyl + yy] = mpi->getRank()*100+(xx*cnfg->Nyl+yy) + 1;
 	}
     }
 
@@ -79,14 +80,14 @@ int main(int argc, char *argv[]) {
 
     gfield<double> gf(Nx,Ny);
 
-    lfield<double> f(Nxl,Nyl);
+    lfield<double> f(cnfg->Nxl,cnfg->Nyl);
 
     f.mpi_exchange_boundaries(mpi);
 
 
     printf("FFTW TEST\n");
 
-    fftw1D* fourier = new fftw1D();
+    fftw1D* fourier = new fftw1D(cnfg);
 
     fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
 

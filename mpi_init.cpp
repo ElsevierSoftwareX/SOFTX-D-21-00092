@@ -6,7 +6,7 @@
 
 #include "config.h"
 
-int mpi_class::mpi_init(void) {
+int mpi_class::mpi_init(config *cnfg) {
 
     int proc_x = proc_grid[0];
     int proc_y = proc_grid[1];
@@ -60,10 +60,10 @@ int mpi_class::mpi_init(void) {
                 exit(0);
     }
 
-    Nxl = Nx/proc_x;
-    Nyl = Ny/proc_y;
+    cnfg->Nxl = Nx/proc_x;
+    cnfg->Nyl = Ny/proc_y;
 
-    if( Nxl == 1 ){
+    if( cnfg->Nxl == 1 ){
 
                 if( rank == 0 ){
 
@@ -77,7 +77,7 @@ int mpi_class::mpi_init(void) {
                 exit(0);
     }
 
-    if( Nyl == 1 ){
+    if( cnfg->Nyl == 1 ){
 
                 if( rank == 0 ){
 
@@ -91,21 +91,21 @@ int mpi_class::mpi_init(void) {
                 exit(0);
     }
 
-    printf("Running with local lattice size: %i %i\n", Nxl, Nyl);
+    printf("Running with local lattice size: %i %i\n", cnfg->Nxl, cnfg->Nyl);
 
     if( proc_x == 1 ){
-	Nxl_buf = Nx;
+	cnfg->Nxl_buf = Nx;
 	ExchangeX = 0;
     }else{
-	Nxl_buf = Nxl + 2;
+	cnfg->Nxl_buf = cnfg->Nxl + 2;
 	ExchangeX = 1;
     }
 
     if( proc_y == 1 ){
-	Nyl_buf = Ny;
+	cnfg->Nyl_buf = Ny;
 	ExchangeY = 0;
     }else{
-	Nyl_buf = Nyl + 2;
+	cnfg->Nyl_buf = cnfg->Nyl + 2;
 	ExchangeY = 1;
     }
 

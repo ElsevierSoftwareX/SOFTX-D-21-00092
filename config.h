@@ -1,20 +1,25 @@
+#ifndef H_CONFIG
+#define H_CONFIG
+
 #define Nx 64
 #define Ny 64
 
-extern int Nxl;
-extern int Nyl;
+#include <iostream>
 
-extern int Nxl_buf;
-extern int Nyl_buf;
+class config{
 
-extern int ExchangeX;
-extern int ExchangeY;
+public:
 
-extern int XNeighbourNext, XNeighbourPrevious;
-extern int YNeighbourNext, YNeighbourPrevious;
+int Nxl = 0, Nyl = 0;
+int Nxl_buf = 0, Nyl_buf = 0;
 
-extern int procx;
-extern int procy;
+int ExchangeX = 0, ExchangeY = 0;
 
-extern double *x;
-extern double *p;
+int XNeighbourNext = 0, XNeighbourPrevious = 0;
+int YNeighbourNext = 0, YNeighbourPrevious = 0;
+
+int proc_x, proc_y;
+
+};
+
+#endif

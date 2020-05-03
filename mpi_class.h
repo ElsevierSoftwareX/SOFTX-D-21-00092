@@ -7,6 +7,8 @@
 //#include "mpi_init.h"
 #include "mpi_pos.h"
 
+#include "config.h"
+
 #include <mpi.h>
 
 class mpi_class {
@@ -29,6 +31,8 @@ private:
     int pos_x;
     int pos_y;
 
+    int n_pos_x, n_pos_y;
+    int p_pos_x, p_pos_y;
 
 public:
 
@@ -62,7 +66,7 @@ public:
 
     }
 
-    int mpi_init();
+    int mpi_init(config* cnfg);
 
     int mpi_exchange_grid();
 
@@ -83,7 +87,41 @@ public:
 	return col_comm;
     }
 
+    int getExchangeX(){
+	
+	return ExchangeX;
 
+    }
+
+    int getExchangeY(){
+	
+	return ExchangeY;
+
+    }
+
+    int getXNeighbourNext(){
+
+	return XNeighbourNext;
+
+    }	
+
+    int getYNeighbourNext(){
+
+	return YNeighbourNext;
+
+    }	
+
+    int getXNeighbourPrevious(){
+
+	return XNeighbourPrevious;
+
+    }	
+
+    int getYNeighbourPrevious(){
+
+	return YNeighbourPrevious;
+
+    }	
 };
 
 #endif

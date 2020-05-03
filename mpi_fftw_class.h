@@ -38,6 +38,8 @@ class fftw {
 
     const ptrdiff_t N0 = Nx, N1 = Ny;
 
+    int Nxl, Nyl;
+
     fftw_plan plan;
     fftw_complex *data_local;
 
@@ -45,12 +47,15 @@ class fftw {
 
     public:
 
-    fftw(void){
+    fftw(config *cnfg){
 
 
         fftw_init_threads();
         fftw_mpi_init();
         fftw_plan_with_nthreads(omp_get_max_threads());
+
+        Nxl = cnfg->Nxl;
+        Nyl = cnfg->Nyl;
 
     }
 
@@ -78,6 +83,8 @@ class fftw1D : public fftw {
     ptrdiff_t alloc_localY, local_n0Y, local_n0_startY;
 
     public:
+
+    fftw1D(config *cnfg) : fftw{ cnfg} {};
 
     ~fftw1D(void){
 
@@ -189,6 +196,8 @@ return 1;
 class fftw2D : public fftw {
 
     public:
+
+    fftw2D(config *cnfg) : fftw{ cnfg} {};
 
     int init2D(void){
 
