@@ -43,7 +43,7 @@ class su3_matrix {
 			m[8] = 0.0;	
 		}
 
-		int exponentiate();
+		int exponentiate(double sign);
 
 		int zheevh3(double *w){
 
@@ -143,7 +143,7 @@ class su3_matrix {
 
 };
 
-template<class T> int su3_matrix<T>::exponentiate(void){
+template<class T> int su3_matrix<T>::exponentiate(double sign){
 
 			std::complex<T> A[3][3];
 			std::complex<T> Q[3][3];
@@ -167,9 +167,9 @@ template<class T> int su3_matrix<T>::exponentiate(void){
 //			w[1] = ww[1];
 //			w[2] = ww[2];
 
-			eig[0] = exp(std::complex<double>(0.0, ww[0]));
-			eig[1] = exp(std::complex<double>(0.0, ww[1]));
-			eig[2] = exp(std::complex<double>(0.0, ww[2]));
+			eig[0] = exp(std::complex<double>(0.0, sign*ww[0]));
+			eig[1] = exp(std::complex<double>(0.0, sign*ww[1]));
+			eig[2] = exp(std::complex<double>(0.0, sign*ww[2]));
 
 			for(int i = 0; i < 3; i++){
 				for(int j = 0; j < 3; j++){

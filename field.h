@@ -116,6 +116,7 @@ template<class T> class lfield: public field<T> {
 		int solvePoisson(double mass, double g, momenta* momtable);
 
 		int exponentiate();
+		int exponentiate(double s);
 
 		int operator *= ( lfield<T> &f ){
 
@@ -139,6 +140,61 @@ template<class T> class lfield: public field<T> {
 
 		return 1;
 		}
+
+		lfield<T> operator * ( lfield<T> &f ){
+
+			lfield<T> result(Nxl, Nyl);
+
+			for(int i = 0; i < Nxl*Nyl; i ++){
+			
+				su3_matrix<double> A,B,C;
+
+				for(int k = 0; k < 9; k++){
+
+					A.m[k] = this->u[k][i];
+					B.m[k] = f.u[k][i];
+				}
+		
+				C = A*B;
+
+				for(int k = 0; k < 9; k++){
+
+					result.u[k][i] = C.m[k];
+				}
+			}
+
+		return result;
+		}
+
+		lfield<T> operator + ( lfield<T> &f ){
+
+			lfield<T> result(Nxl, Nyl);
+
+			for(int i = 0; i < Nxl*Nyl; i ++){
+			
+				su3_matrix<double> A,B,C;
+
+				for(int k = 0; k < 9; k++){
+
+					A.m[k] = this->u[k][i];
+					B.m[k] = f.u[k][i];
+				}
+		
+				C = A+B;
+
+				for(int k = 0; k < 9; k++){
+
+					result.u[k][i] = C.m[k];
+				}
+			}
+
+		return result;
+		}
+
+		int setKernelPbarX(momenta* mom);
+		int setKernelPbarY(momenta* mom);
+
+		lfield<T> hermitian();
 };
 
 
@@ -442,7 +498,6 @@ template<class T> int lfield<T>::solvePoisson(double mass, double g, momenta* mo
 return 1;
 }
 
-
 template<class T> int lfield<T>::exponentiate(){
 
 
@@ -455,7 +510,7 @@ template<class T> int lfield<T>::exponentiate(){
 			A.m[k] = this->u[k][i];
 		}
 		
-		A.exponentiate();
+		A.exponentiate(1.0);
 
 		for(int k = 0; k < 9; k++){
 
@@ -465,6 +520,121 @@ template<class T> int lfield<T>::exponentiate(){
 	}
 
 return 1;
+}
+
+template<class T> int lfield<T>::exponentiate(double s){
+
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+	
+		su3_matrix<double> A;
+
+		for(int k = 0; k < 9; k++){
+
+			A.m[k] = s*(this->u[k][i]);
+		}
+		
+		A.exponentiate(-1.0);
+
+		for(int k = 0; k < 9; k++){
+
+			this->u[k][i] = A.m[k];
+		}
+
+	}
+
+return 1;
+}
+
+template<class T> int lfield<T>::setKernelPbarX(momenta* mom){
+
+			//!pbar(dir,z,t)
+                       	//tmpunit%su3(1,1) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+                       	//tmpunit%su3(2,2) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+                       	//tmpunit%su3(3,3) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+
+                       	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
+
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+		if( mom->phat2(i) > 10e-9 ){
+
+			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarX(i)/mom->phat2(i));
+			this->u[4][i] = this->u[0][i];
+			this->u[8][i] = this->u[0][i];
+
+		}else{
+
+			this->u[0][i] = std::complex<double>(0.0, 0.0);
+			this->u[4][i] = this->u[0][i];
+			this->u[8][i] = this->u[0][i];
+
+		}
+	}
+
+return 1;
+}
+
+template<class T> int lfield<T>::setKernelPbarY(momenta* mom){
+
+			//!pbar(dir,z,t)
+                       	//tmpunit%su3(1,1) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+                       	//tmpunit%su3(2,2) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+                       	//tmpunit%su3(3,3) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+
+                       	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
+
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+		if( mom->phat2(i) > 10e-9 ){
+	
+			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarY(i)/mom->phat2(i));
+			this->u[4][i] = this->u[0][i];
+			this->u[8][i] = this->u[0][i];
+
+		}else{
+
+			this->u[0][i] = std::complex<double>(0.0, 0.0);
+			this->u[4][i] = this->u[0][i];
+			this->u[8][i] = this->u[0][i];
+
+		}
+	}
+
+return 1;
+}
+
+template<class T> lfield<T> lfield<T>::hermitian(void){
+
+	lfield<T> result(Nxl, Nyl);
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+		result.u[0][i] = std::conj(this->u[0][i]);
+		result.u[1][i] = std::conj(this->u[3][i]);
+		result.u[2][i] = std::conj(this->u[6][i]);
+		result.u[3][i] = std::conj(this->u[1][i]);
+		result.u[4][i] = std::conj(this->u[4][i]);
+		result.u[5][i] = std::conj(this->u[7][i]);
+		result.u[6][i] = std::conj(this->u[2][i]);
+		result.u[7][i] = std::conj(this->u[5][i]);
+		result.u[8][i] = std::conj(this->u[8][i]);
+
+	}
+
+return result;
 }
 
 #endif

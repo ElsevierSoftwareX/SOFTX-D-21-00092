@@ -55,6 +55,10 @@ public:
 
 	int set();
 
+	double phat2(int i);
+	double pbarX(int i);
+	double pbarY(int i);
+
 };
 
 int momenta::set(){
@@ -94,4 +98,18 @@ int momenta::set(){
 return 1;
 }
 
+double momenta::phat2(int i){
+
+	return tbl_phat2[i]; 
+}
+
+double momenta::pbarX(int i){
+
+	return tbl_pbarx[i]; 
+}
+
+double momenta::pbarY(int i){
+
+	return tbl_pbary[i]; 
+}
 #endif

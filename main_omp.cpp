@@ -57,6 +57,7 @@ int main(int argc, char *argv[]) {
     //construct initial state
     lfield<double> f(cnfg->Nxl,cnfg->Nyl);
     lfield<double> uf(cnfg->Nxl,cnfg->Nyl);
+//    lfield<double> uf_next(cnfg->Nxl,cnfg->Nyl);
 
     for(int i = 0; i < MVmodel->Ny_parameter; i++){
 	
@@ -73,7 +74,9 @@ int main(int argc, char *argv[]) {
 	uf *= f;
     }
 
+    //exchange and store uf in the global array gf
     gfield<double> gf(Nx, Ny);
+//    gfield<double> gf_next(Nx, Ny);
 
     gf.allgather(&uf);
 
@@ -81,14 +84,77 @@ int main(int argc, char *argv[]) {
     lfield<double> xi_local_x(cnfg->Nxl,cnfg->Nyl);
     lfield<double> xi_local_y(cnfg->Nxl,cnfg->Nyl);
 
+    lfield<double> kernel_pbarx(cnfg->Nxl,cnfg->Nyl);
+    kernel_pbarx.setKernelPbarX(momtable);
+
+    lfield<double> kernel_pbary(cnfg->Nxl,cnfg->Nyl);
+    kernel_pbary.setKernelPbarY(momtable);
+
+    lfield<double> A_local(cnfg->Nxl, cnfg->Nyl);
+    lfield<double> B_local(cnfg->Nxl, cnfg->Nyl);
+
+    lfield<double> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
+    lfield<double> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
+
+    lfield<double> uf_hermitian(cnfg->Nxl, cnfg->Nyl);
+
+    double step = 0.0001;
+
     for(int langevin = 0; langevin < 10; langevin++){
 
 	xi_local_x.setGaussian(random_generator);
 	xi_local_y.setGaussian(random_generator);
 
+	//should be X2K
 	fourier->execute1D(&xi_local_x, 0);
 	fourier->execute1D(&xi_local_y, 0);
 
+	//construcing A
+	xi_local_x = kernel_pbarx * xi_local_x;
+	xi_local_y = kernel_pbary * xi_local_y;
+
+	A_local = xi_local_x + xi_local_y;
+
+	//should be K2X
+ 	fourier->execute1D(&A_local, 1);
+
+ 	fourier->execute1D(&xi_local_x, 1);
+
+ 	fourier->execute1D(&xi_local_y, 1);
+
+	//constructng B
+                   //tmpunitc%su3 = uglobal(me()*volume_half()+ind,eo)%su3
+
+                   //tmpunitd%su3 = transpose(conjg(tmpunitc%su3))
+
+                   //uxiulocal(ind,eo,1)%su3 = matmul(tmpunitc%su3, matmul(xi_local(ind,eo,1)%su3, tmpunitd%su3))
+                   //uxiulocal(ind,eo,2)%su3 = matmul(tmpunitc%su3, matmul(xi_local(ind,eo,2)%su3, tmpunitd%su3))
+
+    	uf_hermitian = uf.hermitian();
+
+	uxiulocal_x = uf * xi_local_x * uf_hermitian;
+
+	uxiulocal_y = uf * xi_local_y * uf_hermitian;
+
+	//should be X2K
+	fourier->execute1D(&uxiulocal_x, 0);
+	fourier->execute1D(&uxiulocal_y, 0);
+
+	uxiulocal_x = kernel_pbarx * uxiulocal_x;
+	uxiulocal_y = kernel_pbary * uxiulocal_y;
+
+	B_local = uxiulocal_x + uxiulocal_y;
+
+	//should be K2X
+	fourier->execute1D(&B_local, 1);
+
+	A_local.exponentiate(sqrt(step));
+
+	B_local.exponentiate(-sqrt(step));
+
+	uf = B_local * uf * A_local;
+
+	gf.allgather(&uf);
     }
 
     delete fourier;
