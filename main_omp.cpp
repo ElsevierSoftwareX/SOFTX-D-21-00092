@@ -157,6 +157,13 @@ int main(int argc, char *argv[]) {
 	gf.allgather(&uf);
     }
 
+    //compute correlation function
+    fourier->execute1D(&uf);
+
+    uf_hermitian = uf.hermitian();
+
+    trace(uf, uf_hermitian);
+
     delete fourier;
 
     delete mpi;
