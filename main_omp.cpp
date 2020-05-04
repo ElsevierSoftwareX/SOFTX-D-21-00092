@@ -27,6 +27,8 @@
 
 #include "MV_class.h"
 
+#include "single_field.h"
+
 int main(int argc, char *argv[]) {
 
     printf("STARTING CLASS PROGRAM\n");
@@ -158,11 +160,19 @@ int main(int argc, char *argv[]) {
     }
 
     //compute correlation function
-    fourier->execute1D(&uf);
+    //should be X2K
+    fourier->execute1D(&uf, 0);
 
-    uf_hermitian = uf.hermitian();
+    //uf_hermitian = uf.hermitian();
 
-    trace(uf, uf_hermitian);
+    sfield<double> corr(cnfg->Nxl, cnfg->Nyl);
+
+    uf.trace(&corr);
+
+    sfield<double> corr_global(Nx, Ny);
+
+    corr_global.allgather(&corr);	
+
 
     delete fourier;
 
@@ -172,50 +182,4 @@ int main(int argc, char *argv[]) {
 
 return 1;
 }
-
-/*
-    printf("TESTING PROGRAM\n");
-
-    double XX[Nx*Ny];
-    double YY[Nx*Ny];
-
-    int ii;
-    for(ii = 0; ii < Nx*Ny; ii++){
-	XX[ii] = 0;
-    }
-    for(ii = 0; ii < Nx*Ny; ii++){
-	YY[ii] = 0;
-    }
-
-    int xx, yy;
-
-    for(xx = 0; xx < cnfg->Nxl; xx++){
-    	for(yy = 0; yy < cnfg->Nyl; yy++){
-
-		XX[xx*cnfg->Nyl + yy] = mpi->getRank()*100+(xx*cnfg->Nyl+yy) + 1;
-	}
-    }
-
-    for(xx = 0; xx < Nx; xx++){
-    	for(yy = 0; yy < Ny; yy++){
-
-		XX[yy + Ny*xx] = yy + Ny*xx + 1;
-	}
-    }
-
-    printf("FIELD ALLOCATION AND BOUNDARY EXCHANGE\n");
-
-    gfield<double> gf(Nx,Ny);
-
-//    mpi_split(XX, p);
-
-//    mpi_gather(YY, p);
-
-//    f.mpi_exchange_boundaries(mpi);
-
-    printf("FFTW TEST\n");
-
-
-
-*/ 
-
+ 

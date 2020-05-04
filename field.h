@@ -17,6 +17,8 @@
 #include "MV_class.h"
 #include "rand_class.h"
 
+#include "single_field.h"
+
 #include "momenta.h"
 
 template<class T> class field {
@@ -195,6 +197,8 @@ template<class T> class lfield: public field<T> {
 		int setKernelPbarY(momenta* mom);
 
 		lfield<T> hermitian();
+
+		int trace(sfield<T>* cc);
 };
 
 
@@ -636,5 +640,41 @@ template<class T> lfield<T> lfield<T>::hermitian(void){
 
 return result;
 }
+
+template<class T> int lfield<T>::trace(sfield<T>* cc){
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+                su3_matrix<double> A;
+                su3_matrix<double> B;
+                su3_matrix<double> C;
+
+                for(int k = 0; k < 9; k++){
+                        A.m[k] = this->u[k][i];
+                }
+
+		B.m[0] = std::conj(this->u[0][i]);
+		B.m[1] = std::conj(this->u[3][i]);
+		B.m[2] = std::conj(this->u[6][i]);
+		B.m[3] = std::conj(this->u[1][i]);
+		B.m[4] = std::conj(this->u[4][i]);
+		B.m[5] = std::conj(this->u[7][i]);
+		B.m[6] = std::conj(this->u[2][i]);
+		B.m[7] = std::conj(this->u[5][i]);
+		B.m[8] = std::conj(this->u[8][i]);
+
+                C = A*B;
+
+                cc->u[i] = C.m[0] + C.m[4] + C.m[8];
+	}
+
+return 1;
+}
+
+
 
 #endif
