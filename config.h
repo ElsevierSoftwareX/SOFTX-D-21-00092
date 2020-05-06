@@ -22,6 +22,8 @@ int proc_x, proc_y;
 
 int seed;
 
+int stat;
+
 };
 
 #endif

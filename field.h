@@ -80,6 +80,10 @@ template<class T, int t> class gfield: public field<T,t> {
 		gfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxg = NNx; Nyg = NNy;};
 
 		friend class fftw2D;
+
+		int average_and_symmetrize();
+
+		lfield<T,t> reduce(int NNx, int NNy, mpi_class* mpi);
 };
 
 
@@ -329,7 +333,7 @@ return 1;
 
 template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_class* rr){
 
-	if(t == 0){
+	if(t == 9){
 
 	const double EPS = 10e-12;
 
@@ -545,7 +549,7 @@ template<class T, int t> int lfield<T, t>::exponentiate(double s){
 
 
 	for(int i = 0; i < Nxl*Nyl; i++){
-	
+
 		su3_matrix<double> A;
 
 		for(int k = 0; k < t; k++){
@@ -683,7 +687,7 @@ return result;
 }
 
 //template<typename T>
-template<typename T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
+template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 
 //template<class T, int t> int lfield<T,t>::trace(template<class TT, int tt> lfield<TT,tt>* cc){
 
@@ -728,6 +732,45 @@ template<typename T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 return 1;
 }
 
+template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
+
+	gfield<T,t>* corr_tmp = new gfield(Nx,Ny);
+	
+	for(int i = 0; i < Nx; i++){
+		for(int j = 0; j < Ny; j++){
+			corr_tmp->u[i*Ny+j][0] = 0.5*(this->u[i*Ny+j][0] + this->u[j*Ny+i][0]);
+		}
+	}
+
+	for(int i = 0; i < Nx; i++){
+		for(int j = 0; j < Ny; j++){
+			
+			int a = abs(i-Nx)%Nx;
+			int b = abs(j-Ny)%Ny;
+
+			this->u[i*Ny+j][0] = 0.25*(	corr_tmp->u[i*Ny+j][0] +
+							corr_tmp->u[a*Ny+j][0] + 
+							corr_tmp->u[i*Ny+b][0] + 
+							corr_tmp->u[a*Ny+b][0]);
+		}
+	}
+
+	delete corr_tmp;
+
+return 1;
+}
 
 
+template<class T, int t> lfield<T,t> gfield<T,t>::reduce(int NNx, int NNy, mpi_class* mpi){
+
+	lfield<T,t>* corr_tmp = new lfield<T,t>(NNx,NNy);
+	
+	for(int i = 0; i < NNx; i++){
+		for(int j = 0; j < NNy; j++){
+			corr_tmp->u[i*NNy+j][0] = this->u[(i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy][0];
+		}
+	}
+
+return *corr_tmp;
+}
 #endif
