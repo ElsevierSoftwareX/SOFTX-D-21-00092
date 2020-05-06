@@ -17,15 +17,15 @@
 #include "MV_class.h"
 #include "rand_class.h"
 
-#include "single_field.h"
+//#include "single_field.h"
 
 #include "momenta.h"
 
-template<class T> class field {
+template<class T, int t> class field {
 
-	protected:
+	public:
 
-		std::complex<T>* u[9];		
+		std::complex<T>** u;		
 
 		int Nxl, Nyl;
 
@@ -36,11 +36,13 @@ template<class T> class field {
 		~field(void);
 };
 
-template<class T> field<T>::field(int NNx, int NNy) {
+template<class T, int t> field<T,t>::field(int NNx, int NNy) {
 
 	int i;
 
-	for(i = 0; i < 9; i++){
+	u = (std::complex<T>**)malloc(t*sizeof(std::complex<T>*));
+
+	for(i = 0; i < t; i++){
 
 		u[i] = (std::complex<T>*)malloc(NNx*NNy*sizeof(std::complex<T>));
 
@@ -50,11 +52,11 @@ template<class T> field<T>::field(int NNx, int NNy) {
 	Nyl = NNy;
 }
 
-template<class T> field<T>::~field() {
+template<class T, int t> field<T,t>::~field() {
 
 	int i;
 
-	for(i = 0; i < 9; i++){
+	for(i = 0; i < t; i++){
 
 		free(u[i]);
 
@@ -62,10 +64,10 @@ template<class T> field<T>::~field() {
 
 }
 
-template<class T> class lfield;
+template<class T, int t> class lfield;
 
 
-template<class T> class gfield: public field<T> {
+template<class T, int t> class gfield: public field<T,t> {
 
 	int Nxg, Nyg;
 
@@ -73,28 +75,28 @@ template<class T> class gfield: public field<T> {
 
 		//T getZero(void){ return this.u[0][0]; }
 
-		int allgather(lfield<T>* ulocal);
+		int allgather(lfield<T,t>* ulocal);
 
-		gfield(int NNx, int NNy) : field<T>{NNx, NNy} { Nxg = NNx; Nyg = NNy;};
+		gfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxg = NNx; Nyg = NNy;};
 
 		friend class fftw2D;
 };
 
 
-template<class T> class lfield: public field<T> {
+template<class T, int t> class lfield: public field<T,t> {
 
 	int Nxl, Nyl;
 	int Nxl_buf, Nyl_buf;
 
 	public:
 
-		lfield(int NNx, int NNy) : field<T>{NNx, NNy} { Nxl = NNx; Nyl = NNy; };
+		lfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxl = NNx; Nyl = NNy; };
 
 		friend class fftw1D;
 
 		int mpi_exchange_boundaries(mpi_class* mpi);
 
-		friend class gfield<T>;
+		friend class gfield<T,t>;
 
 		int loc_pos(int x, int y){
 
@@ -120,13 +122,13 @@ template<class T> class lfield: public field<T> {
 		int exponentiate();
 		int exponentiate(double s);
 
-		int operator *= ( lfield<T> &f ){
+		int operator *= ( lfield<T,t> &f ){
 
 			for(int i = 0; i < Nxl*Nyl; i ++){
 			
 				su3_matrix<double> A,B,C;
 
-				for(int k = 0; k < 9; k++){
+				for(int k = 0; k < t; k++){
 
 					A.m[k] = this->u[k][i];
 					B.m[k] = f.u[k][i];
@@ -134,7 +136,7 @@ template<class T> class lfield: public field<T> {
 		
 				C = A*B;
 
-				for(int k = 0; k < 9; k++){
+				for(int k = 0; k < t; k++){
 
 					this->u[k][i] = C.m[k];
 				}
@@ -143,15 +145,15 @@ template<class T> class lfield: public field<T> {
 		return 1;
 		}
 
-		lfield<T> operator * ( lfield<T> &f ){
+		lfield<T,t> operator * ( lfield<T,t> &f ){
 
-			lfield<T> result(Nxl, Nyl);
+			lfield<T,t> result(Nxl, Nyl);
 
 			for(int i = 0; i < Nxl*Nyl; i ++){
 			
 				su3_matrix<double> A,B,C;
 
-				for(int k = 0; k < 9; k++){
+				for(int k = 0; k < t; k++){
 
 					A.m[k] = this->u[k][i];
 					B.m[k] = f.u[k][i];
@@ -159,7 +161,7 @@ template<class T> class lfield: public field<T> {
 		
 				C = A*B;
 
-				for(int k = 0; k < 9; k++){
+				for(int k = 0; k < t; k++){
 
 					result.u[k][i] = C.m[k];
 				}
@@ -168,15 +170,15 @@ template<class T> class lfield: public field<T> {
 		return result;
 		}
 
-		lfield<T> operator + ( lfield<T> &f ){
+		lfield<T,t> operator + ( lfield<T,t> &f ){
 
-			lfield<T> result(Nxl, Nyl);
+			lfield<T,t> result(Nxl, Nyl);
 
 			for(int i = 0; i < Nxl*Nyl; i ++){
 			
 				su3_matrix<double> A,B,C;
 
-				for(int k = 0; k < 9; k++){
+				for(int k = 0; k < t; k++){
 
 					A.m[k] = this->u[k][i];
 					B.m[k] = f.u[k][i];
@@ -184,7 +186,7 @@ template<class T> class lfield: public field<T> {
 		
 				C = A+B;
 
-				for(int k = 0; k < 9; k++){
+				for(int k = 0; k < t; k++){
 
 					result.u[k][i] = C.m[k];
 				}
@@ -196,13 +198,13 @@ template<class T> class lfield: public field<T> {
 		int setKernelPbarX(momenta* mom);
 		int setKernelPbarY(momenta* mom);
 
-		lfield<T> hermitian();
+		lfield<T,t> hermitian();
 
-		int trace(sfield<T>* cc);
+		int trace(lfield<double,1>* cc);
 };
 
 
-template<class T> int gfield<T>::allgather(lfield<T>* ulocal){
+template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal){
 
 
 	T* data_local_re = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
@@ -213,7 +215,7 @@ template<class T> int gfield<T>::allgather(lfield<T>* ulocal){
 
 	int i,k;
 
-	for(k = 0; k < 9; k++){
+	for(k = 0; k < t; k++){
 
 		for(i = 0; i < ulocal->Nxl*ulocal->Nyl; i++){
 
@@ -235,7 +237,7 @@ template<class T> int gfield<T>::allgather(lfield<T>* ulocal){
 	return 1;
 }
 
-template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
+template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi){
 
     double *bufor_send_n;
     double *bufor_receive_n;
@@ -325,12 +327,9 @@ template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
 return 1;
 }
 
-template<class T> int lfield<T>::setMVModel(MV_class* MVconfig, rand_class* rr){
+template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_class* rr){
 
-	printf("SETTING MV MODEL: Nxl = %i, Nyl = %i\n", Nxl, Nyl);
-
-	int myrank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+	if(t == 0){
 
 	const double EPS = 10e-12;
 
@@ -403,10 +402,19 @@ template<class T> int lfield<T>::setMVModel(MV_class* MVconfig, rand_class* rr){
 		this->u[8][i] += std::complex<double>(2.0*n[7]/sqrt(3.0),0.0);
 	}
 
+	}else{
+
+		printf("Invalid lfield classes for setMVModel function\n");
+
+	}
+
+
 return 1;
 }
 
-template<class T> int lfield<T>::setGaussian(rand_class* rr){
+template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
+
+	if(t == 9){
 
 	const double EPS = 10e-12;
 
@@ -481,18 +489,25 @@ template<class T> int lfield<T>::setGaussian(rand_class* rr){
 		this->u[8][i] += std::complex<double>(2.0*n[7]/sqrt(3.0),0.0);
 	}
 
+	}else{
+
+		printf("Invalid lfield classes for setGaussian function\n");
+
+	}
+
+
 return 1;
 }
 
 
-template<class T> int lfield<T>::solvePoisson(double mass, double g, momenta* mom){
+template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, momenta* mom){
 
 		//u(ind,eo)%su3 = cmplx(-1.0*g_parameter, 0.0, kind=CMPLXKND)*&
                 //&u(ind,eo)%su3/(-phat2(z+1,t+1) + mass_parameter**2)
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 	
-		for(int k = 0; k < 9; k++){
+		for(int k = 0; k < t; k++){
 
 			this->u[k][i] *= std::complex<double>(-1.0*g/(mom->phat2(i) + mass*mass), 0.0);
 
@@ -502,21 +517,21 @@ template<class T> int lfield<T>::solvePoisson(double mass, double g, momenta* mo
 return 1;
 }
 
-template<class T> int lfield<T>::exponentiate(){
+template<class T, int t > int lfield<T, t>::exponentiate(){
 
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 	
 		su3_matrix<double> A;
 
-		for(int k = 0; k < 9; k++){
+		for(int k = 0; k < t; k++){
 
 			A.m[k] = this->u[k][i];
 		}
 		
 		A.exponentiate(1.0);
 
-		for(int k = 0; k < 9; k++){
+		for(int k = 0; k < t; k++){
 
 			this->u[k][i] = A.m[k];
 		}
@@ -526,21 +541,21 @@ template<class T> int lfield<T>::exponentiate(){
 return 1;
 }
 
-template<class T> int lfield<T>::exponentiate(double s){
+template<class T, int t> int lfield<T, t>::exponentiate(double s){
 
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 	
 		su3_matrix<double> A;
 
-		for(int k = 0; k < 9; k++){
+		for(int k = 0; k < t; k++){
 
 			A.m[k] = s*(this->u[k][i]);
 		}
 		
 		A.exponentiate(-1.0);
 
-		for(int k = 0; k < 9; k++){
+		for(int k = 0; k < t; k++){
 
 			this->u[k][i] = A.m[k];
 		}
@@ -550,7 +565,7 @@ template<class T> int lfield<T>::exponentiate(double s){
 return 1;
 }
 
-template<class T> int lfield<T>::setKernelPbarX(momenta* mom){
+template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
 
 			//!pbar(dir,z,t)
                        	//tmpunit%su3(1,1) =  cmplx(0.0,&
@@ -561,6 +576,7 @@ template<class T> int lfield<T>::setKernelPbarX(momenta* mom){
                         //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
 
                        	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
+	if(t == 9){
 
 
 	for(int i = 0; i < Nxl*Nyl; i++){
@@ -580,10 +596,18 @@ template<class T> int lfield<T>::setKernelPbarX(momenta* mom){
 		}
 	}
 
+	}else{
+
+		printf("Invalid lfield classes for setKernelPbarX function\n");
+
+	}
+
+
+
 return 1;
 }
 
-template<class T> int lfield<T>::setKernelPbarY(momenta* mom){
+template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 
 			//!pbar(dir,z,t)
                        	//tmpunit%su3(1,1) =  cmplx(0.0,&
@@ -595,6 +619,7 @@ template<class T> int lfield<T>::setKernelPbarY(momenta* mom){
 
                        	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
 
+	if(t == 9){
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 
@@ -613,12 +638,22 @@ template<class T> int lfield<T>::setKernelPbarY(momenta* mom){
 		}
 	}
 
+	}else{
+
+		printf("Invalid lfield classes for setKernelPbarY function\n");
+
+	}
+
+
+
 return 1;
 }
 
-template<class T> lfield<T> lfield<T>::hermitian(void){
+template<class T, int t> lfield<T,t> lfield<T,t>::hermitian(void){
 
-	lfield<T> result(Nxl, Nyl);
+	lfield<T,t> result(Nxl, Nyl);
+
+	if(t == 9){
 
 	// 0 1 2
 	// 3 4 5
@@ -638,14 +673,25 @@ template<class T> lfield<T> lfield<T>::hermitian(void){
 
 	}
 
+	}else{
+
+		printf("Invalid lfield classes for hermitian function\n");
+
+	}
+
 return result;
 }
 
-template<class T> int lfield<T>::trace(sfield<T>* cc){
+//template<typename T>
+template<typename T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
+
+//template<class T, int t> int lfield<T,t>::trace(template<class TT, int tt> lfield<TT,tt>* cc){
 
 	// 0 1 2
 	// 3 4 5
 	// 6 7 8
+
+	if(t == 9 ){
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 
@@ -653,7 +699,7 @@ template<class T> int lfield<T>::trace(sfield<T>* cc){
                 su3_matrix<double> B;
                 su3_matrix<double> C;
 
-                for(int k = 0; k < 9; k++){
+                for(int k = 0; k < t; k++){
                         A.m[k] = this->u[k][i];
                 }
 
@@ -669,8 +715,15 @@ template<class T> int lfield<T>::trace(sfield<T>* cc){
 
                 C = A*B;
 
-                cc->u[i] = C.m[0] + C.m[4] + C.m[8];
+                cc->u[i][0] = C.m[0] + C.m[4] + C.m[8];
 	}
+
+	}else{
+
+		printf("Invalid lfield classes for trace function\n");
+
+	}
+
 
 return 1;
 }

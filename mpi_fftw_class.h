@@ -127,14 +127,14 @@ class fftw1D : public fftw {
 
     }
 
-    int execute1D(lfield<double>* f, int dir){
+    template<class T, int t> int execute1D(lfield<T,t>* f, int dir){
 
     int i,j,k;
 
     int pos_x = 0;
     int pos_y = 0;
 
-for(k = 0; k < 9; k++){
+for(k = 0; k < t; k++){
 
 //    for(j = pos_y*Nyl; j < (pos_y+1)*Nyl; j++){
      for(j = 0; j < Nyl; j++){

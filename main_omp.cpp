@@ -27,7 +27,7 @@
 
 #include "MV_class.h"
 
-#include "single_field.h"
+//#include "single_field.h"
 
 int main(int argc, char *argv[]) {
 
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.12, 5);
+    MV_class* MVmodel = new MV_class(1.0, 0.48, 5);
 
     fftw1D* fourier = new fftw1D(cnfg);
 
@@ -57,8 +57,8 @@ int main(int argc, char *argv[]) {
 
 
     //construct initial state
-    lfield<double> f(cnfg->Nxl,cnfg->Nyl);
-    lfield<double> uf(cnfg->Nxl,cnfg->Nyl);
+    lfield<double,9> f(cnfg->Nxl,cnfg->Nyl);
+    lfield<double,9> uf(cnfg->Nxl,cnfg->Nyl);
 //    lfield<double> uf_next(cnfg->Nxl,cnfg->Nyl);
 
     for(int i = 0; i < MVmodel->Ny_parameter; i++){
@@ -77,28 +77,28 @@ int main(int argc, char *argv[]) {
     }
 
     //exchange and store uf in the global array gf
-    gfield<double> gf(Nx, Ny);
+    gfield<double,9> gf(Nx, Ny);
 //    gfield<double> gf_next(Nx, Ny);
 
     gf.allgather(&uf);
 
     //perform evolution
-    lfield<double> xi_local_x(cnfg->Nxl,cnfg->Nyl);
-    lfield<double> xi_local_y(cnfg->Nxl,cnfg->Nyl);
+    lfield<double,9> xi_local_x(cnfg->Nxl,cnfg->Nyl);
+    lfield<double,9> xi_local_y(cnfg->Nxl,cnfg->Nyl);
 
-    lfield<double> kernel_pbarx(cnfg->Nxl,cnfg->Nyl);
+    lfield<double,9> kernel_pbarx(cnfg->Nxl,cnfg->Nyl);
     kernel_pbarx.setKernelPbarX(momtable);
 
-    lfield<double> kernel_pbary(cnfg->Nxl,cnfg->Nyl);
+    lfield<double,9> kernel_pbary(cnfg->Nxl,cnfg->Nyl);
     kernel_pbary.setKernelPbarY(momtable);
 
-    lfield<double> A_local(cnfg->Nxl, cnfg->Nyl);
-    lfield<double> B_local(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
 
-    lfield<double> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
-    lfield<double> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
 
-    lfield<double> uf_hermitian(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,9> uf_hermitian(cnfg->Nxl, cnfg->Nyl);
 
     double step = 0.0001;
 
@@ -165,13 +165,15 @@ int main(int argc, char *argv[]) {
 
     //uf_hermitian = uf.hermitian();
 
-    sfield<double> corr(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,1> corr(cnfg->Nxl, cnfg->Nyl);
 
     uf.trace(&corr);
 
-    sfield<double> corr_global(Nx, Ny);
+    gfield<double,1> corr_global(Nx, Ny);
 
     corr_global.allgather(&corr);	
+
+
 
 
     delete fourier;
