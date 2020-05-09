@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 2;
+    cnfg->stat = 4;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -93,21 +93,22 @@ int main(int argc, char *argv[]) {
     lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
 
-    lfield<double,9> uf_hermitian(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,9>* uf_hermitian;
 
 //-------------------------------------------------------
 
-        //correlation function
-        lfield<double,1>* corr = new lfield<double,1>(cnfg->Nxl, cnfg->Nyl);
-        gfield<double,1>* corr_global = new gfield<double,1>(Nx, Ny);
+    //correlation function
+    lfield<double,1>* corr = new lfield<double,1>(cnfg->Nxl, cnfg->Nyl);
+    gfield<double,1>* corr_global = new gfield<double,1>(Nx, Ny);
 
 //-------------------------------------------------------
 //------ACCUMULATE STATISTICS----------------------------
 //-------------------------------------------------------
 
-    std::vector<lfield<double,1>> accumulator;
+    std::vector<lfield<double,1>*> accumulator;
 
 for(int stat = 0; stat < cnfg->stat; stat++){
+
 
 	printf("Gatherting stat sample no. %i\n", stat);
 
@@ -188,9 +189,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		//printf("F\n");
 
-		uxiulocal_x = uf * xi_local_x * uf_hermitian;
+		uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
 
-		uxiulocal_y = uf * xi_local_y * uf_hermitian;
+		uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
+
+		delete uf_hermitian;
 
 		//printf("G\n");
 
@@ -246,24 +249,43 @@ for(int stat = 0; stat < cnfg->stat; stat++){
  	printf("correlation function: average_and_symmetrize\n");
    	corr_global->average_and_symmetrize();
 
-//	return 0;
-
 	//store stat in the accumulator
 	printf("correlation function: accumultr.push_back\n");
-	accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
+
+	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
+
+	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
+	accumulator.push_back(corr_ptr);
+
+	printf("correlator appended\n");
 
     }
 
-//    delete corr;
-//    delete corr_global;
+    delete cnfg;
+
+    delete momtable;
+
+    delete random_generator;
+
+    delete MVmodel;
+
+    delete fourier;
+
+    delete mpi;
+
+    delete corr;
+
+    delete corr_global;
+
+    MPI_Finalize();
 
     printf("accumulator size = %i\n", accumulator.size());
 
-//    delete fourier;
 
-//    delete mpi;
+//    delete corr;
 
-    MPI_Finalize();
+//    delete corr_global;
+
 
 return 1;
 }

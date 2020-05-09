@@ -83,7 +83,7 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		int average_and_symmetrize();
 
-		lfield<T,t> reduce(int NNx, int NNy, mpi_class* mpi);
+		lfield<T,t>* reduce(int NNx, int NNy, mpi_class* mpi);
 };
 
 
@@ -130,7 +130,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setKernelPbarX(momenta* mom);
 		int setKernelPbarY(momenta* mom);
 
-		lfield<T,t> hermitian();
+		lfield<T,t>* hermitian();
 
 		lfield<T,t>& operator= ( const lfield<T,t>& f );
 		lfield<T,t>& operator*= ( const lfield<T,t>& f );
@@ -192,6 +192,8 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 
 //			printf("starting multiplicatin in * operator, size of result t = %i\n", t);
 
+			if( f.Nxl == g.Nxl && f.Nyl == g.Nyl ){
+
 			static su3_matrix<double> A,B,C;
 
 			for(int i = 0; i < f.Nxl*f.Nyl; i++){
@@ -214,8 +216,12 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 				}
 			}
 
+			}else{
 
-//			printf("Size of new object created in *operator: Nxl = %i, Nyl = %i\n", result.Nxl, result.Nyl);
+				printf("Size of input objects in * operator is different!\n");
+
+			}
+
 
 		return result;
 		}
@@ -229,6 +235,8 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 //			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
 
 //			printf("starting addition in + operator, size of result t = %i\n", t);
+
+			if( f.Nxl == g.Nxl && f.Nyl == g.Nyl ){
 
 			static su3_matrix<double> A,B,C;
 
@@ -248,6 +256,13 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 				}
 			}
 
+			}else{
+
+				printf("Size of input objects in + operator is different!\n");
+
+			}
+
+
 //			printf("Size of new object craeted in +operator: Nxl = %i, Nyl = %i\n", result.Nxl, result.Nyl);
 
 		return result;
@@ -259,11 +274,11 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal){
 
 
-	T* data_local_re = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
-	T* data_local_im = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
+	static T* data_local_re = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
+	static T* data_local_im = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
 
-	T* data_global_re = (T*)malloc(Nxg*Nyg*sizeof(T));
-	T* data_global_im = (T*)malloc(Nxg*Nyg*sizeof(T));
+	static T* data_global_re = (T*)malloc(Nxg*Nyg*sizeof(T));
+	static T* data_global_im = (T*)malloc(Nxg*Nyg*sizeof(T));
 
 	int i,k;
 
@@ -285,6 +300,12 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal){
 	
 		}
 	}
+
+//	free(data_local_re);
+//	free(data_local_im);
+
+//	free(data_global_re);
+//	free(data_global_im);
 
 	return 1;
 }
@@ -701,9 +722,9 @@ template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 return 1;
 }
 
-template<class T, int t> lfield<T,t> lfield<T,t>::hermitian(void){
+template<class T, int t> lfield<T,t>* lfield<T,t>::hermitian(void){
 
-	lfield<T,t> result(Nxl, Nyl);
+	lfield<T,t>* result = new lfield<T,t>(Nxl, Nyl);
 
 	if(t == 9){
 
@@ -713,15 +734,15 @@ template<class T, int t> lfield<T,t> lfield<T,t>::hermitian(void){
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 
-		result.u[0][i] = std::conj(this->u[0][i]);
-		result.u[1][i] = std::conj(this->u[3][i]);
-		result.u[2][i] = std::conj(this->u[6][i]);
-		result.u[3][i] = std::conj(this->u[1][i]);
-		result.u[4][i] = std::conj(this->u[4][i]);
-		result.u[5][i] = std::conj(this->u[7][i]);
-		result.u[6][i] = std::conj(this->u[2][i]);
-		result.u[7][i] = std::conj(this->u[5][i]);
-		result.u[8][i] = std::conj(this->u[8][i]);
+		result->u[0][i] = std::conj(this->u[0][i]);
+		result->u[1][i] = std::conj(this->u[3][i]);
+		result->u[2][i] = std::conj(this->u[6][i]);
+		result->u[3][i] = std::conj(this->u[1][i]);
+		result->u[4][i] = std::conj(this->u[4][i]);
+		result->u[5][i] = std::conj(this->u[7][i]);
+		result->u[6][i] = std::conj(this->u[2][i]);
+		result->u[7][i] = std::conj(this->u[5][i]);
+		result->u[8][i] = std::conj(this->u[8][i]);
 
 	}
 
@@ -811,7 +832,7 @@ return 1;
 }
 
 
-template<class T, int t> lfield<T,t> gfield<T,t>::reduce(int NNx, int NNy, mpi_class* mpi){
+template<class T, int t> lfield<T,t>* gfield<T,t>::reduce(int NNx, int NNy, mpi_class* mpi){
 
 //	printf("Nxg = %i, Nyg = %i, NNx = %i, NNy = %i\n", Nxg, Nyg, NNx, NNy);
 //	printf("pos_x = %i, pox_y = %i\n", mpi->getPosX(), mpi->getPosY());
@@ -832,6 +853,6 @@ template<class T, int t> lfield<T,t> gfield<T,t>::reduce(int NNx, int NNy, mpi_c
 
 //	printf("x = %e, %e\n", x.real(), x.imag());
 
-return *corr_tmp;
+return corr_tmp;
 }
 #endif
