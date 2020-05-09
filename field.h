@@ -130,6 +130,9 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setKernelPbarX(momenta* mom);
 		int setKernelPbarY(momenta* mom);
 
+		int setKernelPbarXWithCouplingConstant(momenta* mom);
+		int setKernelPbarYWithCouplingConstant(momenta* mom);
+
 		lfield<T,t>* hermitian();
 
 		lfield<T,t>& operator= ( const lfield<T,t>& f );
@@ -651,7 +654,6 @@ template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
                        	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
 	if(t == 9){
 
-
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 		if( mom->phat2(i) > 10e-9 ){
@@ -697,7 +699,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 		if( mom->phat2(i) > 10e-9 ){
-	
+
 			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarY(i)/mom->phat2(i));
 			this->u[4][i] = this->u[0][i];
 			this->u[8][i] = this->u[0][i];
@@ -721,6 +723,100 @@ template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 
 return 1;
 }
+template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(momenta* mom){
+
+			//!pbar(dir,z,t)
+                       	//tmpunit%su3(1,1) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+                       	//tmpunit%su3(2,2) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+                       	//tmpunit%su3(3,3) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+
+                       	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
+	if(t == 9){
+
+
+                        //coupling_constant = 4.0*real(PI,kind=REALKND)/((11.0-2.0*3.0/3.0)*&
+                        //& log(((15.0**2/6.0**2)**(1.0/0.2) +&
+                        //&(phat2(z+1,t+1)*zmax*zmax/(6.0**2))**(1.0/0.2))**(0.2)))
+
+
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+		if( mom->phat2(i) > 10e-9 ){
+
+			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+
+			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
+			this->u[4][i] = this->u[0][i];
+			this->u[8][i] = this->u[0][i];
+
+		}else{
+
+			this->u[0][i] = std::complex<double>(0.0, 0.0);
+			this->u[4][i] = this->u[0][i];
+			this->u[8][i] = this->u[0][i];
+
+		}
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setKernelPbarX function\n");
+
+	}
+
+
+
+return 1;
+}
+
+template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(momenta* mom){
+
+			//!pbar(dir,z,t)
+                       	//tmpunit%su3(1,1) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+                       	//tmpunit%su3(2,2) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+                       	//tmpunit%su3(3,3) =  cmplx(0.0,&
+                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
+
+                       	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
+
+	if(t == 9){
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+		if( mom->phat2(i) > 10e-9 ){
+	
+			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+
+			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
+			this->u[4][i] = this->u[0][i];
+			this->u[8][i] = this->u[0][i];
+
+		}else{
+
+			this->u[0][i] = std::complex<double>(0.0, 0.0);
+			this->u[4][i] = this->u[0][i];
+			this->u[8][i] = this->u[0][i];
+
+		}
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setKernelPbarY function\n");
+
+	}
+
+
+
+return 1;
+}
+
 
 template<class T, int t> lfield<T,t>* lfield<T,t>::hermitian(void){
 

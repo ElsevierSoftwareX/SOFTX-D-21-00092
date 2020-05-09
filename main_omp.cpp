@@ -87,6 +87,14 @@ int main(int argc, char *argv[]) {
     lfield<double,9> kernel_pbary(cnfg->Nxl, cnfg->Nyl);
     kernel_pbary.setKernelPbarY(momtable);
 
+    //initiaization of kernel fields
+    lfield<double,9> kernel_pbarx_with_sqrt_coupling_constant(cnfg->Nxl, cnfg->Nyl);
+    kernel_pbarx_with_sqrt_coupling_constant.setKernelPbarXWithCouplingConstant(momtable);
+
+    lfield<double,9> kernel_pbary_with_sqrt_coupling_constant(cnfg->Nxl, cnfg->Nyl);
+    kernel_pbary_with_sqrt_coupling_constant.setKernelPbarYWithCouplingConstant(momtable);
+
+
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
 
@@ -145,6 +153,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//perform evolution
     	double step = 0.0001;
 
+	//momentum evolution
+	int sqrt_coupling_constant = 0;
+	int noise_coupling_constant = 0;
+
     	for(int langevin = 0; langevin < 2; langevin++){
 
 		printf("Performing evolution step no. %i\n", langevin);
@@ -152,30 +164,27 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		xi_local_x.setGaussian(random_generator);
 		xi_local_y.setGaussian(random_generator);
 
-		//printf("A\n");
+		if(noise_coupling_constant == 0){
+			//should be X2K
+			fourier->execute1D(&xi_local_x, 0);
+			fourier->execute1D(&xi_local_y, 0);
+		}
 
-		//should be X2K
-		fourier->execute1D(&xi_local_x, 0);
-		fourier->execute1D(&xi_local_y, 0);
-
-		//printf("B\n");
-
-		//construcing A
-		xi_local_x = kernel_pbarx * xi_local_x;
-		xi_local_y = kernel_pbary * xi_local_y;
-
-		//printf("C\n");
+		if(sqrt_coupling_constant == 1 || noise_coupling_constant == 1){
+			//construcing A
+			xi_local_x = kernel_pbarx_with_sqrt_coupling_constant * xi_local_x;
+			xi_local_y = kernel_pbary_with_sqrt_coupling_constant * xi_local_y;
+		}else{
+			xi_local_x = kernel_pbarx * xi_local_x;
+			xi_local_y = kernel_pbary * xi_local_y;
+		}
 
 		A_local = xi_local_x + xi_local_y;
-
-		//printf("D\n");
 
 		//should be K2X
  		fourier->execute1D(&A_local, 1);
 		fourier->execute1D(&xi_local_x, 1);
  		fourier->execute1D(&xi_local_y, 1);
-
-		//printf("E\n");
 
 		//constructng B
         	           //tmpunitc%su3 = uglobal(me()*volume_half()+ind,eo)%su3
@@ -187,15 +196,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	    	uf_hermitian = uf.hermitian();
 
-		//printf("F\n");
-
 		uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
 
 		uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
 
 		delete uf_hermitian;
-
-		//printf("G\n");
 
 		//should be X2K
 		fourier->execute1D(&uxiulocal_x, 0);
@@ -206,26 +211,16 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		uxiulocal_x = kernel_pbarx * uxiulocal_x;
 		uxiulocal_y = kernel_pbary * uxiulocal_y;
 
-		//printf("I\n");
-
 		B_local = uxiulocal_x + uxiulocal_y;
-
-		//printf("J\n");
 
 		//should be K2X
 		fourier->execute1D(&B_local, 1);
-
-		//printf("K\n");
 
 		A_local.exponentiate(sqrt(step));
 
 		B_local.exponentiate(-sqrt(step));
 
-		//printf("L\n");
-
 		uf = B_local * uf * A_local;
-
-		//printf("M\n");
 
 		//gf.allgather(&uf);
     	}
