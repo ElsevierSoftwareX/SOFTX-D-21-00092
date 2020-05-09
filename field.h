@@ -69,9 +69,10 @@ template<class T, int t> class lfield;
 
 template<class T, int t> class gfield: public field<T,t> {
 
-	int Nxg, Nyg;
 
 	public:
+
+		int Nxg, Nyg;
 
 		//T getZero(void){ return this.u[0][0]; }
 
@@ -83,7 +84,13 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		int average_and_symmetrize();
 
+		gfield<T,t>* hermitian();
+
+		int setKernelXbarX(int x, int y);
+		int setKernelXbarY(int x, int y);
+
 		lfield<T,t>* reduce(int NNx, int NNy, mpi_class* mpi);
+
 };
 
 
@@ -93,7 +100,6 @@ template<class T, int t> class lfield: public field<T,t> {
 
 		int Nxl, Nyl;
 		int Nxl_buf, Nyl_buf;
-
 
 		lfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxl = NNx; Nyl = NNy; };
 
@@ -139,6 +145,8 @@ template<class T, int t> class lfield: public field<T,t> {
 		lfield<T,t>& operator*= ( const lfield<T,t>& f );
 
 		int trace(lfield<double,1>* cc);
+
+		int reduceAndSet(int x, int y, gfield<T,t>* field);
 };
 
 template<class T, int t> lfield<T,t>& lfield<T,t>::operator= ( const lfield<T,t>& f ){
@@ -229,6 +237,52 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 		return result;
 		}
 
+template<class T, int t> gfield<T,t> operator * ( const gfield<T,t> &f , const gfield<T,t> &g){
+
+			gfield<T,t> result(f.Nxg, f.Nyg);
+
+//			printf("checking actual size of result: %i, %i\n", result.Nxl, result.Nyl);
+//			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
+//			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
+
+//			printf("starting multiplicatin in * operator, size of result t = %i\n", t);
+
+			if( f.Nxg == g.Nxg && f.Nyg == g.Nyg ){
+
+			static su3_matrix<double> A,B,C;
+
+			for(int i = 0; i < f.Nxg*f.Nyg; i++){
+			
+//				printf("element %i\n", i);
+	
+				for(int k = 0; k < t; k++){
+
+//					printf("direction %i\n", k);
+
+					A.m[k] = f.u[k][i]; //this->u[k][i];
+					B.m[k] = g.u[k][i];
+				}
+		
+				C = A*B;
+
+				for(int k = 0; k < t; k++){
+
+					result.u[k][i] = C.m[k];
+				}
+			}
+
+			}else{
+
+				printf("Size of input objects in * operator is different!\n");
+
+			}
+
+
+		return result;
+		}
+
+
+
 template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lfield<T,t>& g ){
 
 			lfield<T,t> result(f.Nxl, f.Nyl);
@@ -271,6 +325,48 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 		return result;
 		}
 
+
+template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gfield<T,t>& g ){
+
+			gfield<T,t> result(f.Nxg, f.Nyg);
+
+//			printf("checking actual size: %i, %i\n", result.Nxl, result.Nyl);
+//			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
+//			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
+
+//			printf("starting addition in + operator, size of result t = %i\n", t);
+
+			if( f.Nxg == g.Nxg && f.Nyg == g.Nyg ){
+
+			static su3_matrix<double> A,B,C;
+
+			for(int i = 0; i < f.Nxg*f.Nyg; i ++){
+			
+				for(int k = 0; k < t; k++){
+
+					A.m[k] = f.u[k][i];
+					B.m[k] = g.u[k][i];
+				}
+		
+				C = A+B;
+
+				for(int k = 0; k < t; k++){
+
+					result.u[k][i] = C.m[k];
+				}
+			}
+
+			}else{
+
+				printf("Size of input objects in + operator is different!\n");
+
+			}
+
+
+//			printf("Size of new object craeted in +operator: Nxl = %i, Nyl = %i\n", result.Nxl, result.Nyl);
+
+		return result;
+		}
 
 
 
@@ -641,6 +737,7 @@ template<class T, int t> int lfield<T, t>::exponentiate(double s){
 return 1;
 }
 
+
 template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
 
 			//!pbar(dir,z,t)
@@ -723,6 +820,8 @@ template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 
 return 1;
 }
+
+
 template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(momenta* mom){
 
 			//!pbar(dir,z,t)
@@ -818,6 +917,93 @@ return 1;
 }
 
 
+template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_global){
+
+	if(t == 9){
+
+	//for(int i = 0; i < Nxl*Nyl; i++){
+	for(int xx = 0; xx < Nxg; xx++){
+		for(int yy = 0; yy < Nyg; yy++){
+
+			int i = xx*Nyg+yy;
+
+                        double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
+                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+
+                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+
+                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
+
+			if( rrr > 10e-9 ){
+
+				this->u[0][i] = std::complex<double>(0.0, dx/rrr);
+				this->u[4][i] = this->u[0][i];
+				this->u[8][i] = this->u[0][i];
+
+			}else{
+	
+				this->u[0][i] = std::complex<double>(0.0, 0.0);
+				this->u[4][i] = this->u[0][i];
+				this->u[8][i] = this->u[0][i];
+	
+			}
+		}
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setKernelPbarX function\n");
+
+	}
+
+return 1;
+}
+
+template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_global){
+
+	if(t == 9){
+
+	for(int xx = 0; xx < Nxg; xx++){
+		for(int yy = 0; yy < Nxg; yy++){
+
+			int i = xx*Nyg+yy;
+
+	                double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
+                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+
+                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+
+                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
+
+			if( rrr > 10e-9 ){
+
+				this->u[0][i] = std::complex<double>(0.0, dy/rrr);
+				this->u[4][i] = this->u[0][i];
+				this->u[8][i] = this->u[0][i];
+
+			}else{
+
+				this->u[0][i] = std::complex<double>(0.0, 0.0);
+				this->u[4][i] = this->u[0][i];
+				this->u[8][i] = this->u[0][i];
+
+			}
+		}
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setKernelPbarY function\n");
+
+	}
+
+
+
+return 1;
+}
+
 template<class T, int t> lfield<T,t>* lfield<T,t>::hermitian(void){
 
 	lfield<T,t>* result = new lfield<T,t>(Nxl, Nyl);
@@ -829,6 +1015,39 @@ template<class T, int t> lfield<T,t>* lfield<T,t>::hermitian(void){
 	// 6 7 8
 
 	for(int i = 0; i < Nxl*Nyl; i++){
+
+		result->u[0][i] = std::conj(this->u[0][i]);
+		result->u[1][i] = std::conj(this->u[3][i]);
+		result->u[2][i] = std::conj(this->u[6][i]);
+		result->u[3][i] = std::conj(this->u[1][i]);
+		result->u[4][i] = std::conj(this->u[4][i]);
+		result->u[5][i] = std::conj(this->u[7][i]);
+		result->u[6][i] = std::conj(this->u[2][i]);
+		result->u[7][i] = std::conj(this->u[5][i]);
+		result->u[8][i] = std::conj(this->u[8][i]);
+
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for hermitian function\n");
+
+	}
+
+return result;
+}
+
+template<class T, int t> gfield<T,t>* gfield<T,t>::hermitian(void){
+
+	gfield<T,t>* result = new gfield<T,t>(Nx, Ny);
+
+	if(t == 9){
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+	for(int i = 0; i < Nx*Ny; i++){
 
 		result->u[0][i] = std::conj(this->u[0][i]);
 		result->u[1][i] = std::conj(this->u[3][i]);
@@ -950,5 +1169,18 @@ template<class T, int t> lfield<T,t>* gfield<T,t>::reduce(int NNx, int NNy, mpi_
 //	printf("x = %e, %e\n", x.real(), x.imag());
 
 return corr_tmp;
+}
+
+template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local, gfield<T,t>* f){
+
+		for(int xx = 0; xx < f->Nxg; xx++){
+			for(int yy = 0; yy < f->Nyg; yy++){
+
+				this->u[0][x_local*Nyl+y_local] += f->u[0][xx*f->Nyg+yy];		
+	
+			}
+		}
+
+return 1;
 }
 #endif
