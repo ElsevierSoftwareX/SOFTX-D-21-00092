@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-	cnfg->stat = 10;
+    cnfg->stat = 2;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -66,6 +66,9 @@ int main(int argc, char *argv[]) {
     //construct initial state
     lfield<double,9> f(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> uf(cnfg->Nxl, cnfg->Nyl);
+
+//    lfield<double,9> tmp(cnfg->Nxl, cnfg->Nyl);
+
 //-------------------------------------------------------
 
     //exchange and store uf in the global array gf
@@ -93,9 +96,10 @@ int main(int argc, char *argv[]) {
     lfield<double,9> uf_hermitian(cnfg->Nxl, cnfg->Nyl);
 
 //-------------------------------------------------------
-    //correlation function
-    lfield<double,1> corr(cnfg->Nxl, cnfg->Nyl);
-    gfield<double,1> corr_global(Nx, Ny);
+
+        //correlation function
+        lfield<double,1>* corr = new lfield<double,1>(cnfg->Nxl, cnfg->Nyl);
+        gfield<double,1>* corr_global = new gfield<double,1>(Nx, Ny);
 
 //-------------------------------------------------------
 //------ACCUMULATE STATISTICS----------------------------
@@ -128,9 +132,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		uf *= f;
     	}
 
-	printf("Initial state constructed\n");
+//	return 0;
 
-    	//gf.allgather(&uf);
+	printf("Initial state constructed\n");
 
 	//-------------------------------------------------------
 	//------EVOLUTION----------------------------------------
@@ -140,45 +144,37 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//perform evolution
     	double step = 0.0001;
 
-    	for(int langevin = 0; langevin < 10; langevin++){
+    	for(int langevin = 0; langevin < 2; langevin++){
 
 		printf("Performing evolution step no. %i\n", langevin);
 
 		xi_local_x.setGaussian(random_generator);
 		xi_local_y.setGaussian(random_generator);
 
-		printf("A\n");
+		//printf("A\n");
 
 		//should be X2K
 		fourier->execute1D(&xi_local_x, 0);
 		fourier->execute1D(&xi_local_y, 0);
 
-		printf("B\n");
+		//printf("B\n");
 
 		//construcing A
 		xi_local_x = kernel_pbarx * xi_local_x;
 		xi_local_y = kernel_pbary * xi_local_y;
 
-		printf("C\n");
+		//printf("C\n");
 
 		A_local = xi_local_x + xi_local_y;
 
-		printf("D\n");
+		//printf("D\n");
 
 		//should be K2X
  		fourier->execute1D(&A_local, 1);
-
-		printf("D.a\n");
-
- 		fourier->execute1D(&xi_local_x, 1);
-
-		printf("D.b\n");
-
+		fourier->execute1D(&xi_local_x, 1);
  		fourier->execute1D(&xi_local_y, 1);
 
-		printf("D.c\n");
-
-		printf("E\n");
+		//printf("E\n");
 
 		//constructng B
         	           //tmpunitc%su3 = uglobal(me()*volume_half()+ind,eo)%su3
@@ -190,43 +186,43 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	    	uf_hermitian = uf.hermitian();
 
-		printf("F\n");
+		//printf("F\n");
 
 		uxiulocal_x = uf * xi_local_x * uf_hermitian;
 
 		uxiulocal_y = uf * xi_local_y * uf_hermitian;
 
-		printf("G\n");
+		//printf("G\n");
 
 		//should be X2K
 		fourier->execute1D(&uxiulocal_x, 0);
 		fourier->execute1D(&uxiulocal_y, 0);
 
-		printf("H\n");
-
+		//printf("H\n");
+		
 		uxiulocal_x = kernel_pbarx * uxiulocal_x;
 		uxiulocal_y = kernel_pbary * uxiulocal_y;
 
-		printf("I\n");
+		//printf("I\n");
 
 		B_local = uxiulocal_x + uxiulocal_y;
 
-		printf("J\n");
+		//printf("J\n");
 
 		//should be K2X
 		fourier->execute1D(&B_local, 1);
 
-		printf("K\n");
+		//printf("K\n");
 
 		A_local.exponentiate(sqrt(step));
 
 		B_local.exponentiate(-sqrt(step));
 
-		printf("L\n");
+		//printf("L\n");
 
 		uf = B_local * uf * A_local;
 
-		printf("M\n");
+		//printf("M\n");
 
 		//gf.allgather(&uf);
     	}
@@ -237,25 +233,35 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	//compute correlation function
 	//should be X2K
-    	fourier->execute1D(&uf, 0);
 
-    	uf.trace(&corr);
+ 	printf("correlation function: fourier transform\n");
+   	fourier->execute1D(&uf, 0);
+    
+	printf("correlation function: trace\n");
+	uf.trace(corr);
 
-    	corr_global.allgather(&corr);	
+	printf("correlation function: all_gather\n");
+    	corr_global->allgather(corr);	
 
-    	corr_global.average_and_symmetrize();
+ 	printf("correlation function: average_and_symmetrize\n");
+   	corr_global->average_and_symmetrize();
+
+//	return 0;
 
 	//store stat in the accumulator
-
-	accumulator.push_back(corr_global.reduce(cnfg->Nxl, cnfg->Nyl, mpi));
+	printf("correlation function: accumultr.push_back\n");
+	accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
 
     }
 
+//    delete corr;
+//    delete corr_global;
+
     printf("accumulator size = %i\n", accumulator.size());
 
-    delete fourier;
+//    delete fourier;
 
-    delete mpi;
+//    delete mpi;
 
     MPI_Finalize();
 

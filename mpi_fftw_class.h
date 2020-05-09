@@ -134,16 +134,16 @@ class fftw1D : public fftw {
     int pos_x = 0;
     int pos_y = 0;
 
-    printf("in execute1D: t = %i\n", t);
+    //printf("in execute1D: t = %i\n", t);
 
 for(k = 0; k < t; k++){
 
-	 printf("in execute1D: first part: k = %i\n",k);
+//	 printf("in execute1D: component: k = %i\n",k);
 
 //    for(j = pos_y*Nyl; j < (pos_y+1)*Nyl; j++){
      for(j = 0; j < Nyl; j++){
 
-	 printf("in execute1D: iterating over Y: j=%i\n",j);
+//	 printf("in execute1D: iterating over Y: j=%i\n",j);
 
    	// initialize data to some function my_function(x,y) 
     	for (i = 0; i < Nxl; ++i){
@@ -170,7 +170,7 @@ for(k = 0; k < t; k++){
 //    for(i = pos_x*Nxl; i < (pos_x+1)*Nxl; i++){
     for(i = 0; i < Nxl; i++){
 
-	 printf("in execute1D: iterating over X: i=%i\n",i);
+//	 printf("in execute1D: iterating over X: i=%i\n",i);
 
    	// initialize data to some function my_function(x,y) 
     	for (j = 0; j < Nyl; ++j){

@@ -89,10 +89,11 @@ template<class T, int t> class gfield: public field<T,t> {
 
 template<class T, int t> class lfield: public field<T,t> {
 
-	int Nxl, Nyl;
-	int Nxl_buf, Nyl_buf;
-
 	public:
+
+		int Nxl, Nyl;
+		int Nxl_buf, Nyl_buf;
+
 
 		lfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxl = NNx; Nyl = NNy; };
 
@@ -126,12 +127,42 @@ template<class T, int t> class lfield: public field<T,t> {
 		int exponentiate();
 		int exponentiate(double s);
 
-		int operator *= ( lfield<T,t> &f ){
+		int setKernelPbarX(momenta* mom);
+		int setKernelPbarY(momenta* mom);
 
-			for(int i = 0; i < Nxl*Nyl; i ++){
+		lfield<T,t> hermitian();
+
+		lfield<T,t>& operator= ( const lfield<T,t>& f );
+		lfield<T,t>& operator*= ( const lfield<T,t>& f );
+
+		int trace(lfield<double,1>* cc);
+};
+
+template<class T, int t> lfield<T,t>& lfield<T,t>::operator= ( const lfield<T,t>& f ){
+
+			if( this != &f ){
+
+			for(int i = 0; i < f.Nxl*f.Nyl; i ++){
 			
-				su3_matrix<double> A,B,C;
+				for(int k = 0; k < t; k++){
 
+					this->u[k][i] = f.u[k][i];
+				}
+			}
+
+			}
+
+		return *this;
+		}
+
+template<class T, int t> lfield<T,t>& lfield<T,t>::operator*= ( const lfield<T,t>& f ){
+
+			if( this != &f ){
+
+			static su3_matrix<double> A,B,C;
+
+			for(int i = 0; i < f.Nxl*f.Nyl; i++){
+			
 				for(int k = 0; k < t; k++){
 
 					A.m[k] = this->u[k][i];
@@ -146,21 +177,33 @@ template<class T, int t> class lfield: public field<T,t> {
 				}
 			}
 
-		return 1;
+			}
+
+		return *this;
 		}
 
-		lfield<T,t> operator * ( lfield<T,t> &f ){
+template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const lfield<T,t> &g){
 
-			lfield<T,t> result(Nxl, Nyl);
+			lfield<T,t> result(f.Nxl, f.Nyl);
 
-			for(int i = 0; i < Nxl*Nyl; i ++){
+//			printf("checking actual size of result: %i, %i\n", result.Nxl, result.Nyl);
+//			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
+//			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
+
+//			printf("starting multiplicatin in * operator, size of result t = %i\n", t);
+
+			static su3_matrix<double> A,B,C;
+
+			for(int i = 0; i < f.Nxl*f.Nyl; i++){
 			
-				su3_matrix<double> A,B,C;
-
+//				printf("element %i\n", i);
+	
 				for(int k = 0; k < t; k++){
 
-					A.m[k] = this->u[k][i];
-					B.m[k] = f.u[k][i];
+//					printf("direction %i\n", k);
+
+					A.m[k] = f.u[k][i]; //this->u[k][i];
+					B.m[k] = g.u[k][i];
 				}
 		
 				C = A*B;
@@ -171,21 +214,30 @@ template<class T, int t> class lfield: public field<T,t> {
 				}
 			}
 
+
+//			printf("Size of new object created in *operator: Nxl = %i, Nyl = %i\n", result.Nxl, result.Nyl);
+
 		return result;
 		}
 
-		lfield<T,t> operator + ( lfield<T,t> &f ){
+template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lfield<T,t>& g ){
 
-			lfield<T,t> result(Nxl, Nyl);
+			lfield<T,t> result(f.Nxl, f.Nyl);
 
-			for(int i = 0; i < Nxl*Nyl; i ++){
+//			printf("checking actual size: %i, %i\n", result.Nxl, result.Nyl);
+//			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
+//			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
+
+//			printf("starting addition in + operator, size of result t = %i\n", t);
+
+			static su3_matrix<double> A,B,C;
+
+			for(int i = 0; i < f.Nxl*f.Nyl; i ++){
 			
-				su3_matrix<double> A,B,C;
-
 				for(int k = 0; k < t; k++){
 
-					A.m[k] = this->u[k][i];
-					B.m[k] = f.u[k][i];
+					A.m[k] = f.u[k][i];
+					B.m[k] = g.u[k][i];
 				}
 		
 				C = A+B;
@@ -196,16 +248,12 @@ template<class T, int t> class lfield: public field<T,t> {
 				}
 			}
 
+//			printf("Size of new object craeted in +operator: Nxl = %i, Nyl = %i\n", result.Nxl, result.Nyl);
+
 		return result;
 		}
 
-		int setKernelPbarX(momenta* mom);
-		int setKernelPbarY(momenta* mom);
 
-		lfield<T,t> hermitian();
-
-		int trace(lfield<double,1>* cc);
-};
 
 
 template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal){
@@ -719,7 +767,7 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 
                 C = A*B;
 
-                cc->u[i][0] = C.m[0] + C.m[4] + C.m[8];
+                cc->u[0][i] = C.m[0] + C.m[4] + C.m[8];
 	}
 
 	}else{
@@ -734,11 +782,13 @@ return 1;
 
 template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 
+	printf("avegare_and_symmetrize: t = %i\n", t);
+
 	gfield<T,t>* corr_tmp = new gfield(Nx,Ny);
 	
 	for(int i = 0; i < Nx; i++){
 		for(int j = 0; j < Ny; j++){
-			corr_tmp->u[i*Ny+j][0] = 0.5*(this->u[i*Ny+j][0] + this->u[j*Ny+i][0]);
+			corr_tmp->u[0][i*Ny+j] = 0.5*(this->u[0][i*Ny+j] + this->u[0][j*Ny+i]);
 		}
 	}
 
@@ -748,10 +798,10 @@ template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 			int a = abs(i-Nx)%Nx;
 			int b = abs(j-Ny)%Ny;
 
-			this->u[i*Ny+j][0] = 0.25*(	corr_tmp->u[i*Ny+j][0] +
-							corr_tmp->u[a*Ny+j][0] + 
-							corr_tmp->u[i*Ny+b][0] + 
-							corr_tmp->u[a*Ny+b][0]);
+			this->u[0][i*Ny+j] = 0.25*(	corr_tmp->u[0][i*Ny+j] +
+							corr_tmp->u[0][a*Ny+j] + 
+							corr_tmp->u[0][i*Ny+b] + 
+							corr_tmp->u[0][a*Ny+b]);
 		}
 	}
 
@@ -763,13 +813,24 @@ return 1;
 
 template<class T, int t> lfield<T,t> gfield<T,t>::reduce(int NNx, int NNy, mpi_class* mpi){
 
+//	printf("Nxg = %i, Nyg = %i, NNx = %i, NNy = %i\n", Nxg, Nyg, NNx, NNy);
+//	printf("pos_x = %i, pox_y = %i\n", mpi->getPosX(), mpi->getPosY());
+
+
 	lfield<T,t>* corr_tmp = new lfield<T,t>(NNx,NNy);
+
+//	std::complex<double> x = 0;
 	
+//	printf("reduce: t = %i\n", t);
+
 	for(int i = 0; i < NNx; i++){
 		for(int j = 0; j < NNy; j++){
-			corr_tmp->u[i*NNy+j][0] = this->u[(i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy][0];
+			//x += this->u[(i+mpi->getPosX()*NNx)*Nyg+j+mpi->getPosY()*NNy][0];
+			corr_tmp->u[0][i*NNy+j] = this->u[0][(i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy];
 		}
 	}
+
+//	printf("x = %e, %e\n", x.real(), x.imag());
 
 return *corr_tmp;
 }
