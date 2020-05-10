@@ -84,6 +84,8 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		int average_and_symmetrize();
 
+		gfield<T,t>& operator= ( const gfield<T,t>& f );
+
 		gfield<T,t>* hermitian();
 
 		int setKernelXbarX(int x, int y);
@@ -154,6 +156,23 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator= ( const lfield<T,t>
 			if( this != &f ){
 
 			for(int i = 0; i < f.Nxl*f.Nyl; i ++){
+			
+				for(int k = 0; k < t; k++){
+
+					this->u[k][i] = f.u[k][i];
+				}
+			}
+
+			}
+
+		return *this;
+		}
+
+template<class T, int t> gfield<T,t>& gfield<T,t>::operator= ( const gfield<T,t>& f ){
+
+			if( this != &f ){
+
+			for(int i = 0; i < f.Nxg*f.Nyg; i ++){
 			
 				for(int k = 0; k < t; k++){
 

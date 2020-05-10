@@ -257,37 +257,23 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 					int x_global = x + mpi->getPosX()*cnfg->Nxl;
 					int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-					printf("constructing position space kernels, x = %i, y = %i\n", x, y);
-
 					kernel_xbary.setKernelXbarY(x_global, y_global);
 					kernel_xbarx.setKernelXbarX(x_global, y_global);
-
-					printf("global kernel * xi multiplication, x = %i, y = %i\n", x, y);
 
 					xi_global_x_tmp = kernel_xbarx * xi_global_x; 
 					xi_global_y_tmp = kernel_xbary * xi_global_y; 
 
-					printf("global xi_x + xi_y addition, x = %i, y = %i\n", x, y);
-
 					xi_global_tmp = xi_global_x_tmp + xi_global_y_tmp;
 
-					printf("hermitian conjugate, x = %i, y = %i\n", x, y);
-
 				    	uf_global_hermitian = uf_global.hermitian();
-
-					printf("constructing UXIU^*, x = %i, y = %i\n", x, y);
 
 					uxiu_global_tmp = uf_global * xi_global_tmp * (*uf_global_hermitian);
 
 					delete uf_global_hermitian;
 			
-					printf("reduction to local A and B, x = %i, y = %i\n", x, y);
-
 					A_local.reduceAndSet(x, y, &xi_global_tmp); 
 
 					B_local.reduceAndSet(x, y, &uxiu_global_tmp); 
-
-					printf("DONE, x = %i, y = %i\n", x, y);
 
 				}
 			}
