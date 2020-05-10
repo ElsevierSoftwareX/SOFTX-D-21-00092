@@ -90,6 +90,9 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		int setKernelXbarX(int x, int y);
 		int setKernelXbarY(int x, int y);
+		int setKernelXbarXWithCouplingConstant(int x, int y);
+		int setKernelXbarYWithCouplingConstant(int x, int y);
+
 
 		lfield<T,t>* reduce(int NNx, int NNy, mpi_class* mpi);
 
@@ -935,7 +938,6 @@ template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(mom
 return 1;
 }
 
-
 template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_global){
 
 	if(t == 9){
@@ -1022,6 +1024,103 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
 
 return 1;
 }
+
+
+template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int x_global, int y_global){
+
+	if(t == 9){
+
+	//for(int i = 0; i < Nxl*Nyl; i++){
+	for(int xx = 0; xx < Nxg; xx++){
+		for(int yy = 0; yy < Nyg; yy++){
+
+			int i = xx*Nyg+yy;
+
+                                         //coupling_constant = &
+                                         //& 4.0*real(PI,kind=REALKND)/((11.0-2.0*3.0/3.0)*&
+                                         //& log(((15.0**2/6.0**2)**(1.0/0.2) +&
+                                         //& ((1.26)/(((1.0*dt**2+1.0*dz**2)/(1.0*zmax**2))*6.0**2)**(1.0/0.2)))**(0.2)))
+
+                        double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
+                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+
+                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+
+			double coupling_constant = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + 1.26/pow(6.0*6.0*(dx*dx+dy*dy)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
+           	        double rrr = 1.0*(dx2*dx2+dy2*dy2);
+
+			if( rrr > 10e-9 ){
+
+				this->u[0][i] = std::complex<double>(0.0, dx/rrr);
+				this->u[4][i] = this->u[0][i];
+				this->u[8][i] = this->u[0][i];
+
+			}else{
+	
+				this->u[0][i] = std::complex<double>(0.0, 0.0);
+				this->u[4][i] = this->u[0][i];
+				this->u[8][i] = this->u[0][i];
+	
+			}
+		}
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setKernelPbarX function\n");
+
+	}
+
+return 1;
+}
+
+template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int x_global, int y_global){
+
+	if(t == 9){
+
+	for(int xx = 0; xx < Nxg; xx++){
+		for(int yy = 0; yy < Nxg; yy++){
+
+			int i = xx*Nyg+yy;
+
+	                double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
+                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+
+                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+
+			double coupling_constant = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + 1.26/pow(6.0*6.0*(dx*dx+dy*dy)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
+        
+                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
+
+			if( rrr > 10e-9 ){
+
+				this->u[0][i] = std::complex<double>(0.0, sqrt(coupling_constant)*dy/rrr);
+				this->u[4][i] = this->u[0][i];
+				this->u[8][i] = this->u[0][i];
+
+			}else{
+
+				this->u[0][i] = std::complex<double>(0.0, 0.0);
+				this->u[4][i] = this->u[0][i];
+				this->u[8][i] = this->u[0][i];
+
+			}
+		}
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setKernelPbarY function\n");
+
+	}
+
+
+
+return 1;
+}
+
 
 template<class T, int t> lfield<T,t>* lfield<T,t>::hermitian(void){
 

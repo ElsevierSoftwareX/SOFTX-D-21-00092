@@ -171,7 +171,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     	double step = 0.0001;
 
 	//momentum evolution
-	int sqrt_coupling_constant = 0;
+	int sqrt_coupling_constant = 1;
 	int noise_coupling_constant = 0;
 
 	int momentum_evolution = 0;
@@ -257,11 +257,19 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 					int x_global = x + mpi->getPosX()*cnfg->Nxl;
 					int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-					kernel_xbary.setKernelXbarY(x_global, y_global);
-					kernel_xbarx.setKernelXbarX(x_global, y_global);
-
-					xi_global_x_tmp = kernel_xbarx * xi_global_x; 
-					xi_global_y_tmp = kernel_xbary * xi_global_y; 
+					if( sqrt_coupling_constant == 1 ){
+						kernel_xbary.setKernelXbarYWithCouplingConstant(x_global, y_global);
+						kernel_xbarx.setKernelXbarXWithCouplingConstant(x_global, y_global);
+					
+						xi_global_x_tmp = kernel_xbarx * xi_global_x; 
+						xi_global_y_tmp = kernel_xbary * xi_global_y; 
+					}else{
+						kernel_xbary.setKernelXbarY(x_global, y_global);
+						kernel_xbarx.setKernelXbarX(x_global, y_global);
+					
+						xi_global_x_tmp = kernel_xbarx * xi_global_x; 
+						xi_global_y_tmp = kernel_xbary * xi_global_y; 
+					}
 
 					xi_global_tmp = xi_global_x_tmp + xi_global_y_tmp;
 
