@@ -28,6 +28,8 @@
 
 #include "MV_class.h"
 
+#include <numeric>
+
 //#include "single_field.h"
 
 int main(int argc, char *argv[]) {
@@ -38,7 +40,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 4;
+    cnfg->stat = 2;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -138,10 +140,10 @@ int main(int argc, char *argv[]) {
 
 //global control variables, should be exported to the config structure and set up from the input file
 	int sqrt_coupling_constant = 0;
-	int noise_coupling_constant = 1;
+	int noise_coupling_constant = 0;
 
-	int momentum_evolution = 0;
-	int position_evolution = 1;
+	int momentum_evolution = 1;
+	int position_evolution = 0;
 
 //-------------------------------------------------------
 //-------------------------------------------------------
@@ -354,32 +356,43 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//------CORRELATION FUNCTION-----------------------------
 	//-------------------------------------------------------
 
+
 	//compute correlation function
 	//should be X2K
 
- 	printf("correlation function: fourier transform\n");
    	fourier->execute1D(&uf, 0);
     
-	printf("correlation function: trace\n");
 	uf.trace(corr);
 
-	printf("correlation function: all_gather\n");
     	corr_global->allgather(corr);	
 
- 	printf("correlation function: average_and_symmetrize\n");
    	corr_global->average_and_symmetrize();
 
 	//store stat in the accumulator
-	printf("correlation function: accumultr.push_back\n");
-
 	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
 
 	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
 	accumulator.push_back(corr_ptr);
 
-	printf("correlator appended\n");
-
     }
+
+    printf("accumulator size = %i\n", accumulator.size());
+
+    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+
+    sum.setToZero();
+
+    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
+	sum += **it;
+
+    sum.print(momtable);
+
+
+//-------------------------------------------------------
+//------DEALLOCATE AND CLEAN UP--------------------------
+//-------------------------------------------------------
+
+
 
     if(position_evolution == 1 && noise_coupling_constant == 1 )
 	delete cholesky;
@@ -401,13 +414,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     delete corr_global;
 
     MPI_Finalize();
-
-    printf("accumulator size = %i\n", accumulator.size());
-
-
-//    delete corr;
-
-//    delete corr_global;
 
 
 return 1;

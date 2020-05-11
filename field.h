@@ -131,6 +131,15 @@ template<class T, int t> class lfield: public field<T,t> {
 			return (y + Nyl_buf*x);
 		}
 
+		int setToZero(void){
+			for(int i = 0; i < Nxl*Nyl; i ++){
+				for(int k = 0; k < t; k++){
+					this->u[k][i] = 0.0;
+				}
+			}
+		return 1;
+		}
+
 		int setMVModel(MV_class* MVconfig, rand_class* rr);
 
 		int setGaussian(rand_class* rr);
@@ -152,10 +161,14 @@ template<class T, int t> class lfield: public field<T,t> {
 
 		lfield<T,t>& operator= ( const lfield<T,t>& f );
 		lfield<T,t>& operator*= ( const lfield<T,t>& f );
+		lfield<T,t>& operator+= ( const lfield<T,t>& f );
 
 		int trace(lfield<double,1>* cc);
 
 		int reduceAndSet(int x, int y, gfield<T,t>* field);
+
+		int print(momenta* mom);
+
 };
 
 template<class T, int t> lfield<T,t>& lfield<T,t>::operator= ( const lfield<T,t>& f ){
@@ -169,6 +182,7 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator= ( const lfield<T,t>
 					this->u[k][i] = f.u[k][i];
 				}
 			}
+
 
 			}
 
@@ -211,6 +225,23 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator*= ( const lfield<T,t
 				for(int k = 0; k < t; k++){
 
 					this->u[k][i] = C.m[k];
+				}
+			}
+
+			}
+
+		return *this;
+		}
+
+template<class T, int t> lfield<T,t>& lfield<T,t>::operator+= ( const lfield<T,t>& f ){
+
+			if( this != &f ){
+
+			for(int i = 0; i < f.Nxl*f.Nyl; i++){
+			
+				for(int k = 0; k < t; k++){
+
+					this->u[k][i] += f.u[k][i];
 				}
 			}
 
@@ -1375,5 +1406,21 @@ template<class T, int t> int gfield<T,t>::multiplyByCholesky(gmatrix<T>* mm){
 
 return 1;
 } 
+
+template<class T, int t> int lfield<T,t>::print(momenta* mom){
+
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nxl; yy++){
+
+			int i = xx*Nyl+yy;
+       
+			printf("%f %f %f\n",sqrt(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
+		}
+	}
+
+return 1;
+}
+
+
 
 #endif
