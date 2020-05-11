@@ -12,6 +12,7 @@
 #include <fftw3-mpi.h>
 
 #include "field.h"
+#include "matrix.h"
 
 #include "mpi_fftw_class.h"
 
@@ -132,6 +133,119 @@ int main(int argc, char *argv[]) {
 
     std::vector<lfield<double,1>*> accumulator;
 
+//-------------------------------------------------------
+//-------------------------------------------------------
+
+//global control variables, should be exported to the config structure and set up from the input file
+	int sqrt_coupling_constant = 0;
+	int noise_coupling_constant = 1;
+
+	int momentum_evolution = 0;
+	int position_evolution = 1;
+
+//-------------------------------------------------------
+//-------------------------------------------------------
+
+//create sigma correlation matrix for the noise vectors in position space
+//perform cholesky decomposition to get the square root of the correlation matrix
+if(position_evolution == 1 && noise_coupling_constant == 1 ){
+
+	int position_space = 0;
+	int momentum_space = 1;
+
+	if( position_space == 1 ){
+	
+		corr_global->setCorrelationsForCouplingConstant();
+
+	}
+	if( momentum_space == 1 ){
+
+		corr->setCorrelationsForCouplingConstant(momtable);
+
+		fourier->execute1D(corr, 0);
+
+		corr_global->allgather(corr);
+		
+	}
+	//each rank is constructing his own global cholesky matrix
+
+//	gmatrix<double,1> sigma(Nx*Ny,Nx*Ny);
+	gmatrix<double> cholesky(Nx*Ny,Nx*Ny);
+
+	//cholesky decomposition of the implicit matrix sigma(x,y) = corr_global(x-y) 
+
+	printf("starting cholesky decomposintion\n");
+	cholesky.decompose(corr_global);
+	printf("cholesky decomposition finished\n");
+
+/*
+        !!index i
+        do ind=1,volume_global()
+!             write(*,*) "cholesky construction ind = ", ind, "out of ", volume_global()
+             if( ind < volume_global()/2+1 ) then
+                 eo=EVEN
+                 indm = ind
+             else
+                 eo=ODD
+                 indm = ind - volume_global()/2
+             end if
+
+                   suma = 0
+
+                   !!index k = 1, i -1
+                   do indp=1,ind-1
+                        if(indp < volume_global()/2+1 ) then
+                            eop=EVEN
+                            indmp = indp
+                        else
+                            eop=ODD
+                            indmp = indp - volume_global()/2
+                        end if
+
+                        suma = suma + cholesky(indm, eo, indmp, eop)*cholesky(indm, eo, indmp, eop)
+                   end do
+
+                   cholesky(indm,eo,indm,eo) = sqrt(sigma(indm,eo,indm,eo) - suma)
+
+                   !!index j = i+1,...
+                   do indp=ind+1,volume_global()
+                        if(indp < volume_global()/2+1 ) then
+                            eop=EVEN
+                            indmp = indp
+                        else
+                            eop=ODD
+                            indmp = indp - volume_global()/2
+                        end if
+
+                        sumb = 0
+
+                        !!index k = 1, i-1
+                        do indc=1,ind-1
+                            if(indc < volume_global()/2+1 ) then
+                                eoc=EVEN
+                                indmc = indc
+                            else
+                                eoc=ODD
+                                indmc = indc - volume_global()/2
+                            end if
+
+                            sumb = sumb + cholesky(indm,eo,indmc,eoc)*cholesky(indmp,eop,indmc,eoc)
+
+                       end do
+
+                       if( ind .ne. indp ) then
+
+                               cholesky(indmp,eop,indm, eo) = (sigma(indm,eo,indmp,eop) - sumb)/cholesky(indm,eo,indm,eo)
+                               cholesky(indm,eo, indmp,eop) = 0
+
+                       end if
+
+                   end do
+       end do
+*/
+
+}
+
 for(int stat = 0; stat < cnfg->stat; stat++){
 
 
@@ -170,13 +284,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//perform evolution
     	double step = 0.0001;
 
-	//momentum evolution
-	int sqrt_coupling_constant = 1;
-	int noise_coupling_constant = 0;
-
-	int momentum_evolution = 0;
-	int position_evolution = 1;
-
+	//evolution
     	for(int langevin = 0; langevin < 2; langevin++){
 
 		printf("Performing evolution step no. %i\n", langevin);

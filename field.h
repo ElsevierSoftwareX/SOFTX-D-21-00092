@@ -93,6 +93,7 @@ template<class T, int t> class gfield: public field<T,t> {
 		int setKernelXbarXWithCouplingConstant(int x, int y);
 		int setKernelXbarYWithCouplingConstant(int x, int y);
 
+		int setCorrelationsForCouplingConstant();
 
 		lfield<T,t>* reduce(int NNx, int NNy, mpi_class* mpi);
 
@@ -143,6 +144,8 @@ template<class T, int t> class lfield: public field<T,t> {
 
 		int setKernelPbarXWithCouplingConstant(momenta* mom);
 		int setKernelPbarYWithCouplingConstant(momenta* mom);
+
+		int setCorrelationsForCouplingConstant(momenta* mom);
 
 		lfield<T,t>* hermitian();
 
@@ -1052,7 +1055,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int
 
 			if( rrr > 10e-9 ){
 
-				this->u[0][i] = std::complex<double>(0.0, dx/rrr);
+				this->u[0][i] = std::complex<double>(0.0, sqrt(coupling_constant)*dx/rrr);
 				this->u[4][i] = this->u[0][i];
 				this->u[8][i] = this->u[0][i];
 
@@ -1301,4 +1304,41 @@ template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local,
 
 return 1;
 }
+
+template<class T, int t> int gfield<T,t>::setCorrelationsForCouplingConstant(){
+
+	for(int xx = 0; xx < Nxg; xx++){
+		for(int yy = 0; yy < Nxg; yy++){
+
+			int i = xx*Nyg+yy;
+
+                        double dx = Nxg*sin(M_PI*(xx)/Nxg)/M_PI;
+                        double dy = Nyg*sin(M_PI*(yy)/Nyg)/M_PI;
+
+			double coupling_constant = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + 1.26/pow(6.0*6.0*(dx*dx+dy*dy)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
+        
+			this->u[0][i] = coupling_constant;
+		}
+	}
+
+return 1;
+}
+
+template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(momenta* mom){
+
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nxl; yy++){
+
+			int i = xx*Nyl+yy;
+
+			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+       
+			this->u[0][i] = coupling_constant;
+		}
+	}
+
+return 1;
+}
+
+
 #endif
