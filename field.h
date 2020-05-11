@@ -17,8 +17,6 @@
 #include "MV_class.h"
 #include "rand_class.h"
 
-//#include "single_field.h"
-
 #include "momenta.h"
 
 template<class T, int t> class field {
@@ -66,6 +64,7 @@ template<class T, int t> field<T,t>::~field() {
 
 template<class T, int t> class lfield;
 
+template<class T> class gmatrix;
 
 template<class T, int t> class gfield: public field<T,t> {
 
@@ -94,6 +93,8 @@ template<class T, int t> class gfield: public field<T,t> {
 		int setKernelXbarYWithCouplingConstant(int x, int y);
 
 		int setCorrelationsForCouplingConstant();
+
+		int multiplyByCholesky(gmatrix<T>* mm);
 
 		lfield<T,t>* reduce(int NNx, int NNy, mpi_class* mpi);
 
@@ -1340,5 +1341,39 @@ template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(mom
 return 1;
 }
 
+template<class T, int t> int gfield<T,t>::multiplyByCholesky(gmatrix<T>* mm){
+
+	gfield<T,t>* tmp = new gfield<T,t>(Nxg, Nyg); 
+
+	for(int tt = 0; tt < t; tt++){
+	
+		for(int xx = 0; xx < Nxg; xx++){
+			for(int yy = 0; yy < Nyg; yy++){
+	
+				tmp->u[tt][xx*Nyg+yy] = 0;
+
+				for(int xxi = 0; xxi < Nxg; xxi++){
+					for(int yyi = 0; yyi < Nyg; yyi++){
+	
+						tmp->u[tt][xx*Nyg+yy] += mm->u[(xx*Nyg+yy)*Nxg*Nyg + xxi*Nyg+yyi] * this->u[tt][xxi*Nyg+yyi];
+
+					}
+				}
+			}
+		}
+
+		for(int xx = 0; xx < Nxg; xx++){
+			for(int yy = 0; yy < Nyg; yy++){
+	
+				this->u[tt][xx*Nyg+yy] = tmp->u[tt][xx*Nyg+yy];
+
+			}
+		}	
+	}
+
+	delete tmp;
+
+return 1;
+} 
 
 #endif

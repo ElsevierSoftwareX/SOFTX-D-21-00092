@@ -146,6 +146,9 @@ int main(int argc, char *argv[]) {
 //-------------------------------------------------------
 //-------------------------------------------------------
 
+	gmatrix<double>* cholesky;
+
+
 //create sigma correlation matrix for the noise vectors in position space
 //perform cholesky decomposition to get the square root of the correlation matrix
 if(position_evolution == 1 && noise_coupling_constant == 1 ){
@@ -170,80 +173,12 @@ if(position_evolution == 1 && noise_coupling_constant == 1 ){
 	//each rank is constructing his own global cholesky matrix
 
 //	gmatrix<double,1> sigma(Nx*Ny,Nx*Ny);
-	gmatrix<double> cholesky(Nx*Ny,Nx*Ny);
+	cholesky = new gmatrix<double>(Nx*Ny,Nx*Ny);
 
 	//cholesky decomposition of the implicit matrix sigma(x,y) = corr_global(x-y) 
 
-	printf("starting cholesky decomposintion\n");
-	cholesky.decompose(corr_global);
+	cholesky->decompose(corr_global);
 	printf("cholesky decomposition finished\n");
-
-/*
-        !!index i
-        do ind=1,volume_global()
-!             write(*,*) "cholesky construction ind = ", ind, "out of ", volume_global()
-             if( ind < volume_global()/2+1 ) then
-                 eo=EVEN
-                 indm = ind
-             else
-                 eo=ODD
-                 indm = ind - volume_global()/2
-             end if
-
-                   suma = 0
-
-                   !!index k = 1, i -1
-                   do indp=1,ind-1
-                        if(indp < volume_global()/2+1 ) then
-                            eop=EVEN
-                            indmp = indp
-                        else
-                            eop=ODD
-                            indmp = indp - volume_global()/2
-                        end if
-
-                        suma = suma + cholesky(indm, eo, indmp, eop)*cholesky(indm, eo, indmp, eop)
-                   end do
-
-                   cholesky(indm,eo,indm,eo) = sqrt(sigma(indm,eo,indm,eo) - suma)
-
-                   !!index j = i+1,...
-                   do indp=ind+1,volume_global()
-                        if(indp < volume_global()/2+1 ) then
-                            eop=EVEN
-                            indmp = indp
-                        else
-                            eop=ODD
-                            indmp = indp - volume_global()/2
-                        end if
-
-                        sumb = 0
-
-                        !!index k = 1, i-1
-                        do indc=1,ind-1
-                            if(indc < volume_global()/2+1 ) then
-                                eoc=EVEN
-                                indmc = indc
-                            else
-                                eoc=ODD
-                                indmc = indc - volume_global()/2
-                            end if
-
-                            sumb = sumb + cholesky(indm,eo,indmc,eoc)*cholesky(indmp,eop,indmc,eoc)
-
-                       end do
-
-                       if( ind .ne. indp ) then
-
-                               cholesky(indmp,eop,indm, eo) = (sigma(indm,eo,indmp,eop) - sumb)/cholesky(indm,eo,indm,eo)
-                               cholesky(indm,eo, indmp,eop) = 0
-
-                       end if
-
-                   end do
-       end do
-*/
-
 }
 
 for(int stat = 0; stat < cnfg->stat; stat++){
@@ -344,18 +279,29 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 			//should be K2X
 			fourier->execute1D(&B_local, 1);
-
 		}
 
 		if( position_evolution == 1 ){
 
+			if(noise_coupling_constant == 1 ){
+				//should be X2K
+				fourier->execute1D(&xi_local_x, 0);
+				fourier->execute1D(&xi_local_y, 0);
+			}
 
- 			printf("gathering local xi to global\n");
-   			xi_global_x.allgather(&xi_local_x);	
+			printf("gathering local xi to global\n");
+			xi_global_x.allgather(&xi_local_x);	
     			xi_global_y.allgather(&xi_local_y);	
 
+			if(noise_coupling_constant == 1 ){
+				//should be X2K
+				xi_global_x.multiplyByCholesky(cholesky);
+				xi_global_y.multiplyByCholesky(cholesky);
+	
+			}
+
 			printf("gathering local uf to global\n");
-    			uf_global.allgather(&uf);	
+    			uf_global.allgather(&uf);
 
 			printf("starting iteration over global lattice\n");
 			//for(int i = 0; i < cnfg->Nxl*cnfg->Nyl; i++){
@@ -434,6 +380,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	printf("correlator appended\n");
 
     }
+
+    if(position_evolution == 1 && noise_coupling_constant == 1 )
+	delete cholesky;
 
     delete cnfg;
 
