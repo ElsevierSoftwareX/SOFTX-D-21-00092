@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.48, 12);
+    MV_class* MVmodel = new MV_class(1.0, 1.0, 1);
 
     fftw1D* fourier = new fftw1D(cnfg);
 
@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
     std::vector<lfield<double,1>*> accumulator;
 
 //-------------------------------------------------------
+
 //-------------------------------------------------------
 
 for(int stat = 0; stat < cnfg->stat; stat++){
@@ -102,46 +103,23 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		printf("Iteration %i\n", i);
 
 		f.setToZero();
-	
+
 		f.setMVModel(MVmodel, random_generator);
 
-		//printf("Fourier transform\n");
-//		fourier->execute1D(&f, 0);
-		//f.print(momtable);
-
-		//printf("solvePoisson\n");
-		f.solvePoisson(0.00001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
-		//f.print(momtable);
-
-		//printf("Fourier transform\n");
-//	    	fourier->execute1D(&f, 1);
-		//f.print(momtable);
-
-		//printf("exponential\n");
 		f.exponentiate();
-		//f.print(momtable);
-
-		//f.print(momtable);
 
 		uf *= f;
-		//uf = f;
     	}
 
     	//-------------------------------------------------------
 	//------CORRELATION FUNCTION-----------------------------
 	//-------------------------------------------------------
 
-
-	//compute correlation function
-	//should be X2K
-
-//   	fourier->execute1D(&uf, 0);
-    
 	uf.trace(corr);
 
     	corr_global->allgather(corr);	
 
-   	corr_global->average_and_symmetrize();
+//	corr_global->average_and_symmetrize();
 
 	//store stat in the accumulator
 	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
@@ -157,11 +135,13 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     sum.setToZero();
 
-    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
+    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it){
 	sum += **it;
+    }
 
-    sum.printDebug(1.0/1296.0/accumulator.size());
+    sum.printDebug(1.0/3.0/accumulator.size());
 
+    printf("Expected result: should be 1 on each site\n");
 
 //-------------------------------------------------------
 //------DEALLOCATE AND CLEAN UP--------------------------

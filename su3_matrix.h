@@ -160,6 +160,15 @@ template<class T> int su3_matrix<T>::exponentiate(double sign){
 			A[2][1] = m[7];
 			A[2][2] = m[8];
 
+
+//			for(int ii = 0; ii < 3; ii++){
+//			for(int jj = 0; jj < 3; jj++){
+//
+//				printf("A[%i][%i].r = %f, A[%i][%i].i = %f\n", ii,jj,A[ii][jj].real(),ii,jj,A[ii][jj].imag());
+//
+//			}
+//			}
+
 			int st;
 			st = function_zheevh3(A, Q, ww);
 
@@ -167,9 +176,23 @@ template<class T> int su3_matrix<T>::exponentiate(double sign){
 //			w[1] = ww[1];
 //			w[2] = ww[2];
 
+//			printf("eigenvalues: %f, %f, %f\n", ww[0], ww[1], ww[2]);
+
 			eig[0] = exp(std::complex<double>(0.0, sign*ww[0]));
 			eig[1] = exp(std::complex<double>(0.0, sign*ww[1]));
 			eig[2] = exp(std::complex<double>(0.0, sign*ww[2]));
+
+//			eig[0] = exp(std::complex<double>(sign*ww[0],0.0));
+//			eig[1] = exp(std::complex<double>(sign*ww[1],0.0));
+//			eig[2] = exp(std::complex<double>(sign*ww[2],0.0));
+
+			//printf("exp(ww) = %f %f\n", eig[0].real(), eig[0].imag());
+			//printf("exp(ww) = %f %f\n", eig[1].real(), eig[1].imag());
+			//printf("exp(ww) = %f %f\n", eig[2].real(), eig[2].imag());
+
+			//eig[0] = 0.0;
+			//eig[1] = 0.0;
+			//eig[2] = 1.0;
 
 			for(int i = 0; i < 3; i++){
 				for(int j = 0; j < 3; j++){
@@ -179,9 +202,20 @@ template<class T> int su3_matrix<T>::exponentiate(double sign){
 					for(int k = 0; k < 3; k++){
 
 						m[i*3+j] += Q[i][k] * eig[k] * std::conj(Q[j][k]); 
+						//m[i*3+j] += Q[i][k] * ww[k] * std::conj(Q[j][k]); 
+
 					}
 				}
 			}
+
+
+//			for(int ii = 0; ii < 3; ii++){
+//			for(int jj = 0; jj < 3; jj++){
+//
+//				printf("A[%i][%i].r = %f, A[%i][%i].i = %f\n", ii,jj,m[ii*3+jj].real(),ii,jj,m[ii*3+jj].imag());
+//
+//			}
+//			}
 
 //                        u(ind,eo)%su3(icol1,icol2) = &
 //                        & u(ind,eo)%su3(icol1,icol2) + Q(icol1,eig) * &

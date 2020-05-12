@@ -134,6 +134,7 @@ template<class T, int t> class lfield: public field<T,t> {
 			return (y + Nyl_buf*x);
 		}
 
+
 		int setToZero(void){
 			for(int i = 0; i < Nxl*Nyl; i ++){
 				for(int k = 0; k < t; k++){
@@ -143,6 +144,21 @@ template<class T, int t> class lfield: public field<T,t> {
 		return 1;
 		}
 
+		int setToUnit(void){
+			for(int i = 0; i < Nxl*Nyl; i ++){
+				this->u[0][i] = 1.0 + I*0.0;
+				this->u[4][i] = 1.0 + I*0.0;
+				this->u[8][i] = 1.0 + I*0.0;
+
+				this->u[1][i] = 0.0 + I*0.0;
+				this->u[2][i] = 0.0 + I*0.0;
+				this->u[3][i] = 0.0 + I*0.0;
+				this->u[5][i] = 0.0 + I*0.0;
+				this->u[6][i] = 0.0 + I*0.0;
+				this->u[7][i] = 0.0 + I*0.0;
+			}
+		return 1;
+		}
 		int setToOne(void){
 			for(int i = 0; i < Nxl*Nyl; i ++){
 				for(int k = 0; k < t; k++){
@@ -1335,16 +1351,20 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 		B.m[7] = std::conj(this->u[5][i]);
 		B.m[8] = std::conj(this->u[8][i]);
 
-		//printf("A.m[0].r = %f, A.m[4].r = %f, A.m[8].r = %f\n", A.m[0].real(), A.m[4].real(), A.m[8].real());
-		//printf("A.m[0].i = %f, A.m[4].i = %f, A.m[8].i = %f\n", A.m[0].imag(), A.m[4].imag(), A.m[8].imag());
+		//printf("A.m[0].r = %f, A.m[1].r = %f, A.m[2].r = %f\n", A.m[0].real(), A.m[1].real(), A.m[2].real());
+		//printf("A.m[0].i = %f, A.m[1].i = %f, A.m[2].i = %f\n", A.m[0].imag(), A.m[1].imag(), A.m[2].imag());
+		//printf("A.m[3].r = %f, A.m[4].r = %f, A.m[5].r = %f\n", A.m[3].real(), A.m[4].real(), A.m[5].real());
+		//printf("A.m[3].i = %f, A.m[4].i = %f, A.m[5].i = %f\n", A.m[3].imag(), A.m[4].imag(), A.m[5].imag());
+		//printf("A.m[6].r = %f, A.m[7].r = %f, A.m[8].r = %f\n", A.m[6].real(), A.m[7].real(), A.m[8].real());
+		//printf("A.m[6].i = %f, A.m[7].i = %f, A.m[8].i = %f\n", A.m[6].imag(), A.m[7].imag(), A.m[8].imag());
 
 		//printf("B.m[0].r = %f, B.m[4].r = %f, B.m[8].r = %f\n", B.m[0].real(), B.m[4].real(), B.m[8].real());
 		//printf("B.m[0].i = %f, B.m[4].i = %f, B.m[8].i = %f\n", B.m[0].imag(), B.m[4].imag(), B.m[8].imag());
 
                 C = A*B;
 
-		//intf("C.m[0].r = %f, C.m[4].r = %f, C.m[8].r = %f\n", C.m[0].real(), C.m[4].real(), C.m[8].real());
-		//intf("C.m[0].i = %f, C.m[4].i = %f, C.m[8].i = %f\n", C.m[0].imag(), C.m[4].imag(), C.m[8].imag());
+		//printf("C.m[0].r = %f, C.m[4].r = %f, C.m[8].r = %f\n", C.m[0].real(), C.m[4].real(), C.m[8].real());
+		//printf("C.m[0].i = %f, C.m[4].i = %f, C.m[8].i = %f\n", C.m[0].imag(), C.m[4].imag(), C.m[8].imag());
 
                 cc->u[0][i] = C.m[0] + C.m[4] + C.m[8];
 	}
