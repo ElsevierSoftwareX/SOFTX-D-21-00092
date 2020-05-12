@@ -132,7 +132,7 @@ class su3_matrix {
 			for(i=0;i<3;i++){
 				for(j=0;j<3;j++){
 					for(k=0;k<3;k++){
-						c.m[i*3+j] += this->m[i*3+k] + b.m[k*3+j];
+						c.m[i*3+j] += this->m[i*3+k] * b.m[k*3+j];
 					}
 				}
 			}

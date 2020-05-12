@@ -103,46 +103,17 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		f.setToOne();
 
-		//printf("MVModel\n");
-		//f.print(momtable);
-
-		//printf("Fourier transform\n");
-//		fourier->execute1D(&f, 0);
-		//f.print(momtable);
-
-		//printf("solvePoisson\n");
-		//f.solvePoisson(0.00001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
-		//f.print(momtable);
-
-		//printf("Fourier transform\n");
-//	    	fourier->execute1D(&f, 1);
-		//f.print(momtable);
-
-		//printf("exponential\n");
-		//f.exponentiate();
-		//f.print(momtable);
-
-		//f.print(momtable);
-
 		uf += f;
-		//uf = f;
     	}
 
     	//-------------------------------------------------------
 	//------CORRELATION FUNCTION-----------------------------
 	//-------------------------------------------------------
 
-
-	//compute correlation function
-	//should be X2K
-
-   	//fourier->execute1D(&uf, 0);
     
 	uf.trace(corr);
 
     	corr_global->allgather(corr);	
-
-//   	corr_global->average_and_symmetrize();
 
 	//store stat in the accumulator
 	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
@@ -163,6 +134,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     sum.printDebug(1.0/1296.0/accumulator.size());
 
+
+    printf("Expected result: 1 on each site\n");
 
 //-------------------------------------------------------
 //------DEALLOCATE AND CLEAN UP--------------------------

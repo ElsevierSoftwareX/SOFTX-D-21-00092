@@ -137,7 +137,16 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setToZero(void){
 			for(int i = 0; i < Nxl*Nyl; i ++){
 				for(int k = 0; k < t; k++){
-					this->u[k][i] = 0.0;
+					this->u[k][i] = 0.0 + I*0.0;
+				}
+			}
+		return 1;
+		}
+
+		int setToOne(void){
+			for(int i = 0; i < Nxl*Nyl; i ++){
+				for(int k = 0; k < t; k++){
+					this->u[k][i] = 1.0 + I*0.0;
 				}
 			}
 		return 1;
@@ -171,6 +180,9 @@ template<class T, int t> class lfield: public field<T,t> {
 		int reduceAndSet(int x, int y, gfield<T,t>* field);
 
 		int print(momenta* mom);
+
+		int printDebug();
+		int printDebug(double x);
 
 };
 
@@ -1257,7 +1269,16 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 		B.m[7] = std::conj(this->u[5][i]);
 		B.m[8] = std::conj(this->u[8][i]);
 
+		//printf("A.m[0].r = %f, A.m[4].r = %f, A.m[8].r = %f\n", A.m[0].real(), A.m[4].real(), A.m[8].real());
+		//printf("A.m[0].i = %f, A.m[4].i = %f, A.m[8].i = %f\n", A.m[0].imag(), A.m[4].imag(), A.m[8].imag());
+
+		//printf("B.m[0].r = %f, B.m[4].r = %f, B.m[8].r = %f\n", B.m[0].real(), B.m[4].real(), B.m[8].real());
+		//printf("B.m[0].i = %f, B.m[4].i = %f, B.m[8].i = %f\n", B.m[0].imag(), B.m[4].imag(), B.m[8].imag());
+
                 C = A*B;
+
+		//intf("C.m[0].r = %f, C.m[4].r = %f, C.m[8].r = %f\n", C.m[0].real(), C.m[4].real(), C.m[8].real());
+		//intf("C.m[0].i = %f, C.m[4].i = %f, C.m[8].i = %f\n", C.m[0].imag(), C.m[4].imag(), C.m[8].imag());
 
                 cc->u[0][i] = C.m[0] + C.m[4] + C.m[8];
 	}
@@ -1424,6 +1445,31 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom){
 return 1;
 }
 
+template<class T, int t> int lfield<T,t>::printDebug(){
 
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nxl; yy++){
 
+			int i = xx*Nyl+yy;
+       
+			printf("%i %i %f %f\n",xx, yy, this->u[0][i].real(), this->u[0][i].imag());
+		}
+	}
+
+return 1;
+}
+
+template<class T, int t> int lfield<T,t>::printDebug(double x){
+
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nxl; yy++){
+
+			int i = xx*Nyl+yy;
+       
+			printf("%i %i %f %f\n",xx, yy, x*(this->u[0][i].real()), x*(this->u[0][i].imag()));
+		}
+	}
+
+return 1;
+}
 #endif
