@@ -152,6 +152,32 @@ template<class T, int t> class lfield: public field<T,t> {
 		return 1;
 		}
 
+		int setToFixed(void){
+			for(int ix = 0; ix < Nxl; ix ++){
+				for(int iy = 0; iy < Nyl; iy ++){
+
+					for(int k = 0; k < t; k++){
+						if( ix < Nxl/2 && iy < Nyl/2 ){
+							this->u[k][ix*Nyl + iy] = ((ix)%Nxl)*((ix)%Nxl) + ((iy)%Nyl)*((iy)%Nyl) + I*0.0;
+						}
+						if( ix > Nxl/2 && iy < Nyl/2 ){
+							this->u[k][ix*Nyl + iy] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy)%Nyl)*((iy)%Nyl) + I*0.0;
+						}
+						if( ix < Nxl/2 && iy > Nyl/2 ){
+							this->u[k][ix*Nyl + iy] = ((ix)%Nxl)*((ix)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl) + I*0.0;
+						}
+						if( ix > Nxl/2 && iy > Nyl/2 ){
+							this->u[k][ix*Nyl + iy] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl) + I*0.0;
+						}
+
+						//this->u[k][ix*Nyl + iy] = (ix-Nxl)*(ix-Nxl) + (iy-Nyl)*(iy-Nyl) + I*0.0;
+					}
+				}
+			}
+		return 1;
+		}
+
+
 		int setMVModel(MV_class* MVconfig, rand_class* rr);
 
 		int setGaussian(rand_class* rr);
@@ -183,6 +209,8 @@ template<class T, int t> class lfield: public field<T,t> {
 
 		int printDebug();
 		int printDebug(double x);
+		int printDebugRadial(double x);
+
 
 };
 
@@ -1472,4 +1500,34 @@ template<class T, int t> int lfield<T,t>::printDebug(double x){
 
 return 1;
 }
+
+template<class T, int t> int lfield<T,t>::printDebugRadial(double x){
+
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nxl; yy++){
+
+			int i = xx*Nyl+yy;
+
+ 			double z; 
+			if( xx < Nxl/2 && yy < Nyl/2 ){
+				z = x/pow(((xx)%Nxl)*((xx)%Nxl) + ((yy)%Nyl)*((yy)%Nyl),2.0)/3.0;
+			}
+			if( xx > Nxl/2 && yy < Nyl/2 ){
+				z = x/pow(((xx-Nxl)%Nxl)*((xx-Nxl)%Nxl) + ((yy)%Nyl)*((yy)%Nyl),2.0)/3.0;
+			}
+			if( xx < Nxl/2 && yy > Nyl/2 ){
+				z = x/pow(((xx)%Nxl)*((xx)%Nxl) + ((yy-Nyl)%Nyl)*((yy-Nyl)%Nyl),2.0)/3.0;
+			}
+			if( xx > Nxl/2 && yy > Nyl/2 ){
+				z = x/pow(((xx-Nxl)%Nxl)*((xx-Nxl)%Nxl) + ((yy-Nyl)%Nyl)*((yy-Nyl)%Nyl),2.0)/3.0;
+			}
+
+			printf("%i %i %f %f\n",xx, yy, z*(this->u[0][i].real()), z*(this->u[0][i].imag()));
+		}
+	}
+
+return 1;
+}
+
+
 #endif
