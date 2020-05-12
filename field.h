@@ -44,6 +44,9 @@ template<class T, int t> field<T,t>::field(int NNx, int NNy) {
 
 		u[i] = (std::complex<T>*)malloc(NNx*NNy*sizeof(std::complex<T>));
 
+		for(int j = 0; j < NNx*NNy; j++)
+			u[i][j] = 0.0;
+
 	}
 
 	Nxl = NNx;
