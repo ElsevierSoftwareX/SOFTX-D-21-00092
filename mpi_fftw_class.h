@@ -219,12 +219,23 @@ class fftw2D : public fftw {
         /* create plan for in-place forward DFT */
         planX2K = fftw_mpi_plan_dft_2d(N0, N1, data_local, data_local, MPI_COMM_WORLD,
                                 FFTW_FORWARD, FFTW_ESTIMATE);
+
+        planK2X = fftw_mpi_plan_dft_2d(N0, N1, data_local, data_local, MPI_COMM_WORLD,
+                                FFTW_BACKWARD, FFTW_ESTIMATE);
+
     }
 
-   int execute2d(void){
+   int execute2d(lfield<T,t>* f, int dir){
 
        /* compute transforms, in-place, as many times as desired */
-       fftw_execute(planX2K);
+//       fftw_execute(planX2K);
+
+        if( dir ){
+                fftw_mpi_execute_dft(planX2K, data_local, data_local);
+        }else{
+                fftw_mpi_execute_dft(planK2X, data_local, data_local);
+        }
+
 
     }
 

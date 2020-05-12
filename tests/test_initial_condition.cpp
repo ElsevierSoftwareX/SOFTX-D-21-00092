@@ -59,7 +59,11 @@ int main(int argc, char *argv[]) {
 
     fftw1D* fourier = new fftw1D(cnfg);
 
+    fftw2D* fourier2 = new fftw2D(cnfg);
+
     fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+
+    fourier2->init2D();    
 
     printf("ALLOCATION\n");
 
@@ -102,7 +106,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		f.setMVModel(MVmodel, random_generator);
 
 		//printf("Fourier transform\n");
-		fourier->execute1D(&f, 0);
+//		fourier->execute1D(&f, 0);
+		fourier2->execute2D(&f,0);
 		//f.print(momtable);
 
 		//printf("solvePoisson\n");
@@ -110,7 +115,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		//f.print(momtable);
 
 		//printf("Fourier transform\n");
-	    	fourier->execute1D(&f, 1);
+//	    	fourier->execute1D(&f, 1);
+		fourier2->execute2D(&f,1);
 		//f.print(momtable);
 
 		//printf("exponential\n");
@@ -131,7 +137,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//compute correlation function
 	//should be X2K
 
-   	fourier->execute1D(&uf, 0);
+//   	fourier->execute1D(&uf, 0);
+	fourier2->execute2D(&uf,0);
     
 	uf.trace(corr);
 
