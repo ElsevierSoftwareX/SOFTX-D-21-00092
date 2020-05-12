@@ -179,6 +179,7 @@ template<class T, int t> class lfield: public field<T,t> {
 
 
 		int setMVModel(MV_class* MVconfig, rand_class* rr);
+		int setUnitModel(rand_class* rr);
 
 		int setGaussian(rand_class* rr);
 
@@ -202,6 +203,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		lfield<T,t>& operator+= ( const lfield<T,t>& f );
 
 		int trace(lfield<double,1>* cc);
+		int average(lfield<double,1>* cc);
 
 		int reduceAndSet(int x, int y, gfield<T,t>* field);
 
@@ -683,6 +685,41 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
 return 1;
 }
+
+template<class T, int t> int lfield<T,t>::setUnitModel(rand_class* rr){
+
+	if(t == 9){
+
+	const double EPS = 10e-12;
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+        double n[8];
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+
+//				hh=sqrt(real(1.0*g_parameter**2*mu_parameter**2/Ny_parameter, kind=REALKND)) * &
+//                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
+//                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
+
+		for(int k = 0; k < 8; k++)
+                	this->u[k][i] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+		
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setMVModel function\n");
+
+	}
+
+
+return 1;
+}
+
 
 template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
 
@@ -1267,6 +1304,7 @@ return result;
 }
 
 //template<typename T>
+
 template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 
 //template<class T, int t> int lfield<T,t>::trace(template<class TT, int tt> lfield<TT,tt>* cc){
@@ -1320,6 +1358,31 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 
 return 1;
 }
+
+template<class T, int t> int lfield<T,t>::average(lfield<double,1>* cc){
+
+	if(t == 9 ){
+
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+//                for(int k = 0; k < t; k++){
+//                         cc->u[0][i] += this->u[k][i];
+//                }
+                         cc->u[0][i] = this->u[0][i];
+
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for trace function\n");
+
+	}
+
+
+return 1;
+}
+
+
 
 template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 
