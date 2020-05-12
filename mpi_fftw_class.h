@@ -225,10 +225,21 @@ class fftw2D : public fftw {
 
     }
 
-   int execute2d(lfield<T,t>* f, int dir){
+template<class T, int t> int execute2D(lfield<T,t>* f, int dir){
 
        /* compute transforms, in-place, as many times as desired */
 //       fftw_execute(planX2K);
+
+int i,j,k;
+
+for(k = 0; k < t; k++){
+	for (i = 0; i < Nxl; ++i){
+		for(j = 0; j < Nyl; j++){
+                        data_local[i*Nyl+j][0] = f->u[k][i*Nyl+j].real(); //data_global[(i+pos_x*Nxl)*N1+j][0];
+                        data_local[i*Nyl+j][1] = f->u[k][i*Nyl+j].imag(); //data_global[(i+pos_x*Nxl)*N1+j][1];
+		}
+        }
+
 
         if( dir ){
                 fftw_mpi_execute_dft(planX2K, data_local, data_local);
@@ -236,10 +247,16 @@ class fftw2D : public fftw {
                 fftw_mpi_execute_dft(planK2X, data_local, data_local);
         }
 
+	for (i = 0; i < Nxl; ++i){
+		for(j = 0; j < Nyl; j++){
+                        f->u[k][i*Nyl+j] = data_local[i*Nyl+j][0] +I*data_local[i*Nyl+j][1];
+		}
+        }
 
-    }
+}
 
-
+return 1;
+}
 
 };
   

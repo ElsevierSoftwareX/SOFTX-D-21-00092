@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.48, 100);
+    MV_class* MVmodel = new MV_class(1.0, 0.48, 20);
 
     fftw1D* fourier = new fftw1D(cnfg);
 
