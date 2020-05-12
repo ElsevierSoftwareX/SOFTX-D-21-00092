@@ -224,6 +224,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int reduceAndSet(int x, int y, gfield<T,t>* field);
 
 		int print(momenta* mom);
+		int print(momenta* mom, double x);
 
 		int printDebug();
 		int printDebug(double x);
@@ -834,7 +835,7 @@ template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, m
 	
 		for(int k = 0; k < t; k++){
 
-			this->u[k][i] *= std::complex<double>(-1.0*g/(mom->phat2(i) + mass*mass), 0.0);
+			this->u[k][i] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass), 0.0);
 
 		}
 	}
@@ -1550,6 +1551,20 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom){
 			int i = xx*Nyl+yy;
        
 			printf("%f %f %f\n",sqrt(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
+		}
+	}
+
+return 1;
+}
+
+template<class T, int t> int lfield<T,t>::print(momenta* mom, double x){
+
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nxl; yy++){
+
+			int i = xx*Nyl+yy;
+       
+			printf("%f %f %f\n",sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[0][i].real()), x*(mom->phat2(i))*(this->u[0][i].imag()));
 		}
 	}
 
