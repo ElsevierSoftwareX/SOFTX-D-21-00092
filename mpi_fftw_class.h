@@ -231,6 +231,24 @@ template<class T, int t> int execute2D(lfield<T,t>* f, int dir){
 //       fftw_execute(planX2K);
 
 int i,j,k;
+double scale_after_fft;
+
+//        if(fft_dir == X2K) then
+//            fbwd = FFTW_FORWARD
+//            scale_after_fft = real(1.0,kind=REALKND) / &
+//             & real(volume_global(),kind=REALKND)
+//            plan = plan_fw
+//        else if(fft_dir == K2X) then
+//            fbwd = FFTW_BACKWARD
+//            scale_after_fft = real(1.0,kind=REALKND)
+//            plan = plan_bw
+
+if( dir ){
+	scale_after_fft = 1.0/N0/N1;
+} else {
+	scale_after_fft = 1.0;
+}
+
 
 for(k = 0; k < t; k++){
 	for (i = 0; i < Nxl; ++i){
@@ -249,7 +267,7 @@ for(k = 0; k < t; k++){
 
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
-                        f->u[k][i*Nyl+j] = data_local[i*Nyl+j][0] +I*data_local[i*Nyl+j][1];
+                        f->u[k][i*Nyl+j] = (data_local[i*Nyl+j][0] +I*data_local[i*Nyl+j][1])*scale_after_fft;
 		}
         }
 
