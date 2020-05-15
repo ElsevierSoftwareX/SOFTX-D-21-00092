@@ -134,6 +134,29 @@ class fftw1D : public fftw {
     int pos_x = 0;
     int pos_y = 0;
 
+double scale_after_fft_X;
+double scale_after_fft_Y;
+
+//        if(fft_dir == X2K) then
+//            fbwd = FFTW_FORWARD
+//            scale_after_fft = real(1.0,kind=REALKND) / &
+//             & real(volume_global(),kind=REALKND)
+//            plan = plan_fw
+//        else if(fft_dir == K2X) then
+//            fbwd = FFTW_BACKWARD
+//            scale_after_fft = real(1.0,kind=REALKND)
+//            plan = plan_bw
+
+if( dir ){
+	scale_after_fft_X = 1.0/(1.0*N0);
+	scale_after_fft_Y = 1.0/(1.0*N1);
+} else {
+	scale_after_fft_X = 1.0;
+	scale_after_fft_Y = 1.0;
+}
+
+
+
     //printf("in execute1D: t = %i\n", t);
 
 for(k = 0; k < t; k++){
@@ -159,7 +182,7 @@ for(k = 0; k < t; k++){
 	}
 
     	for (i = 0; i < Nxl; ++i) {
-			f->u[k][i*Nyl+j] = data_localY[i][0] + I*data_localY[i][1];
+			f->u[k][i*Nyl+j] = (data_localY[i][0] + I*data_localY[i][1])*scale_after_fft_Y;
 
 //	       		data_global_tmp[(i+pos_x*Nxl)*N1+j][0] = data_localY[i][0];
 //	       		data_global_tmp[(i+pos_x*Nxl)*N1+j][1] = data_localY[i][1];
@@ -187,7 +210,7 @@ for(k = 0; k < t; k++){
 
     	for (j = 0; j < Nyl; ++j) {
 
-	       		f->u[k][i*Nyl+j] = data_local[j][0] + I*data_local[j][1];
+	       		f->u[k][i*Nyl+j] = (data_local[j][0] + I*data_local[j][1])*scale_after_fft_X;
 
 //	       		data_global[i*Ny+j+pos_y*Nyl][0] = data_localX[j][0];
 //	       		data_global[i*Ny+j+pos_y*Nyl][1] = data_localX[j][1];
@@ -248,6 +271,7 @@ if( dir ){
 } else {
 	scale_after_fft = 1.0;
 }
+
 
 
 for(k = 0; k < t; k++){
