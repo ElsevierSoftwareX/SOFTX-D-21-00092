@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.48, 20);
+    MV_class* MVmodel = new MV_class(1.0, 0.48, 50);
 
     fftw1D* fourier = new fftw1D(cnfg);
 
@@ -107,7 +107,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		//printf("Fourier transform\n");
 //		fourier->execute1D(&f, 0);
-		fourier2->execute2D(&f,0);
+		fourier2->execute2D(&f,1);
 		//f.print(momtable);
 
 		//printf("solvePoisson\n");
@@ -116,7 +116,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		//printf("Fourier transform\n");
 //	    	fourier->execute1D(&f, 1);
-		fourier2->execute2D(&f,1);
+		fourier2->execute2D(&f,0);
 		//f.print(momtable);
 
 		//printf("exponential\n");
@@ -138,7 +138,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//should be X2K
 
 //   	fourier->execute1D(&uf, 0);
-	fourier2->execute2D(&uf,0);
+	fourier2->execute2D(&uf,1);
     
 	uf.trace(corr);
 
