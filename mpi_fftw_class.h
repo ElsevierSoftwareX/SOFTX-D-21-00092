@@ -244,7 +244,7 @@ double scale_after_fft;
 //            plan = plan_bw
 
 if( dir ){
-	scale_after_fft = 1.0/N0/N1;
+	scale_after_fft = 1.0/(1.0*N0*N1);
 } else {
 	scale_after_fft = 1.0;
 }

@@ -101,6 +101,17 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		lfield<T,t>* reduce(int NNx, int NNy, mpi_class* mpi);
 
+		int setToZero(void){
+			for(int i = 0; i < Nxg*Nyg; i ++){
+				for(int k = 0; k < t; k++){
+					this->u[k][i] = 0.0 + I*0.0;
+				}
+			}
+		return 1;
+		}
+
+
+
 };
 
 
@@ -143,6 +154,7 @@ template<class T, int t> class lfield: public field<T,t> {
 			}
 		return 1;
 		}
+
 
 		int setToUnit(void){
 			for(int i = 0; i < Nxl*Nyl; i ++){
@@ -316,6 +328,8 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 
 			lfield<T,t> result(f.Nxl, f.Nyl);
 
+			result.setToZero();
+
 //			printf("checking actual size of result: %i, %i\n", result.Nxl, result.Nyl);
 //			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
 //			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
@@ -359,6 +373,8 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 template<class T, int t> gfield<T,t> operator * ( const gfield<T,t> &f , const gfield<T,t> &g){
 
 			gfield<T,t> result(f.Nxg, f.Nyg);
+
+			result.setToZero();
 
 //			printf("checking actual size of result: %i, %i\n", result.Nxl, result.Nyl);
 //			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
@@ -406,6 +422,8 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 
 			lfield<T,t> result(f.Nxl, f.Nyl);
 
+			result.setToZero();
+
 //			printf("checking actual size: %i, %i\n", result.Nxl, result.Nyl);
 //			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
 //			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
@@ -448,6 +466,8 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gfield<T,t>& g ){
 
 			gfield<T,t> result(f.Nxg, f.Nyg);
+
+			result.setToZero();
 
 //			printf("checking actual size: %i, %i\n", result.Nxl, result.Nyl);
 //			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
@@ -624,10 +644,6 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
 	const double EPS = 10e-12;
 
-	// 0 1 2
-	// 3 4 5
-	// 6 7 8
-
         double n[8];
 
 	for(int i = 0; i < Nxl*Nyl; i++){
@@ -642,6 +658,10 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 		
 	 //these are the LAMBDAs and not the generators t^a = lambda/2.
 
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
             //lambda_nr(1)%su3(1,2) =  runit
             //lambda_nr(1)%su3(2,1) =  runit
 		this->u[1][i] += std::complex<double>(n[0],0.0);
@@ -650,8 +670,8 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
             //lambda_nr(2)%su3(1,2) = -iunit
             //lambda_nr(2)%su3(2,1) =  iunit
-		this->u[1][i] -= std::complex<double>(0.0,n[1]);
-		this->u[3][i] += std::complex<double>(0.0,n[1]);
+		this->u[1][i] += std::complex<double>(0.0,n[1]);
+		this->u[3][i] -= std::complex<double>(0.0,n[1]);
 
 
             //lambda_nr(3)%su3(1,1) =  runit
@@ -668,8 +688,8 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
             //lambda_nr(5)%su3(1,3) = -iunit
             //lambda_nr(5)%su3(3,1) =  iunit
-		this->u[2][i] -= std::complex<double>(0.0,n[4]);
-		this->u[6][i] += std::complex<double>(0.0,n[4]);
+		this->u[2][i] += std::complex<double>(0.0,n[4]);
+		this->u[6][i] -= std::complex<double>(0.0,n[4]);
 
 
             //lambda_nr(6)%su3(2,3) =  runit
@@ -680,8 +700,8 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
             //lambda_nr(7)%su3(2,3) = -iunit
             //lambda_nr(7)%su3(3,2) =  iunit
-		this->u[5][i] -= std::complex<double>(0.0,n[6]);
-		this->u[7][i] += std::complex<double>(0.0,n[6]);
+		this->u[5][i] += std::complex<double>(0.0,n[6]);
+		this->u[7][i] -= std::complex<double>(0.0,n[6]);
 
 
             //lambda_nr(8)%su3(1,1) =  cst8
@@ -690,7 +710,7 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
 		this->u[0][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
 		this->u[4][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		this->u[8][i] += std::complex<double>(2.0*n[7]/sqrt(3.0),0.0);
+		this->u[8][i] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 	}
 
 	}else{
@@ -753,14 +773,12 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 
-		double coupling_constant = 1.0;
-
 //				hh=sqrt(real(coupling_constant, kind=REALKND)) * &
 //                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
 //                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
 
 		for(int k = 0; k < 8; k++)
-                	n[k] = sqrt( coupling_constant ) * sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+                	n[k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
 		
 	 //these are the LAMBDAs and not the generators t^a = lambda/2.
 
@@ -772,8 +790,8 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
 
             //lambda_nr(2)%su3(1,2) = -iunit
             //lambda_nr(2)%su3(2,1) =  iunit
-		this->u[1][i] -= std::complex<double>(0.0,n[1]);
-		this->u[3][i] += std::complex<double>(0.0,n[1]);
+		this->u[1][i] += std::complex<double>(0.0,n[1]);
+		this->u[3][i] -= std::complex<double>(0.0,n[1]);
 
 
             //lambda_nr(3)%su3(1,1) =  runit
@@ -790,8 +808,8 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
 
             //lambda_nr(5)%su3(1,3) = -iunit
             //lambda_nr(5)%su3(3,1) =  iunit
-		this->u[2][i] -= std::complex<double>(0.0,n[4]);
-		this->u[6][i] += std::complex<double>(0.0,n[4]);
+		this->u[2][i] += std::complex<double>(0.0,n[4]);
+		this->u[6][i] -= std::complex<double>(0.0,n[4]);
 
 
             //lambda_nr(6)%su3(2,3) =  runit
@@ -802,8 +820,8 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
 
             //lambda_nr(7)%su3(2,3) = -iunit
             //lambda_nr(7)%su3(3,2) =  iunit
-		this->u[5][i] -= std::complex<double>(0.0,n[6]);
-		this->u[7][i] += std::complex<double>(0.0,n[6]);
+		this->u[5][i] += std::complex<double>(0.0,n[6]);
+		this->u[7][i] -= std::complex<double>(0.0,n[6]);
 
 
             //lambda_nr(8)%su3(1,1) =  cst8
@@ -812,7 +830,7 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
 
 		this->u[0][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
 		this->u[4][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		this->u[8][i] += std::complex<double>(2.0*n[7]/sqrt(3.0),0.0);
+		this->u[8][i] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 	}
 
 	}else{
@@ -907,7 +925,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 
-		if( mom->phat2(i) > 10e-9 ){
+		if( fabs(mom->phat2(i)) > 10e-6 ){
 
 			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarX(i)/mom->phat2(i));
 			this->u[4][i] = this->u[0][i];
@@ -949,7 +967,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 
-		if( mom->phat2(i) > 10e-9 ){
+		if( fabs(mom->phat2(i)) > 10e-6 ){
 
 			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarY(i)/mom->phat2(i));
 			this->u[4][i] = this->u[0][i];
@@ -1410,6 +1428,8 @@ template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 	printf("avegare_and_symmetrize: t = %i\n", t);
 
 	gfield<T,t>* corr_tmp = new gfield(Nx,Ny);
+
+	corr_tmp->setToZero();
 	
 	for(int i = 0; i < Nx; i++){
 		for(int j = 0; j < Ny; j++){
@@ -1445,7 +1465,7 @@ template<class T, int t> lfield<T,t>* gfield<T,t>::reduce(int NNx, int NNy, mpi_
 	lfield<T,t>* corr_tmp = new lfield<T,t>(NNx,NNy);
 
 //	std::complex<double> x = 0;
-	
+	corr_tmp->setToZero();	
 //	printf("reduce: t = %i\n", t);
 
 	for(int i = 0; i < NNx; i++){
@@ -1550,7 +1570,7 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom){
 
 			int i = xx*Nyl+yy;
        
-			printf("%f %f %f\n",sqrt(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
+			printf("%f %f %f\n", Nx*Ny*(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
 		}
 	}
 
@@ -1563,8 +1583,12 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom, double x){
 		for(int yy = 0; yy < Nxl; yy++){
 
 			int i = xx*Nyl+yy;
-       
-			printf("%f %f %f\n",sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[0][i].real()), x*(mom->phat2(i))*(this->u[0][i].imag()));
+      
+			if( fabs(xx-yy) <= 4 ){
+ 
+				printf("%f %f %f\n", sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[0][i].real()), x*(mom->phat2(i))*(this->u[0][i].imag()));
+
+			}
 		}
 	}
 

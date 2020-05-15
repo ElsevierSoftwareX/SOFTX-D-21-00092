@@ -20,7 +20,8 @@ class rand_class{
 
 	public:
 
-	std::ranlux48 rgenerator;
+//	std::ranlux48 rgenerator;
+	std::ranlux24_base rgenerator;
 	std::uniform_real_distribution<double> distribution{0.0,1.0};
 
 	rand_class(mpi_class *mpi, config *cnfg){
