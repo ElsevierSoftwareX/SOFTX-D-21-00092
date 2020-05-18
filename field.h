@@ -209,7 +209,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setMVModel(MV_class* MVconfig, rand_class* rr);
 		int setUnitModel(rand_class* rr);
 
-		int setGaussian(rand_class* rr);
+		int setGaussian(rand_class* rr, int s);
 
 		int solvePoisson(double mass, double g, momenta* momtable);
 
@@ -646,6 +646,14 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
         double n[8];
 
+FILE *f;
+
+int i,j,k;
+int x,y,c;
+float v;
+
+//f = fopen("initial_input.dat","r+");
+
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 
@@ -653,8 +661,26 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 //                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
 //                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
 
-		for(int k = 0; k < 8; k++)
-                	n[k] = sqrt( pow(MVconfig->g_parameter,2.0) * pow(MVconfig->mu_parameter,2.0) / MVconfig->Ny_parameter ) * sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+//		for(int k = 0; k < 8; k++){
+//                      fscanf(f,"%i %i %i %f\n", &x, &y, &c, &v);
+//			n[k] = v;
+//		}
+       
+		for(int k = 0; k < 8; k++){
+	         	n[k] = sqrt( pow(MVconfig->g_parameter,2.0) * pow(MVconfig->mu_parameter,2.0) / MVconfig->Ny_parameter ) * sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+		}
+
+//for(i = 0; i < 4; i++){
+//        for(j = 0; j < 4; j++){
+//                for(k = 0; k < 8; k++){
+//                        fscanf(f,"%i %i %i %f\n", &x, &y, &c, &v);
+//                        printf("%i %i %i %f\n", x, y, c, v);
+//                }
+//        }
+//}
+
+
+
 		
 	 //these are the LAMBDAs and not the generators t^a = lambda/2.
 
@@ -713,6 +739,8 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 		this->u[8][i] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 	}
 
+//	fclose(f);
+
 	}else{
 
 		printf("Invalid lfield classes for setMVModel function\n");
@@ -758,7 +786,7 @@ return 1;
 }
 
 
-template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
+template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr, int s){
 
 	if(t == 9){
 
@@ -769,6 +797,31 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
 	// 6 7 8
 
         double n[8];
+
+
+FILE *f;
+
+int i,j,k;
+int x,y,c;
+float v;
+
+char filename[100];
+sprintf(filename, "noise%i_input.dat", s);
+
+//f = fopen(filename,"r+");
+
+//        for(int i = 0; i < Nxl*Nyl; i++){
+
+
+//                              hh=sqrt(real(1.0*g_parameter**2*mu_parameter**2/Ny_parameter, kind=REALKND)) * &
+//                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
+//                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
+
+//                for(int k = 0; k < 8; k++){
+//                        fscanf(f," %i %i %i %f\n", &x, &y, &c, &v);
+//                        n[k] = v;
+//                }
+
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 
@@ -833,6 +886,8 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr){
 		this->u[8][i] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 	}
 
+//	fclose(f);
+
 	}else{
 
 		printf("Invalid lfield classes for setGaussian function\n");
@@ -854,6 +909,8 @@ template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, m
 		for(int k = 0; k < t; k++){
 
 			this->u[k][i] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass), 0.0);
+//			this->u[k][i] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + 3.6e-4), 0.0);
+
 
 		}
 	}
@@ -925,7 +982,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 
-		if( fabs(mom->phat2(i)) > 10e-6 ){
+		if( fabs(mom->phat2(i)) > 10e-9 ){
 
 			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarX(i)/mom->phat2(i));
 			this->u[4][i] = this->u[0][i];
@@ -967,7 +1024,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 
 	for(int i = 0; i < Nxl*Nyl; i++){
 
-		if( fabs(mom->phat2(i)) > 10e-6 ){
+		if( fabs(mom->phat2(i)) > 10e-9 ){
 
 			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarY(i)/mom->phat2(i));
 			this->u[4][i] = this->u[0][i];
@@ -1565,15 +1622,32 @@ return 1;
 
 template<class T, int t> int lfield<T,t>::print(momenta* mom){
 
+	for(int k = 0; k < t; k++){
+
 	for(int xx = 0; xx < Nxl; xx++){
 		for(int yy = 0; yy < Nxl; yy++){
 
 			int i = xx*Nyl+yy;
-       
-			printf("%f %f %f\n", Nx*Ny*(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
+//			if((yy+xx)%2 == 0)       
+			//printf("%f %f %f\n", Nx*Ny*(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
+			printf("%i %i %f %f\n", xx+1, yy+1, this->u[k][i].real(), this->u[k][i].imag());
+
 		}
 	}
+/*
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nxl; yy++){
 
+			int i = yy*Nyl+xx;
+       			if((xx+yy)%2==1)
+			//printf("%f %f %f\n", Nx*Ny*(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
+			printf("%i %i %f %f\n", xx+1, yy+1, this->u[k][i].real(), this->u[k][i].imag());
+
+		}
+	}
+*/
+	}
+	
 return 1;
 }
 

@@ -79,15 +79,15 @@ int momenta::set(){
     			//pbar2 = sum_\mu sin(2pi k_\mu / N_\mu)^2
     			//pbar_\mu = sin(2pi k_\mu / N_\mu)
 
-			sargx = sin( M_PI * ig / Nx );
-			sargy = sin( M_PI * jg / Ny );
+			sargx = sin( M_PI * ig / (1.0 * Nx) );
+			sargy = sin( M_PI * jg / (1.0 * Ny) );
 
 			tbl_phat2[i*Nyl+j] = 4.0*pow(sargx,2.0) + 4.0*pow(sargy,2.0);
 			tbl_phatx[i*Nyl+j] = sargx;
 			tbl_phaty[i*Nyl+j] = sargy;
 
-			sargx = sin( 2.0 * M_PI * ig / Nx );
-			sargy = sin( 2.0 * M_PI * jg / Ny );
+			sargx = sin( 2.0 * M_PI * ig / (1.0 * Nx) );
+			sargy = sin( 2.0 * M_PI * jg / (1.0 * Ny) );
 
 			tbl_pbar2[i*Nyl+j] = pow(sargx,2.0) + pow(sargy,2.0);
 			tbl_pbarx[i*Nyl+j] = sargx;

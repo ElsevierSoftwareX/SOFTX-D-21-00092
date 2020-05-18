@@ -157,7 +157,7 @@ if( dir ){
 
 
 
-    //printf("in execute1D: t = %i\n", t);
+//    printf("in execute1D: t = %i\n", t);
 
 for(k = 0; k < t; k++){
 
@@ -197,20 +197,20 @@ for(k = 0; k < t; k++){
 
    	// initialize data to some function my_function(x,y) 
     	for (j = 0; j < Nyl; ++j){
-         		data_local[j][0] = f->u[k][i*Nyl+j].real(); //data_global_tmp[i*Ny+j+pos_y*Nyl][0];
-          		data_local[j][1] = f->u[k][i*Nyl+j].imag(); //data_global_tmp[i*Ny+j+pos_y*Nyl][1];
+         		data_localY[j][0] = f->u[k][i*Nyl+j].real(); //data_global_tmp[i*Ny+j+pos_y*Nyl][0];
+          		data_localY[j][1] = f->u[k][i*Nyl+j].imag(); //data_global_tmp[i*Ny+j+pos_y*Nyl][1];
 	}
 
     	// compute transforms, in-place, as many times as desired 
 	if( dir ){
-	    	fftw_mpi_execute_dft(planX2K, data_local, data_local);
+	    	fftw_mpi_execute_dft(planX2K, data_localY, data_localY);
 	}else{
-	    	fftw_mpi_execute_dft(planK2X, data_local, data_local);
+	    	fftw_mpi_execute_dft(planK2X, data_localY, data_localY);
 	}
 
     	for (j = 0; j < Nyl; ++j) {
 
-	       		f->u[k][i*Nyl+j] = (data_local[j][0] + I*data_local[j][1])*scale_after_fft_X;
+	       		f->u[k][i*Nyl+j] = (data_localY[j][0] + I*data_localY[j][1])*scale_after_fft_X;
 
 //	       		data_global[i*Ny+j+pos_y*Nyl][0] = data_localX[j][0];
 //	       		data_global[i*Ny+j+pos_y*Nyl][1] = data_localX[j][1];
