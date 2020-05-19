@@ -138,39 +138,25 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		f.setMVModel(MVmodel, random_generator);
 
-//		f.print(momtable);
-//		printf("Fourier transform\n");
-//		fourier->execute1D(&f, 0);
 		fourier2->execute2D(&f,1);
-//		f.print(momtable);
 
-//		printf("solvePoisson\n");
 		f.solvePoisson(0.0001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
-//		f.print(momtable);
 
-//		printf("Fourier transform\n");
-//	    	fourier->execute1D(&f, 1);
 		fourier2->execute2D(&f,0);
-//		f.print(momtable);
 
-		//printf("exponential\n");
 		f.exponentiate();
-		//f.print(momtable);
-
-		//f.print(momtable);
 
 		uf *= f;
-		//uf = f;
     	}
 
-        double step = 0.00005;
+        double step = 0.0001;
 
         //evolution
-        for(int langevin = 0; langevin < 800; langevin++){
+        for(int langevin = 0; langevin < 400; langevin++){
 
-//		const clock_t begin_time = std::clock();
+		const clock_t begin_time = std::clock();
 
-//                printf("Performing evolution step no. %i\n", langevin);
+                printf("Performing evolution step no. %i\n", langevin);
 
 		xi_local_x.setToZero();
 		xi_local_y.setToZero();
@@ -178,105 +164,42 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 xi_local_x.setGaussian(random_generator,1);
                 xi_local_y.setGaussian(random_generator,2);
 
-//		printf("xi_local_x\n");
-//		xi_local_x.print(momtable);
-//		printf("xi_local_y\n");
-//		xi_local_y.print(momtable);
-
-                //should be X2K
                 fourier2->execute2D(&xi_local_x, 1);
                 fourier2->execute2D(&xi_local_y, 1);
 
-//		printf("after xi_local_x\n");
-//		xi_local_x.print(momtable);
-//		printf("after xi_local_y\n");
-//		xi_local_y.print(momtable);
-
-//		xi_local_x_tmp.setToZero();
-//		xi_local_y_tmp.setToZero();
- 
                 xi_local_x_tmp = kernel_pbarx * xi_local_x;
                 xi_local_y_tmp = kernel_pbary * xi_local_y;
 
-//		A_local.setToZero();
-
                 A_local = xi_local_x_tmp + xi_local_y_tmp;
 
-//		printf("A before\n");
-//		A_local.print(momtable);
-
-                //should be K2X
                 fourier2->execute2D(&A_local, 0);
                 fourier2->execute2D(&xi_local_x, 0);
                 fourier2->execute2D(&xi_local_y, 0);
 
-//		printf("A after\n");
-//		A_local.print(momtable);
-
-
-                        //constructng B
-                                   //tmpunitc%su3 = uglobal(me()*volume_half()+ind,eo)%su3
-
-                                   //tmpunitd%su3 = transpose(conjg(tmpunitc%su3))
-
-                                   //uxiulocal(ind,eo,1)%su3 = matmul(tmpunitc%su3, matmul(xi_local(ind,eo,1)%su3, tmpunitd%su3))
-                                   //uxiulocal(ind,eo,2)%su3 = matmul(tmpunitc%su3, matmul(xi_local(ind,eo,2)%su3, tmpunitd%su3))
-
-
                 uf_hermitian = uf.hermitian();
 
-//		uxiulocal_x.setToZero();
-//		uxiulocal_y.setToZero();
-
                 uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
-
 		uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
 
                 delete uf_hermitian;
 
-//		printf("uxiulocal_x before\n");
-//		uxiulocal_x.print(momtable);
-//		printf("uxiulocal_y before\n");
-//		uxiulocal_y.print(momtable);
-
-                //should be X2K
                 fourier2->execute2D(&uxiulocal_x, 1);
                 fourier2->execute2D(&uxiulocal_y, 1);
-
-//		printf("uxiulocal_x after\n");
-//		uxiulocal_x.print(momtable);
-//		printf("uxiulocal_y after\n");
-//		uxiulocal_y.print(momtable);
-
-
-//		uxiulocal_x_tmp.setToZero();
-//		uxiulocal_y_tmp.setToZero();
 
                 uxiulocal_x = kernel_pbarx * uxiulocal_x;
                 uxiulocal_y = kernel_pbary * uxiulocal_y;
 
-//		B_local.setToZero();
-
                 B_local = uxiulocal_x + uxiulocal_y;
 
-//		printf("B before\n");
-//		B_local.print(momtable);
-
-                //should be K2X
                 fourier2->execute2D(&B_local, 0);
-
-//		printf("B after\n");
-//		B_local.print(momtable);
-		        
+	        
  		A_local.exponentiate(sqrt(step));
 
         	B_local.exponentiate(-sqrt(step));
 
         	uf = B_local * uf * A_local;
 		
-//		uf = uf_tmp;
-
-//		std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+		std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
 	}
 
     	//-------------------------------------------------------
@@ -284,8 +207,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//-------------------------------------------------------
 
 	//compute correlation function
-	//should be X2K
-//   	fourier->execute1D(&uf, 0);
 	fourier2->execute2D(&uf,1);
     
 	uf.trace(corr);
