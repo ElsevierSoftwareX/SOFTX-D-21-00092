@@ -23,6 +23,7 @@
 #include "../mpi_class.h"
 
 #include "../momenta.h"
+#include "../positions.h"
 
 #include "../rand_class.h"
 
@@ -40,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 16;
+    cnfg->stat = 32;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -54,9 +55,13 @@ int main(int argc, char *argv[]) {
 
     momtable->set();
 
+    positions* postable = new positions(cnfg, mpi);
+
+    postable->set();
+
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.24, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.96, 50);
 
     fftw1D* fourier = new fftw1D(cnfg);
 
@@ -74,19 +79,23 @@ int main(int argc, char *argv[]) {
     lfield<double,9> f(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> uf(cnfg->Nxl, cnfg->Nyl);
 
+    gfield<double,9> uf_global(Nx, Ny);
+
     //evolution
     lfield<double,9> xi_local_x(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> xi_local_y(cnfg->Nxl, cnfg->Nyl);
 
+    gfield<double,9> xi_global_x(Nx, Ny);
+    gfield<double,9> xi_global_y(Nx, Ny);
+    gfield<double,9> xi_global_x_tmp(Nx, Ny);
+    gfield<double,9> xi_global_y_tmp(Nx, Ny);
+
+    gfield<double,9> uxiu_global_tmp(Nx,Ny);
+    gfield<double,9> xi_global_tmp(Nx,Ny);
 
     //initiaization of kernel fields
-    lfield<double,9> kernel_pbarx(cnfg->Nxl, cnfg->Nyl);
-    kernel_pbarx.setToZero();
-    kernel_pbarx.setKernelPbarX(momtable);
-
-    lfield<double,9> kernel_pbary(cnfg->Nxl, cnfg->Nyl);
-    kernel_pbary.setToZero();
-    kernel_pbary.setKernelPbarY(momtable);
+    gfield<double,9> kernel_xbarx(Nx, Ny);
+    gfield<double,9> kernel_xbary(Nx, Ny);
 
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
@@ -94,7 +103,7 @@ int main(int argc, char *argv[]) {
     lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
 
-    lfield<double,9>* uf_hermitian;
+    gfield<double,9>* uf_global_hermitian;
 
 
 //    lfield<double,9> uf_tmp(cnfg->Nxl, cnfg->Nyl);
@@ -149,14 +158,14 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		uf *= f;
     	}
 
-        double step = 0.0001;
+        double step = 0.0004;
 
         //evolution
-        for(int langevin = 0; langevin < 400; langevin++){
+        for(int langevin = 0; langevin < 100; langevin++){
 
-//		const clock_t begin_time = std::clock();
+		const clock_t begin_time = std::clock();
 
-//                printf("Performing evolution step no. %i\n", langevin);
+                printf("Performing evolution step no. %i\n", langevin);
 
 		xi_local_x.setToZero();
 		xi_local_y.setToZero();
@@ -164,105 +173,57 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 xi_local_x.setGaussian(random_generator,1);
                 xi_local_y.setGaussian(random_generator,2);
 
-//		printf("xi_local_x\n");
-//		xi_local_x.print(momtable);
-//		printf("xi_local_y\n");
-//		xi_local_y.print(momtable);
+                printf("gathering local xi to global\n");
+                xi_global_x.allgather(&xi_local_x);
+                xi_global_y.allgather(&xi_local_y);
 
-                //should be X2K
-                fourier2->execute2D(&xi_local_x, 1);
-                fourier2->execute2D(&xi_local_y, 1);
+                printf("gathering local uf to global\n");
+                uf_global.allgather(&uf);
 
-//		printf("after xi_local_x\n");
-//		xi_local_x.print(momtable);
-//		printf("after xi_local_y\n");
-//		xi_local_y.print(momtable);
+		A_local.setToZero();
+		B_local.setToZero();
 
-//		xi_local_x_tmp.setToZero();
-//		xi_local_y_tmp.setToZero();
- 
-                xi_local_x_tmp = kernel_pbarx * xi_local_x;
-                xi_local_y_tmp = kernel_pbary * xi_local_y;
+                uf_global_hermitian = uf_global.hermitian();
 
-//		A_local.setToZero();
+                printf("starting iteration over global lattice\n");
+                //for(int i = 0; i < cnfg->Nxl*cnfg->Nyl; i++){
+                for(int x = 0; x < cnfg->Nxl; x++){
+	                for(int y = 0; y < cnfg->Nyl; y++){
 
-                A_local = xi_local_x_tmp + xi_local_y_tmp;
+        	                int x_global = x + mpi->getPosX()*cnfg->Nxl;
+                                int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-//		printf("A before\n");
-//		A_local.print(momtable);
+				kernel_xbarx.setToZero();
+				kernel_xbary.setToZero();
 
-                //should be K2X
-                fourier2->execute2D(&A_local, 0);
-                fourier2->execute2D(&xi_local_x, 0);
-                fourier2->execute2D(&xi_local_y, 0);
+                                kernel_xbarx.setKernelXbarX(x_global, y_global, postable);
+                                kernel_xbary.setKernelXbarY(x_global, y_global, postable);
 
-//		printf("A after\n");
-//		A_local.print(momtable);
+                                xi_global_x_tmp = kernel_xbarx * xi_global_x;
+                                xi_global_y_tmp = kernel_xbary * xi_global_y;
 
 
-                        //constructng B
-                                   //tmpunitc%su3 = uglobal(me()*volume_half()+ind,eo)%su3
-
-                                   //tmpunitd%su3 = transpose(conjg(tmpunitc%su3))
-
-                                   //uxiulocal(ind,eo,1)%su3 = matmul(tmpunitc%su3, matmul(xi_local(ind,eo,1)%su3, tmpunitd%su3))
-                                   //uxiulocal(ind,eo,2)%su3 = matmul(tmpunitc%su3, matmul(xi_local(ind,eo,2)%su3, tmpunitd%su3))
+                                xi_global_tmp = xi_global_x_tmp + xi_global_y_tmp;
 
 
-                uf_hermitian = uf.hermitian();
-
-//		uxiulocal_x.setToZero();
-//		uxiulocal_y.setToZero();
-
-                uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
-
-		uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
-
-                delete uf_hermitian;
-
-//		printf("uxiulocal_x before\n");
-//		uxiulocal_x.print(momtable);
-//		printf("uxiulocal_y before\n");
-//		uxiulocal_y.print(momtable);
-
-                //should be X2K
-                fourier2->execute2D(&uxiulocal_x, 1);
-                fourier2->execute2D(&uxiulocal_y, 1);
-
-//		printf("uxiulocal_x after\n");
-//		uxiulocal_x.print(momtable);
-//		printf("uxiulocal_y after\n");
-//		uxiulocal_y.print(momtable);
+                                A_local.reduceAndSet(x, y, &xi_global_tmp);
 
 
-//		uxiulocal_x_tmp.setToZero();
-//		uxiulocal_y_tmp.setToZero();
+                                uxiu_global_tmp = uf_global * xi_global_tmp * (*uf_global_hermitian);
 
-                uxiulocal_x = kernel_pbarx * uxiulocal_x;
-                uxiulocal_y = kernel_pbary * uxiulocal_y;
+                                B_local.reduceAndSet(x, y, &uxiu_global_tmp);
+                        }
+                }
 
-//		B_local.setToZero();
+                delete uf_global_hermitian;
 
-                B_local = uxiulocal_x + uxiulocal_y;
-
-//		printf("B before\n");
-//		B_local.print(momtable);
-
-                //should be K2X
-                fourier2->execute2D(&B_local, 0);
-
-//		printf("B after\n");
-//		B_local.print(momtable);
-		        
- 		A_local.exponentiate(sqrt(step));
+		A_local.exponentiate(sqrt(step));
 
         	B_local.exponentiate(-sqrt(step));
 
         	uf = B_local * uf * A_local;
 		
-//		uf = uf_tmp;
-
-//		std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+		std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
 	}
 
     	//-------------------------------------------------------

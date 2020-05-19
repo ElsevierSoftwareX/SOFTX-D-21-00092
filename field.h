@@ -18,6 +18,7 @@
 #include "rand_class.h"
 
 #include "momenta.h"
+#include "positions.h"
 
 template<class T, int t> class field {
 
@@ -90,10 +91,10 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		gfield<T,t>* hermitian();
 
-		int setKernelXbarX(int x, int y);
-		int setKernelXbarY(int x, int y);
-		int setKernelXbarXWithCouplingConstant(int x, int y);
-		int setKernelXbarYWithCouplingConstant(int x, int y);
+		int setKernelXbarX(int x, int y, positions* postable);
+		int setKernelXbarY(int x, int y, positions* postable);
+		int setKernelXbarXWithCouplingConstant(int x, int y, positions* postable);
+		int setKernelXbarYWithCouplingConstant(int x, int y, positions* postable);
 
 		int setCorrelationsForCouplingConstant();
 
@@ -534,8 +535,9 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal){
 
 		for(i = 0; i < Nxg*Nyg; i++){
 
-			this->u[k][i] = data_global_re[i] + I*data_global_im[i];
-	
+	//			this->u[k][i] = data_global_re[i] + I*data_global_im[i];
+				this->u[k][i] = ulocal->u[k][i]; //data_global_re[i] + I*data_global_im[i];
+
 		}
 	}
 
@@ -1145,7 +1147,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(mom
 return 1;
 }
 
-template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_global){
+template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_global, positions* pos){
 
 	if(t == 9){
 
@@ -1154,28 +1156,44 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 		for(int yy = 0; yy < Nyg; yy++){
 
 			int i = xx*Nyg+yy;
+		
+			int ii = fabs(x_global - xx)*Nyg + fabs(y_global - yy);
 
-                        double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
-                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+                        //double dx2 = 0.5*Nxg*sin(2.0*M_PI*(x_global-xx)/Nxg)/M_PI;
+                        //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
 
-                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+//                        double dx = pos->xbarX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+                        //double dy = pos->xbarY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
 
-                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
+//                        double rrr = pos->xhat2(ii); //1.0*(dx2*dx2+dy2*dy2);
+
+	                                 double dx = x_global - xx;
+                                         if( dx >= Nxg/2 )
+                                                dx = dx - Nxg;
+                                         if( dx < -Nxg/2 )
+                                                dx = dx + Nxg;
+                                         
+                                         double dy = y_global - yy;
+                                         if( dy >= Nyg/2 )
+                                                dy = dy - Nyg;
+                                         if( dy < -Nyg/2 )
+                                                dy = dy + Nyg;
+
+                                         double rrr = 1.0*(dx*dx+dy*dy);
 
 			if( rrr > 10e-9 ){
 
-				this->u[0][i] = std::complex<double>(0.0, dx/rrr);
+				this->u[0][i] = std::complex<double>(dx/rrr, 0.0);
 				this->u[4][i] = this->u[0][i];
 				this->u[8][i] = this->u[0][i];
 
-			}else{
-	
-				this->u[0][i] = std::complex<double>(0.0, 0.0);
-				this->u[4][i] = this->u[0][i];
-				this->u[8][i] = this->u[0][i];
-	
-			}
+			}//else{
+			//
+			//	this->u[0][i] = std::complex<double>(0.0, 0.0);
+			//	this->u[4][i] = this->u[0][i];
+			//	this->u[8][i] = this->u[0][i];
+			//
+			//}
 		}
 	}
 
@@ -1188,7 +1206,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 return 1;
 }
 
-template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_global){
+template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_global, positions* pos){
 
 	if(t == 9){
 
@@ -1197,27 +1215,43 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
 
 			int i = xx*Nyg+yy;
 
-	                double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
-                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+			int ii = fabs(x_global - xx)*Nyg + fabs(y_global - yy);
 
-                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+                        //double dx2 = 0.5*Nxg*sin(2.0*M_PI*(x_global-xx)/Nxg)/M_PI;
+                        //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
 
-                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
+                        //double dx = pos->xbarX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+//                        double dy = pos->xbarY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+
+//                        double rrr = pos->xhat2(ii); //1.0*(dx2*dx2+dy2*dy2);
+
+                                         double dx = x_global - xx;
+                                         if( dx >= Nxg/2 )
+                                                dx = dx - Nxg;
+                                         if( dx < -Nxg/2 )
+                                                dx = dx + Nxg;
+                                         
+                                         double dy = y_global - yy;
+                                         if( dy >= Nyg/2 )
+                                                dy = dy - Nyg;
+                                         if( dy < -Nyg/2 )
+                                                dy = dy + Nyg;
+
+                                         double rrr = 1.0*(dx*dx+dy*dy);
 
 			if( rrr > 10e-9 ){
 
-				this->u[0][i] = std::complex<double>(0.0, dy/rrr);
+				this->u[0][i] = std::complex<double>(dy/rrr, 0.0);
 				this->u[4][i] = this->u[0][i];
 				this->u[8][i] = this->u[0][i];
 
-			}else{
-
-				this->u[0][i] = std::complex<double>(0.0, 0.0);
-				this->u[4][i] = this->u[0][i];
-				this->u[8][i] = this->u[0][i];
-
-			}
+			}//else{
+			//
+			//	this->u[0][i] = std::complex<double>(0.0, 0.0);
+			//	this->u[4][i] = this->u[0][i];
+			//	this->u[8][i] = this->u[0][i];
+			//
+			//}
 		}
 	}
 
@@ -1233,7 +1267,7 @@ return 1;
 }
 
 
-template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int x_global, int y_global){
+template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int x_global, int y_global, positions* postable){
 
 	if(t == 9){
 
@@ -1282,7 +1316,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int
 return 1;
 }
 
-template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int x_global, int y_global){
+template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int x_global, int y_global, positions* postable){
 
 	if(t == 9){
 
@@ -1539,12 +1573,16 @@ return corr_tmp;
 
 template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local, gfield<T,t>* f){
 
+		for(int k = 0; k < t; k++){
+
 		for(int xx = 0; xx < f->Nxg; xx++){
 			for(int yy = 0; yy < f->Nyg; yy++){
 
-				this->u[0][x_local*Nyl+y_local] += f->u[0][xx*f->Nyg+yy];		
+				this->u[k][x_local*Nyl+y_local] += f->u[k][xx*f->Nyg+yy];		
 	
 			}
+		}
+
 		}
 
 return 1;
