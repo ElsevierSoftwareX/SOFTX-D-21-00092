@@ -94,8 +94,8 @@ int positions::set(){
 			tbl_xhatx[i*Nyl+j] = sargx;
 			tbl_xhaty[i*Nyl+j] = sargy;
 
-			sargx = 0.5 * Nx * sin( 2.0 * M_PI * ig / (1.0 * Nx) ) / M_PI;
-			sargy = 0.5 * Ny * sin( 2.0 * M_PI * jg / (1.0 * Ny) ) / M_PI;
+			sargx = 2.0 * Nx * sin( 0.5 * M_PI * ig / (1.0 * Nx) ) / M_PI;
+			sargy = 2.0 * Ny * sin( 0.5 * M_PI * jg / (1.0 * Ny) ) / M_PI;
 
 			tbl_xbar2[i*Nyl+j] = pow(sargx,2.0) + pow(sargy,2.0);
 			tbl_xbarx[i*Nyl+j] = sargx;

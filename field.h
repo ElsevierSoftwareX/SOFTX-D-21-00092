@@ -1162,11 +1162,11 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
                         //double dx2 = 0.5*Nxg*sin(2.0*M_PI*(x_global-xx)/Nxg)/M_PI;
                         //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
 
-//                        double dx = pos->xbarX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+                        double dx = pos->xhatX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
                         //double dy = pos->xbarY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
 
-//                        double rrr = pos->xhat2(ii); //1.0*(dx2*dx2+dy2*dy2);
-
+                        double rrr = pos->xbar2(ii); //1.0*(dx2*dx2+dy2*dy2);
+/*
 	                                 double dx = x_global - xx;
                                          if( dx >= Nxg/2 )
                                                 dx = dx - Nxg;
@@ -1180,7 +1180,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
                                                 dy = dy + Nyg;
 
                                          double rrr = 1.0*(dx*dx+dy*dy);
-
+*/
 			if( rrr > 10e-9 ){
 
 				this->u[0][i] = std::complex<double>(dx/rrr, 0.0);
@@ -1221,10 +1221,10 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
                         //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
 
                         //double dx = pos->xbarX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-//                        double dy = pos->xbarY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+                        double dy = pos->xhatY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
 
-//                        double rrr = pos->xhat2(ii); //1.0*(dx2*dx2+dy2*dy2);
-
+                        double rrr = pos->xbar2(ii); //1.0*(dx2*dx2+dy2*dy2);
+/*
                                          double dx = x_global - xx;
                                          if( dx >= Nxg/2 )
                                                 dx = dx - Nxg;
@@ -1238,7 +1238,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
                                                 dy = dy + Nyg;
 
                                          double rrr = 1.0*(dx*dx+dy*dy);
-
+*/
 			if( rrr > 10e-9 ){
 
 				this->u[0][i] = std::complex<double>(dy/rrr, 0.0);
