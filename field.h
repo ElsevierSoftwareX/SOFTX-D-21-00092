@@ -79,7 +79,7 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		//T getZero(void){ return this.u[0][0]; }
 
-		int allgather(lfield<T,t>* ulocal);
+		int allgather(lfield<T,t>* ulocal, mpi_class* mpi);
 
 		gfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxg = NNx; Nyg = NNy;};
 
@@ -148,6 +148,8 @@ template<class T, int t> class lfield: public field<T,t> {
 
 
 		int setToZero(void){
+
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < Nxl*Nyl; i ++){
 				for(int k = 0; k < t; k++){
 					this->u[k][i] = 0.0 + I*0.0;
@@ -158,6 +160,7 @@ template<class T, int t> class lfield: public field<T,t> {
 
 
 		int setToUnit(void){
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < Nxl*Nyl; i ++){
 				this->u[0][i] = 1.0 + I*0.0;
 				this->u[4][i] = 1.0 + I*0.0;
@@ -173,6 +176,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		return 1;
 		}
 		int setToOne(void){
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < Nxl*Nyl; i ++){
 				for(int k = 0; k < t; k++){
 					this->u[k][i] = 1.0 + I*0.0;
@@ -250,8 +254,9 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator= ( const lfield<T,t>
 
 			if( this != &f ){
 
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < f.Nxl*f.Nyl; i ++){
-			
+		
 				for(int k = 0; k < t; k++){
 
 					this->u[k][i] = f.u[k][i];
@@ -268,8 +273,8 @@ template<class T, int t> gfield<T,t>& gfield<T,t>::operator= ( const gfield<T,t>
 
 			if( this != &f ){
 
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < f.Nxg*f.Nyg; i ++){
-			
 				for(int k = 0; k < t; k++){
 
 					this->u[k][i] = f.u[k][i];
@@ -285,10 +290,11 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator*= ( const lfield<T,t
 
 			if( this != &f ){
 
-			static su3_matrix<double> A,B,C;
-
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < f.Nxl*f.Nyl; i++){
 			
+				su3_matrix<double> A,B,C;
+
 				for(int k = 0; k < t; k++){
 
 					A.m[k] = this->u[k][i];
@@ -312,8 +318,8 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator+= ( const lfield<T,t
 
 			if( this != &f ){
 
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < f.Nxl*f.Nyl; i++){
-			
 				for(int k = 0; k < t; k++){
 
 					this->u[k][i] += f.u[k][i];
@@ -339,10 +345,11 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 
 			if( f.Nxl == g.Nxl && f.Nyl == g.Nyl ){
 
-			static su3_matrix<double> A,B,C;
-
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < f.Nxl*f.Nyl; i++){
-			
+
+				su3_matrix<double> A,B,C;
+		
 //				printf("element %i\n", i);
 	
 				for(int k = 0; k < t; k++){
@@ -385,10 +392,11 @@ template<class T, int t> gfield<T,t> operator * ( const gfield<T,t> &f , const g
 
 			if( f.Nxg == g.Nxg && f.Nyg == g.Nyg ){
 
-			static su3_matrix<double> A,B,C;
-
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < f.Nxg*f.Nyg; i++){
 			
+				su3_matrix<double> A,B,C;
+
 //				printf("element %i\n", i);
 	
 				for(int k = 0; k < t; k++){
@@ -433,10 +441,11 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 
 			if( f.Nxl == g.Nxl && f.Nyl == g.Nyl ){
 
-			static su3_matrix<double> A,B,C;
-
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < f.Nxl*f.Nyl; i ++){
-			
+
+				su3_matrix<double> A,B,C;
+		
 				for(int k = 0; k < t; k++){
 
 					A.m[k] = f.u[k][i];
@@ -478,10 +487,11 @@ template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gf
 
 			if( f.Nxg == g.Nxg && f.Nyg == g.Nyg ){
 
-			static su3_matrix<double> A,B,C;
-
+			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < f.Nxg*f.Nyg; i ++){
 			
+				su3_matrix<double> A,B,C;
+
 				for(int k = 0; k < t; k++){
 
 					A.m[k] = f.u[k][i];
@@ -510,7 +520,7 @@ template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gf
 
 
 
-template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal){
+template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_class* mpi){
 
 
 	static T* data_local_re = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
@@ -523,6 +533,7 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal){
 
 	for(k = 0; k < t; k++){
 
+		#pragma omp parallel for simd default(shared)
 		for(i = 0; i < ulocal->Nxl*ulocal->Nyl; i++){
 
 			data_local_re[i] = ulocal->u[k][i].real();
@@ -533,11 +544,29 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal){
    		MPI_Allgather(data_local_re, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, data_global_re, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
 	   	MPI_Allgather(data_local_im, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, data_global_im, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
 
-		for(i = 0; i < Nxg*Nyg; i++){
+		int size = mpi->getSize();
 
-	//			this->u[k][i] = data_global_re[i] + I*data_global_im[i];
-				this->u[k][i] = ulocal->u[k][i]; //data_global_re[i] + I*data_global_im[i];
+		for(int kk = 0; kk < size; kk++){
+		
+			int local_volume = ulocal->Nxl * ulocal->Nyl;
 
+			#pragma omp parallel for simd collapse(2) default(shared)
+			for(int xx = 0; xx < ulocal->Nxl; xx++){
+				for(int yy = 0; yy < ulocal->Nyl; yy++){
+
+					int i = xx*ulocal->Nyl + yy;
+
+					//will only work for parallelization in y direction
+					//int ii = xx*Nyg + (yy + kk*ulocal->Nyl);
+
+					//will only work for parallelization in x direction
+					int ii = (xx + kk*ulocal->Nxl)*Nyg + yy;
+
+					this->u[k][ii] = data_global_re[i+kk*local_volume] + I*data_global_im[i+kk*local_volume];
+					//this->u[k][i] = ulocal->u[k][i]; //data_global_re[i] + I*data_global_im[i];
+
+				}
+			}
 		}
 	}
 
@@ -646,45 +675,16 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
 	const double EPS = 10e-12;
 
-        double n[8];
-
-FILE *f;
-
-int i,j,k;
-int x,y,c;
-float v;
-
-//f = fopen("initial_input.dat","r+");
-
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
+	        double n[8];
 
-//				hh=sqrt(real(1.0*g_parameter**2*mu_parameter**2/Ny_parameter, kind=REALKND)) * &
-//                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
-//                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
-
-//		for(int k = 0; k < 8; k++){
-//                      fscanf(f,"%i %i %i %f\n", &x, &y, &c, &v);
-//			n[k] = v;
-//		}
-       
 		for(int k = 0; k < 8; k++){
 	         	n[k] = sqrt( pow(MVconfig->g_parameter,2.0) * pow(MVconfig->mu_parameter,2.0) / MVconfig->Ny_parameter ) * sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
 		}
 
-//for(i = 0; i < 4; i++){
-//        for(j = 0; j < 4; j++){
-//                for(k = 0; k < 8; k++){
-//                        fscanf(f,"%i %i %i %f\n", &x, &y, &c, &v);
-//                        printf("%i %i %i %f\n", x, y, c, v);
-//                }
-//        }
-//}
-
-
-
-		
-	 //these are the LAMBDAs and not the generators t^a = lambda/2.
+	//these are the LAMBDAs and not the generators t^a = lambda/2.
 
 	// 0 1 2
 	// 3 4 5
@@ -763,10 +763,11 @@ template<class T, int t> int lfield<T,t>::setUnitModel(rand_class* rr){
 	// 3 4 5
 	// 6 7 8
 
-        double n[8];
-
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
+
+		double n[8];
 
 //				hh=sqrt(real(1.0*g_parameter**2*mu_parameter**2/Ny_parameter, kind=REALKND)) * &
 //                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
@@ -798,44 +799,16 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr, int s){
 	// 3 4 5
 	// 6 7 8
 
-        double n[8];
-
-
-FILE *f;
-
-int i,j,k;
-int x,y,c;
-float v;
-
-char filename[100];
-sprintf(filename, "noise%i_input.dat", s);
-
-//f = fopen(filename,"r+");
-
-//        for(int i = 0; i < Nxl*Nyl; i++){
-
-
-//                              hh=sqrt(real(1.0*g_parameter**2*mu_parameter**2/Ny_parameter, kind=REALKND)) * &
-//                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
-//                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
-
-//                for(int k = 0; k < 8; k++){
-//                        fscanf(f," %i %i %i %f\n", &x, &y, &c, &v);
-//                        n[k] = v;
-//                }
-
-
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 
-//				hh=sqrt(real(coupling_constant, kind=REALKND)) * &
-//                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
-//                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
+	    double n[8];
 
-		for(int k = 0; k < 8; k++)
+	    for(int k = 0; k < 8; k++)
                 	n[k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
 		
-	 //these are the LAMBDAs and not the generators t^a = lambda/2.
+   	    //these are the LAMBDAs and not the generators t^a = lambda/2.
 
             //lambda_nr(1)%su3(1,2) =  runit
             //lambda_nr(1)%su3(2,1) =  runit
@@ -888,8 +861,6 @@ sprintf(filename, "noise%i_input.dat", s);
 		this->u[8][i] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 	}
 
-//	fclose(f);
-
 	}else{
 
 		printf("Invalid lfield classes for setGaussian function\n");
@@ -903,17 +874,10 @@ return 1;
 
 template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, momenta* mom){
 
-		//u(ind,eo)%su3 = cmplx(-1.0*g_parameter, 0.0, kind=CMPLXKND)*&
-                //&u(ind,eo)%su3/(-phat2(z+1,t+1) + mass_parameter**2)
-
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
-	
 		for(int k = 0; k < t; k++){
-
 			this->u[k][i] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass), 0.0);
-//			this->u[k][i] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + 3.6e-4), 0.0);
-
-
 		}
 	}
 
@@ -922,7 +886,7 @@ return 1;
 
 template<class T, int t > int lfield<T, t>::exponentiate(){
 
-
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 	
 		su3_matrix<double> A;
@@ -946,7 +910,7 @@ return 1;
 
 template<class T, int t> int lfield<T, t>::exponentiate(double s){
 
-
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 		su3_matrix<double> A;
@@ -982,6 +946,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
                        	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
 	if(t == 9){
 
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 		if( fabs(mom->phat2(i)) > 10e-9 ){
@@ -1024,6 +989,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 
 	if(t == 9){
 
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 		if( fabs(mom->phat2(i)) > 10e-9 ){
@@ -1072,7 +1038,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(mom
                         //&(phat2(z+1,t+1)*zmax*zmax/(6.0**2))**(1.0/0.2))**(0.2)))
 
 
-
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 		if( mom->phat2(i) > 10e-9 ){
@@ -1117,6 +1083,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(mom
 
 	if(t == 9){
 
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 		if( mom->phat2(i) > 10e-9 ){
@@ -1152,6 +1119,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 	if(t == 9){
 
 	//for(int i = 0; i < Nxl*Nyl; i++){
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxg; xx++){
 		for(int yy = 0; yy < Nyg; yy++){
 
@@ -1161,12 +1129,12 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 
                         //double dx2 = 0.5*Nxg*sin(2.0*M_PI*(x_global-xx)/Nxg)/M_PI;
                         //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
-
+/*
                         double dx = pos->xhatX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
                         //double dy = pos->xbarY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
 
                         double rrr = pos->xbar2(ii); //1.0*(dx2*dx2+dy2*dy2);
-/*
+*/
 	                                 double dx = x_global - xx;
                                          if( dx >= Nxg/2 )
                                                 dx = dx - Nxg;
@@ -1180,7 +1148,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
                                                 dy = dy + Nyg;
 
                                          double rrr = 1.0*(dx*dx+dy*dy);
-*/
+
 			if( rrr > 10e-9 ){
 
 				this->u[0][i] = std::complex<double>(dx/rrr, 0.0);
@@ -1210,6 +1178,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
 
 	if(t == 9){
 
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxg; xx++){
 		for(int yy = 0; yy < Nxg; yy++){
 
@@ -1219,12 +1188,12 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
 
                         //double dx2 = 0.5*Nxg*sin(2.0*M_PI*(x_global-xx)/Nxg)/M_PI;
                         //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
-
+/*
                         //double dx = pos->xbarX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
                         double dy = pos->xhatY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
 
                         double rrr = pos->xbar2(ii); //1.0*(dx2*dx2+dy2*dy2);
-/*
+*/
                                          double dx = x_global - xx;
                                          if( dx >= Nxg/2 )
                                                 dx = dx - Nxg;
@@ -1238,7 +1207,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
                                                 dy = dy + Nyg;
 
                                          double rrr = 1.0*(dx*dx+dy*dy);
-*/
+
 			if( rrr > 10e-9 ){
 
 				this->u[0][i] = std::complex<double>(dy/rrr, 0.0);
@@ -1272,6 +1241,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int
 	if(t == 9){
 
 	//for(int i = 0; i < Nxl*Nyl; i++){
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxg; xx++){
 		for(int yy = 0; yy < Nyg; yy++){
 
@@ -1320,6 +1290,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int
 
 	if(t == 9){
 
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxg; xx++){
 		for(int yy = 0; yy < Nxg; yy++){
 
@@ -1373,6 +1344,7 @@ template<class T, int t> lfield<T,t>* lfield<T,t>::hermitian(void){
 	// 3 4 5
 	// 6 7 8
 
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 		result->u[0][i] = std::conj(this->u[0][i]);
@@ -1406,6 +1378,7 @@ template<class T, int t> gfield<T,t>* gfield<T,t>::hermitian(void){
 	// 3 4 5
 	// 6 7 8
 
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nx*Ny; i++){
 
 		result->u[0][i] = std::conj(this->u[0][i]);
@@ -1441,6 +1414,7 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 
 	if(t == 9 ){
 
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
                 su3_matrix<double> A;
@@ -1493,6 +1467,7 @@ template<class T, int t> int lfield<T,t>::average(lfield<double,1>* cc){
 
 	if(t == 9 ){
 
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 //                for(int k = 0; k < t; k++){
@@ -1522,12 +1497,14 @@ template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 
 	corr_tmp->setToZero();
 	
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < Nx; i++){
 		for(int j = 0; j < Ny; j++){
 			corr_tmp->u[0][i*Ny+j] = 0.5*(this->u[0][i*Ny+j] + this->u[0][j*Ny+i]);
 		}
 	}
 
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < Nx; i++){
 		for(int j = 0; j < Ny; j++){
 			
@@ -1559,6 +1536,7 @@ template<class T, int t> lfield<T,t>* gfield<T,t>::reduce(int NNx, int NNy, mpi_
 	corr_tmp->setToZero();	
 //	printf("reduce: t = %i\n", t);
 
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < NNx; i++){
 		for(int j = 0; j < NNy; j++){
 			//x += this->u[(i+mpi->getPosX()*NNx)*Nyg+j+mpi->getPosY()*NNy][0];
@@ -1575,13 +1553,20 @@ template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local,
 
 		for(int k = 0; k < t; k++){
 
+		double sum_re = 0;
+		double sum_im = 0;
+
+		#pragma omp parallel for collapse(2) default(shared) reduction(+:sum_re) reduction(+:sum_im)
 		for(int xx = 0; xx < f->Nxg; xx++){
 			for(int yy = 0; yy < f->Nyg; yy++){
 
-				this->u[k][x_local*Nyl+y_local] += f->u[k][xx*f->Nyg+yy];		
-	
+				sum_re += f->u[k][xx*f->Nyg+yy].real();		
+				sum_im += f->u[k][xx*f->Nyg+yy].imag();		
+
 			}
 		}
+
+		this->u[k][x_local*Nyl+y_local] = sum_re + I*sum_im;
 
 		}
 
@@ -1590,6 +1575,7 @@ return 1;
 
 template<class T, int t> int gfield<T,t>::setCorrelationsForCouplingConstant(){
 
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxg; xx++){
 		for(int yy = 0; yy < Nxg; yy++){
 
@@ -1609,6 +1595,7 @@ return 1;
 
 template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(momenta* mom){
 
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxl; xx++){
 		for(int yy = 0; yy < Nxl; yy++){
 

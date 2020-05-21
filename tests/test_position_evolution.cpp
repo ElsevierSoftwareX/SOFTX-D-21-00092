@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 4;
+    cnfg->stat = 16;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -174,11 +174,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 xi_local_y.setGaussian(random_generator,2);
 
                 printf("gathering local xi to global\n");
-                xi_global_x.allgather(&xi_local_x);
-                xi_global_y.allgather(&xi_local_y);
+                xi_global_x.allgather(&xi_local_x, mpi);
+                xi_global_y.allgather(&xi_local_y, mpi);
 
                 printf("gathering local uf to global\n");
-                uf_global.allgather(&uf);
+                uf_global.allgather(&uf, mpi);
 
 		A_local.setToZero();
 		B_local.setToZero();
@@ -237,7 +237,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     
 	uf.trace(corr);
 
-    	corr_global->allgather(corr);	
+    	corr_global->allgather(corr, mpi);	
 
    	corr_global->average_and_symmetrize();
 

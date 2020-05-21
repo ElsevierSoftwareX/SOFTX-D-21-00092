@@ -74,6 +74,13 @@ public:
 	return rank;
     }
 
+    int getSize(){
+
+	return size;
+    }
+
+
+
     MPI_Comm getRowComm(){
 
 	return row_comm;
