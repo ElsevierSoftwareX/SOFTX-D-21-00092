@@ -243,7 +243,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int reduceAndSet(int x, int y, gfield<T,t>* field);
 
 		int print(momenta* mom);
-		int print(momenta* mom, double x);
+		int print(momenta* mom, double x, mpi_class* mpi);
 
 		int printDebug();
 		int printDebug(double x);
@@ -1678,16 +1678,16 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom){
 return 1;
 }
 
-template<class T, int t> int lfield<T,t>::print(momenta* mom, double x){
+template<class T, int t> int lfield<T,t>::print(momenta* mom, double x, mpi_class* mpi){
 
 	for(int xx = 0; xx < Nxl; xx++){
-		for(int yy = 0; yy < Nxl; yy++){
+		for(int yy = 0; yy < Nyl; yy++){
 
 			int i = xx*Nyl+yy;
       
-			if( fabs(xx-yy) <= 4 ){
+			if( fabs(xx + mpi->getPosX()*Nxl - yy - mpi->getPosY()*Nyl) <= 4 ){
  
-				printf("%f %f %f\n", sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[0][i].real()), x*(mom->phat2(i))*(this->u[0][i].imag()));
+				printf("%f %e %e\n", sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[0][i].real()), x*(mom->phat2(i))*(this->u[0][i].imag()));
 
 			}
 		}
