@@ -1,8 +1,8 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 32
-#define Ny 32
+#define Nx 64
+#define Ny 64
 
 #include <iostream>
 

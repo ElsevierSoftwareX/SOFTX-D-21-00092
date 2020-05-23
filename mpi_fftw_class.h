@@ -48,7 +48,10 @@ class fftw {
 
         fftw_init_threads();
         fftw_mpi_init();
-        fftw_plan_with_nthreads(omp_get_max_threads());
+
+	printf("FFTW can be run with %i threads; running with 4 threads instead\n", omp_get_max_threads());
+
+        fftw_plan_with_nthreads(4);
 
         Nxl = cnfg->Nxl;
         Nyl = cnfg->Nyl;
@@ -275,6 +278,8 @@ if( dir ){
 
 
 for(k = 0; k < t; k++){
+
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
                         data_local[i*Nyl+j][0] = f->u[k][i*Nyl+j].real(); //data_global[(i+pos_x*Nxl)*N1+j][0];
@@ -289,6 +294,7 @@ for(k = 0; k < t; k++){
                 fftw_mpi_execute_dft(planK2X, data_local, data_local);
         }
 
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
                         f->u[k][i*Nyl+j] = (data_local[i*Nyl+j][0] +I*data_local[i*Nyl+j][1])*scale_after_fft;

@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.96, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.48, 50);
 
     fftw1D* fourier = new fftw1D(cnfg);
 
@@ -234,7 +234,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
 	sum += **it;
 
-    sum.print(momtable, 1.0/3.0/accumulator.size());
+    sum.print(momtable, 1.0/3.0/accumulator.size(), mpi);
 
 
 //-------------------------------------------------------
