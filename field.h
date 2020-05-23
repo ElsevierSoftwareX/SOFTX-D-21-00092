@@ -4,7 +4,9 @@
 #include <iostream>
 #include <stdlib.h>
 #include <complex>
-#include <complex.h>
+#include <ccomplex>
+
+//#include <complex.h>
 #include "config.h"
 
 #include <omp.h>
@@ -105,7 +107,7 @@ template<class T, int t> class gfield: public field<T,t> {
 		int setToZero(void){
 			for(int i = 0; i < Nxg*Nyg; i ++){
 				for(int k = 0; k < t; k++){
-					this->u[k][i] = 0.0 + I*0.0;
+					this->u[k][i] = 0.0;
 				}
 			}
 		return 1;
@@ -152,7 +154,7 @@ template<class T, int t> class lfield: public field<T,t> {
 			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < Nxl*Nyl; i ++){
 				for(int k = 0; k < t; k++){
-					this->u[k][i] = 0.0 + I*0.0;
+					this->u[k][i] = 0.0;
 				}
 			}
 		return 1;
@@ -162,16 +164,16 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setToUnit(void){
 			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < Nxl*Nyl; i ++){
-				this->u[0][i] = 1.0 + I*0.0;
-				this->u[4][i] = 1.0 + I*0.0;
-				this->u[8][i] = 1.0 + I*0.0;
+				this->u[0][i] = 1.0;
+				this->u[4][i] = 1.0;
+				this->u[8][i] = 1.0;
 
-				this->u[1][i] = 0.0 + I*0.0;
-				this->u[2][i] = 0.0 + I*0.0;
-				this->u[3][i] = 0.0 + I*0.0;
-				this->u[5][i] = 0.0 + I*0.0;
-				this->u[6][i] = 0.0 + I*0.0;
-				this->u[7][i] = 0.0 + I*0.0;
+				this->u[1][i] = 0.0;
+				this->u[2][i] = 0.0;
+				this->u[3][i] = 0.0;
+				this->u[5][i] = 0.0;
+				this->u[6][i] = 0.0;
+				this->u[7][i] = 0.0;
 			}
 		return 1;
 		}
@@ -179,7 +181,7 @@ template<class T, int t> class lfield: public field<T,t> {
 			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < Nxl*Nyl; i ++){
 				for(int k = 0; k < t; k++){
-					this->u[k][i] = 1.0 + I*0.0;
+					this->u[k][i] = 1.0;
 				}
 			}
 		return 1;
@@ -191,16 +193,16 @@ template<class T, int t> class lfield: public field<T,t> {
 
 					for(int k = 0; k < t; k++){
 						if( ix < Nxl/2 && iy < Nyl/2 ){
-							this->u[k][ix*Nyl + iy] = ((ix)%Nxl)*((ix)%Nxl) + ((iy)%Nyl)*((iy)%Nyl) + I*0.0;
+							this->u[k][ix*Nyl + iy] = ((ix)%Nxl)*((ix)%Nxl) + ((iy)%Nyl)*((iy)%Nyl);
 						}
 						if( ix > Nxl/2 && iy < Nyl/2 ){
-							this->u[k][ix*Nyl + iy] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy)%Nyl)*((iy)%Nyl) + I*0.0;
+							this->u[k][ix*Nyl + iy] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy)%Nyl)*((iy)%Nyl);
 						}
 						if( ix < Nxl/2 && iy > Nyl/2 ){
-							this->u[k][ix*Nyl + iy] = ((ix)%Nxl)*((ix)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl) + I*0.0;
+							this->u[k][ix*Nyl + iy] = ((ix)%Nxl)*((ix)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl);
 						}
 						if( ix > Nxl/2 && iy > Nyl/2 ){
-							this->u[k][ix*Nyl + iy] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl) + I*0.0;
+							this->u[k][ix*Nyl + iy] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl);
 						}
 
 						//this->u[k][ix*Nyl + iy] = (ix-Nxl)*(ix-Nxl) + (iy-Nyl)*(iy-Nyl) + I*0.0;
@@ -562,7 +564,7 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_cla
 					//will only work for parallelization in x direction
 					int ii = (xx + kk*ulocal->Nxl)*Nyg + yy;
 
-					this->u[k][ii] = data_global_re[i+kk*local_volume] + I*data_global_im[i+kk*local_volume];
+					this->u[k][ii] = std::complex<double>(data_global_re[i+kk*local_volume], data_global_im[i+kk*local_volume]);
 					//this->u[k][i] = ulocal->u[k][i]; //data_global_re[i] + I*data_global_im[i];
 
 				}
@@ -675,7 +677,7 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
 	const double EPS = 10e-12;
 
-	#pragma omp parallel for simd default(shared)
+//	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 	        double n[8];
@@ -799,7 +801,7 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr, int s){
 	// 3 4 5
 	// 6 7 8
 
-	#pragma omp parallel for simd default(shared)
+//	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 
@@ -1566,7 +1568,7 @@ template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local,
 			}
 		}
 
-		this->u[k][x_local*Nyl+y_local] = sum_re + I*sum_im;
+		this->u[k][x_local*Nyl+y_local] = std::complex<double>(sum_re, sum_im);
 
 		}
 

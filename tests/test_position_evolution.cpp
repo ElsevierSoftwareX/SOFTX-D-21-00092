@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.96, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.24, 50);
 
     fftw1D* fourier = new fftw1D(cnfg);
 
@@ -158,10 +158,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		uf *= f;
     	}
 
-        double step = 0.0004;
+        double step = 0.0001;
 
         //evolution
-        for(int langevin = 0; langevin < 100; langevin++){
+        for(int langevin = 0; langevin < 400; langevin++){
 
 		const clock_t begin_time = std::clock();
 

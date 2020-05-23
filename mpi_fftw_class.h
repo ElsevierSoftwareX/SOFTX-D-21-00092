@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 
-#include <complex.h>
+#include <complex>
 
 #include "su3_complex.h"
 #include "su3_matrix.h"
@@ -275,6 +275,7 @@ if( dir ){
 
 
 for(k = 0; k < t; k++){
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
                         data_local[i*Nyl+j][0] = f->u[k][i*Nyl+j].real(); //data_global[(i+pos_x*Nxl)*N1+j][0];
@@ -289,9 +290,10 @@ for(k = 0; k < t; k++){
                 fftw_mpi_execute_dft(planK2X, data_local, data_local);
         }
 
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
-                        f->u[k][i*Nyl+j] = (data_local[i*Nyl+j][0] +I*data_local[i*Nyl+j][1])*scale_after_fft;
+                        f->u[k][i*Nyl+j] = std::complex<double>((data_local[i*Nyl+j][0], data_local[i*Nyl+j][1])*scale_after_fft);
 		}
         }
 
