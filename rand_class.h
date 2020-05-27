@@ -26,11 +26,13 @@ class rand_class{
 
 	rand_class(mpi_class *mpi, config *cnfg){
 
-	rgenerator.seed(cnfg->seed + mpi->getRank());
+	rgenerator.seed(cnfg->seed + 64*mpi->getRank() + omp_get_thread_num());
 
 	}
 
-	double get(){
+	
+
+double get(){
 	
 		return distribution(rgenerator);
 	

@@ -8,8 +8,6 @@
 
 #include <mpi.h>
 
-#include <mpi.h>
-
 class momenta {
 
 private:

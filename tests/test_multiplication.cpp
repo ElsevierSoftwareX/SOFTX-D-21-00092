@@ -112,7 +112,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	uf.trace(corr);
 
-    	corr_global->allgather(corr);	
+    	corr_global->allgather(corr, mpi);	
 
 	//store stat in the accumulator
 	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
@@ -131,7 +131,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
 	sum += **it;
 
-    sum.printDebug(1.0/(pow(3.0,4.0)*pow(3.0,4.0)*3.0)/3.0/accumulator.size());
+    sum.printDebug(1.0/(pow(3.0,4.0)*pow(3.0,4.0)*3.0)/3.0/accumulator.size(), mpi);
 
 
     printf("Expected result: 1 on each site\n");

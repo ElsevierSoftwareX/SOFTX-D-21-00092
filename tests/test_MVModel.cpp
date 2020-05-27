@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 6400;
+    cnfg->stat = 2000;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -115,7 +115,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	uf.average(corr);
 
-    	corr_global->allgather(corr);	
+    	corr_global->allgather(corr, mpi);	
 
 //	corr_global->average_and_symmetrize();
 
@@ -142,8 +142,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	sum_err += (**it)*(**it);
     }
 
-    sum.printDebug(1.0/accumulator.size());
-    sum_err.printDebug(1.0/accumulator.size());
+    sum.printDebug(1.0/accumulator.size(), mpi);
+//    sum_err.printDebug(1.0/accumulator.size());
 
 
     printf("Expected result: should be small on each site\n");

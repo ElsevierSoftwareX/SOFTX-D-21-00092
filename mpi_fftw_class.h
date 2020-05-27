@@ -38,6 +38,7 @@ class fftw {
     fftw_plan planX2K;
     fftw_plan planK2X;
     fftw_complex *data_local;
+    fftw_complex *data_localb;
 
     ptrdiff_t alloc_local, local_n0, local_n0_start;
 
@@ -46,12 +47,16 @@ class fftw {
     fftw(config *cnfg){
 
 
+	int nthreads = 6;
+
         fftw_init_threads();
         fftw_mpi_init();
 
-	printf("FFTW can be run with %i threads; running with 4 threads instead\n", omp_get_max_threads());
+	printf("FFTW can be run with %i threads; running with %i threads instead\n", omp_get_max_threads(), nthreads);
 
-        fftw_plan_with_nthreads(4);
+        fftw_plan_with_nthreads(nthreads);
+
+	printf("FFTW plan setup with %i threads created\n", nthreads);
 
         Nxl = cnfg->Nxl;
         Nyl = cnfg->Nyl;
@@ -128,6 +133,7 @@ class fftw1D : public fftw {
     	planK2X = fftw_mpi_plan_dft_1d(N1, data_local, data_local, row_comm,
                                 FFTW_BACKWARD, FFTW_ESTIMATE);    
 
+	return 1;
     }
 
     template<class T, int t> int execute1D(lfield<T,t>* f, int dir){
@@ -236,19 +242,30 @@ class fftw2D : public fftw {
 
     int init2D(void){
 
+	printf("FFTW2D: alloc_local\n");
+
         /* get local data size and allocate */
         alloc_local = fftw_mpi_local_size_2d(N0, N1, MPI_COMM_WORLD,
                                          &local_n0, &local_n0_start);
 
+	printf("FFTW2D: data_local\n");
+
         data_local = fftw_alloc_complex(alloc_local);
+        data_localb = fftw_alloc_complex(alloc_local);
+
+	printf("FFTW2D: planX2K\n");
 
         /* create plan for in-place forward DFT */
         planX2K = fftw_mpi_plan_dft_2d(N0, N1, data_local, data_local, MPI_COMM_WORLD,
                                 FFTW_FORWARD, FFTW_ESTIMATE);
 
-        planK2X = fftw_mpi_plan_dft_2d(N0, N1, data_local, data_local, MPI_COMM_WORLD,
+	printf("FFTW2D: planK2X\n");
+
+        planK2X = fftw_mpi_plan_dft_2d(N0, N1, data_localb, data_localb, MPI_COMM_WORLD,
                                 FFTW_BACKWARD, FFTW_ESTIMATE);
 
+	
+	return 1;
     }
 
 template<class T, int t> int execute2D(lfield<T,t>* f, int dir){
@@ -297,7 +314,7 @@ for(k = 0; k < t; k++){
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
-                        f->u[k][i*Nyl+j] = std::complex<double>((data_local[i*Nyl+j][0], data_local[i*Nyl+j][1])*scale_after_fft);
+                        f->u[k][i*Nyl+j] = std::complex<double>(data_local[i*Nyl+j][0]*scale_after_fft, data_local[i*Nyl+j][1]*scale_after_fft);
 		}
         }
 

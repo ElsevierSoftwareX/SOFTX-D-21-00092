@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 128;
+    cnfg->stat = 36;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -50,19 +50,31 @@ int main(int argc, char *argv[]) {
 
     mpi->mpi_exchange_groups();
 
+    printf("MOMTABLE\n");
+
     momenta* momtable = new momenta(cnfg, mpi);
+
+    printf("MOMTABLE->SET\n");
 
     momtable->set();
 
+    printf("RAND_CLASS\n");
+
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.24, 50);
+    printf("MVModel\n");
 
-    fftw1D* fourier = new fftw1D(cnfg);
+    MV_class* MVmodel = new MV_class(1.0, 0.03, 50);
+
+//    fftw1D* fourier = new fftw1D(cnfg);
+
+    printf("FFTW2\n");
 
     fftw2D* fourier2 = new fftw2D(cnfg);
 
-    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+//    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+
+    printf("FFTW INIT\n");
 
     fourier2->init2D();    
 
@@ -161,8 +173,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		xi_local_x.setToZero();
 		xi_local_y.setToZero();
 
-                xi_local_x.setGaussian(random_generator,1);
-                xi_local_y.setGaussian(random_generator,2);
+                xi_local_x.setGaussian(mpi, cnfg);
+                xi_local_y.setGaussian(mpi, cnfg);
 
                 fourier2->execute2D(&xi_local_x, 1);
                 fourier2->execute2D(&xi_local_y, 1);
@@ -249,7 +261,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     delete MVmodel;
 
-    delete fourier;
+    delete fourier2;
 
     delete mpi;
 

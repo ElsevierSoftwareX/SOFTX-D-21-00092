@@ -22,6 +22,10 @@
 #include "momenta.h"
 #include "positions.h"
 
+#include <random>
+#include <time.h>
+#include <thread>
+
 template<class T, int t> class field {
 
 	public:
@@ -216,7 +220,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setMVModel(MV_class* MVconfig, rand_class* rr);
 		int setUnitModel(rand_class* rr);
 
-		int setGaussian(rand_class* rr, int s);
+		int setGaussian(mpi_class* rr, config* cnfg);
 
 		int solvePoisson(double mass, double g, momenta* momtable);
 
@@ -246,7 +250,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int print(momenta* mom, double x, mpi_class* mpi);
 
 		int printDebug();
-		int printDebug(double x);
+		int printDebug(double x, mpi_class* mpi);
 		int printDebugRadial(double x);
 
 
@@ -765,7 +769,7 @@ template<class T, int t> int lfield<T,t>::setUnitModel(rand_class* rr){
 	// 3 4 5
 	// 6 7 8
 
-	#pragma omp parallel for simd default(shared)
+//	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 
@@ -791,7 +795,7 @@ return 1;
 }
 
 
-template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr, int s){
+template<class T, int t> int lfield<T,t>::setGaussian(mpi_class* mpi, config* cnfg){
 
 	if(t == 9){
 
@@ -801,15 +805,35 @@ template<class T, int t> int lfield<T,t>::setGaussian(rand_class* rr, int s){
 	// 3 4 5
 	// 6 7 8
 
-//	#pragma omp parallel for simd default(shared)
+        //rand_class* rr = new rand_class(mpi,cnfg);
+
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
+
+		static __thread std::ranlux24* generator = nullptr;
+	        if (!generator){
+		  	 std::hash<std::thread::id> hasher;
+			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+		}
+    		std::normal_distribution<double> distribution{0.0,1.0};
+    		//return distribution(*generator);
+
+//        std::ranlux24_base rgenerator;
+//        std::uniform_real_distribution<double> distribution{0.0,1.0};
+//
+//        rand_class(mpi_class *mpi, config *cnfg){
+//
+//        rgenerator.seed(cnfg->seed + 64*mpi->getRank() + omp_get_thread_num());
+//
+//        }
 
 
 	    double n[8];
 
 	    for(int k = 0; k < 8; k++)
-                	n[k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
-		
+                	n[k] = distribution(*generator); //sqrt( -2.0 * log( EPS + distribution(*generator) ) ) * cos( distribution(*generator) * 2.0 * M_PI);
+//                	n[k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+	
    	    //these are the LAMBDAs and not the generators t^a = lambda/2.
 
             //lambda_nr(1)%su3(1,2) =  runit
@@ -1687,7 +1711,7 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom, double x, mpi_clas
       
 			if( fabs(xx + mpi->getPosX()*Nxl - yy - mpi->getPosY()*Nyl) <= 4 ){
  
-				printf("%f %e %e\n", sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[0][i].real()), x*(mom->phat2(i))*(this->u[0][i].imag()));
+				printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[0][i].real()), x*(mom->phat2(i))*(this->u[0][i].imag()));
 
 			}
 		}
@@ -1710,14 +1734,14 @@ template<class T, int t> int lfield<T,t>::printDebug(){
 return 1;
 }
 
-template<class T, int t> int lfield<T,t>::printDebug(double x){
+template<class T, int t> int lfield<T,t>::printDebug(double x, mpi_class* mpi){
 
 	for(int xx = 0; xx < Nxl; xx++){
-		for(int yy = 0; yy < Nxl; yy++){
+		for(int yy = 0; yy < Nyl; yy++){
 
 			int i = xx*Nyl+yy;
        
-			printf("%i %i %f %f\n",xx, yy, x*(this->u[0][i].real()), x*(this->u[0][i].imag()));
+			printf("%i %i %f %f\n",xx+mpi->getPosX()*Nxl, yy+mpi->getPosY()*Nyl, x*(this->u[0][i].real()), x*(this->u[0][i].imag()));
 		}
 	}
 

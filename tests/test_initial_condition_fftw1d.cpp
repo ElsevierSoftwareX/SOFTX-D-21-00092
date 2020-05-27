@@ -142,7 +142,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     
 	uf.trace(corr);
 
-    	corr_global->allgather(corr);	
+    	corr_global->allgather(corr, mpi);	
 
    	corr_global->average_and_symmetrize();
 
@@ -163,7 +163,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
 	sum += **it;
 
-    sum.print(momtable, 1.0/3.0/accumulator.size());
+    sum.print(momtable, 1.0/3.0/accumulator.size(),mpi);
 
 
 //-------------------------------------------------------

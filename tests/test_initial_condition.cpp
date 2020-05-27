@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 10;
+    cnfg->stat = 100;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -55,13 +55,13 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.48, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.24, 50);
 
-    fftw1D* fourier = new fftw1D(cnfg);
+//    fftw1D* fourier = new fftw1D(cnfg);
 
     fftw2D* fourier2 = new fftw2D(cnfg);
 
-    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+//    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
 
     fourier2->init2D();    
 
@@ -142,7 +142,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     
 	uf.trace(corr);
 
-    	corr_global->allgather(corr);	
+    	corr_global->allgather(corr, mpi);	
 
    	corr_global->average_and_symmetrize();
 
@@ -163,7 +163,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
 	sum += **it;
 
-    sum.print(momtable, 1.0/3.0/accumulator.size());
+    sum.print(momtable, 1.0/3.0/accumulator.size(),mpi);
 
 
 //-------------------------------------------------------
@@ -178,7 +178,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     delete MVmodel;
 
-    delete fourier;
+    delete fourier2;
 
     delete mpi;
 

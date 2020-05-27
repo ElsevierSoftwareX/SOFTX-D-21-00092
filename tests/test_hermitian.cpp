@@ -125,7 +125,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	uf.trace(corr);
 
-    	corr_global->allgather(corr);	
+    	corr_global->allgather(corr, mpi);	
 
 	corr_global->average_and_symmetrize();
 
@@ -147,7 +147,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	sum += **it;
     }
 
-    sum.printDebug(1.0/3.0/accumulator.size());
+    sum.printDebug(1.0/3.0/accumulator.size(), mpi);
 
     printf("Expected result: should be 1 on each site\n");
 
