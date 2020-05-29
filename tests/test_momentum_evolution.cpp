@@ -146,7 +146,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     	for(int i = 0; i < MVmodel->Ny_parameter; i++){
 	
-		f.setToZero();
+		//f.setToZero();
 
 		f.setMVModel(MVmodel, random_generator);
 
@@ -156,7 +156,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		fourier2->execute2D(&f,0);
 
-		f.exponentiate();
+		//f.exponentiate();
 
 		uf *= f;
     	}
@@ -170,8 +170,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
                 printf("Performing evolution step no. %i\n", langevin);
 
-		xi_local_x.setToZero();
-		xi_local_y.setToZero();
+		//xi_local_x.setToZero();
+		//xi_local_y.setToZero();
 
                 xi_local_x.setGaussian(mpi, cnfg);
                 xi_local_y.setGaussian(mpi, cnfg);

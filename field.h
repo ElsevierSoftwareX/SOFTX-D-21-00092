@@ -306,6 +306,8 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator*= ( const lfield<T,t
 					A.m[k] = this->u[k][i];
 					B.m[k] = f.u[k][i];
 				}
+
+		                B.exponentiate(1.0);
 		
 				C = A*B;
 
@@ -684,10 +686,22 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 //	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
+                static __thread std::ranlux24* generator = nullptr;
+                if (!generator){
+                         std::hash<std::thread::id> hasher;
+                         generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+                }
+                std::normal_distribution<double> distribution{0.0, MVconfig->g_parameter * MVconfig->mu_parameter / sqrt(MVconfig->Ny_parameter) };
+
+
+	    //set to zero
+            for(int j = 0; j < t; j++)
+                this->u[j][i] = 0.0;
+
 	        double n[8];
 
 		for(int k = 0; k < 8; k++){
-	         	n[k] = sqrt( pow(MVconfig->g_parameter,2.0) * pow(MVconfig->mu_parameter,2.0) / MVconfig->Ny_parameter ) * sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+	         	n[k] = distribution(*generator); //sqrt( pow(MVconfig->g_parameter,2.0) * pow(MVconfig->mu_parameter,2.0) / MVconfig->Ny_parameter ) * sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
 		}
 
 	//these are the LAMBDAs and not the generators t^a = lambda/2.
@@ -826,6 +840,10 @@ template<class T, int t> int lfield<T,t>::setGaussian(mpi_class* mpi, config* cn
 //        rgenerator.seed(cnfg->seed + 64*mpi->getRank() + omp_get_thread_num());
 //
 //        }
+
+	    //set to zero
+	    for(int j = 0; j < t; j++)
+		this->u[j][i] = 0.0;
 
 
 	    double n[8];
