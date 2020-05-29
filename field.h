@@ -1795,4 +1795,263 @@ return 1;
 }
 
 
+template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* uxiulocal_y, lfield<T,t>* uf, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y){
+
+//                uf_hermitian = uf.hermitian();
+//
+//                uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
+//              uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
+//
+//                delete uf_hermitian;
+
+        #pragma omp parallel for simd default(shared)
+        for(int i = 0; i < uf->Nxl*uf->Nyl; i++){
+
+                su3_matrix<double> A,B,C,D,E,F;
+
+                D.m[0] = std::conj(uf->u[0][i]);
+                D.m[1] = std::conj(uf->u[3][i]);
+                D.m[2] = std::conj(uf->u[6][i]);
+                D.m[3] = std::conj(uf->u[1][i]);
+                D.m[4] = std::conj(uf->u[4][i]);
+                D.m[5] = std::conj(uf->u[7][i]);
+                D.m[6] = std::conj(uf->u[2][i]);
+                D.m[7] = std::conj(uf->u[5][i]);
+                D.m[8] = std::conj(uf->u[8][i]);
+
+                for(int k = 0; k < t; k++){
+			A.m[k] = uf->u[k][i];
+	                B.m[k] = xi_local_x->u[k][i];
+        	        C.m[k] = xi_local_y->u[k][i];
+		}
+
+		E = A * B * D;
+		F = A * C * D;
+
+                for(int k = 0; k < t; k++){
+ 	              	uxiulocal_x->u[k][i] = E.m[k];
+                	uxiulocal_y->u[k][i] = F.m[k];
+                }
+	}
+
+
+return 1;
+}
+
+template<class T, int t> int prepare_B_local(lfield<T,t>* B_local, lfield<T,t>* uxiulocal_x, lfield<T,t>* uxiulocal_y, lfield<T,t>* kernel_pbarx, lfield<T,t>* kernel_pbary){
+
+                //uxiulocal_x = kernel_pbarx * uxiulocal_x;
+                //uxiulocal_y = kernel_pbary * uxiulocal_y;
+
+                //B_local = uxiulocal_x + uxiulocal_y;
+
+        #pragma omp parallel for simd default(shared)
+        for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
+
+                su3_matrix<double> A,B,C,D,E,F;
+
+                for(int k = 0; k < t; k++){
+			A.m[k] = kernel_pbarx->u[k][i];
+			B.m[k] = kernel_pbary->u[k][i];
+
+	                C.m[k] = uxiulocal_x->u[k][i];
+        	        D.m[k] = uxiulocal_y->u[k][i];
+		}
+
+		E = A * C + B * D;
+
+                for(int k = 0; k < t; k++){
+ 	              	B_local->u[k][i] = E.m[k];
+                }
+	}
+
+return 1;
+}
+
+
+template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lfield<T,t>* A_local, double step){
+
+//              A_local.exponentiate(sqrt(step));
+
+//              B_local.exponentiate(-sqrt(step));
+
+//              uf = B_local * uf * A_local;
+
+        #pragma omp parallel for simd default(shared)
+        for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
+
+                su3_matrix<double> A,B,C,D,E,F;
+
+                for(int k = 0; k < t; k++){
+                        A.m[k] = uf->u[k][i];
+                        B.m[k] = -sqrt(step)*B_local->u[k][i];
+                        C.m[k] = sqrt(step)*A_local->u[k][i];
+                }
+
+                B.exponentiate(-1.0);
+                C.exponentiate(-1.0);
+
+                E = B * A * C;
+
+                for(int k = 0; k < t; k++){
+                        uf->u[k][i] = E.m[k];
+                }
+        }
+
+return 1;
+}
+
+template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, lfield<T,t>* kernel_pbarx, lfield<T,t>* kernel_pbary){
+
+//              xi_local_x_tmp = kernel_pbarx * xi_local_x;
+//              xi_local_y_tmp = kernel_pbary * xi_local_y;
+
+//              A_local = xi_local_x_tmp + xi_local_y_tmp;
+
+        #pragma omp parallel for simd default(shared)
+        for(int i = 0; i < A_local->Nxl*A_local->Nyl; i++){
+
+                su3_matrix<double> A,B,C,D,E,F;
+
+                for(int k = 0; k < t; k++){
+			A.m[k] = kernel_pbarx->u[k][i];
+			B.m[k] = kernel_pbary->u[k][i];
+
+	                C.m[k] = xi_local_x->u[k][i];
+        	        D.m[k] = xi_local_y->u[k][i];
+		}
+
+		E = A * C + B * D;
+
+                for(int k = 0; k < t; k++){
+ 	              	A_local->u[k][i] = E.m[k];
+                }
+	}
+
+return 1;
+}
+
+//              xi_local_x.setGaussian(mpi, cnfg);
+//              xi_local_y.setGaussian(mpi, cnfg);
+
+template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, mpi_class* mpi, config* cnfg){
+
+	if(t == 9){
+
+	const double EPS = 10e-12;
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+        //rand_class* rr = new rand_class(mpi,cnfg);
+
+	#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < xi_local_x->Nxl*xi_local_x->Nyl; i++){
+
+		static __thread std::ranlux24* generator = nullptr;
+	        if (!generator){
+		  	 std::hash<std::thread::id> hasher;
+			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+		}
+    		std::normal_distribution<double> distribution{0.0,1.0};
+    		//return distribution(*generator);
+
+//        std::ranlux24_base rgenerator;
+//        std::uniform_real_distribution<double> distribution{0.0,1.0};
+//
+//        rand_class(mpi_class *mpi, config *cnfg){
+//
+//        rgenerator.seed(cnfg->seed + 64*mpi->getRank() + omp_get_thread_num());
+//
+//        }
+
+	    //set to zero
+	    for(int j = 0; j < t; j++){
+		xi_local_x->u[j][i] = 0.0;
+		xi_local_y->u[j][i] = 0.0;
+	    }
+
+	    double n[8];
+	    double m[8];
+
+	    for(int k = 0; k < 8; k++){
+                	n[k] = distribution(*generator);
+                	m[k] = distribution(*generator);
+	    }
+//sqrt( -2.0 * log( EPS + distribution(*generator) ) ) * cos( distribution(*generator) * 2.0 * M_PI);
+//                	n[k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+	
+   	    //these are the LAMBDAs and not the generators t^a = lambda/2.
+
+            //lambda_nr(1)%su3(1,2) =  runit
+            //lambda_nr(1)%su3(2,1) =  runit
+		xi_local_x->u[1][i] += std::complex<double>(n[0],0.0);
+		xi_local_x->u[3][i] += std::complex<double>(n[0],0.0);
+		xi_local_y->u[1][i] += std::complex<double>(m[0],0.0);
+		xi_local_y->u[3][i] += std::complex<double>(m[0],0.0);
+
+            //lambda_nr(2)%su3(1,2) = -iunit
+            //lambda_nr(2)%su3(2,1) =  iunit
+		xi_local_x->u[1][i] += std::complex<double>(0.0,n[1]);
+		xi_local_x->u[3][i] -= std::complex<double>(0.0,n[1]);
+		xi_local_y->u[1][i] += std::complex<double>(0.0,m[1]);
+		xi_local_y->u[3][i] -= std::complex<double>(0.0,m[1]);
+
+            //lambda_nr(3)%su3(1,1) =  runit
+            //lambda_nr(3)%su3(2,2) = -runit
+		xi_local_x->u[0][i] += std::complex<double>(n[2],0.0);
+		xi_local_x->u[4][i] -= std::complex<double>(n[2],0.0);
+		xi_local_y->u[0][i] += std::complex<double>(m[2],0.0);
+		xi_local_y->u[4][i] -= std::complex<double>(m[2],0.0);
+
+            //lambda_nr(4)%su3(1,3) =  runit
+            //lambda_nr(4)%su3(3,1) =  runit
+		xi_local_x->u[2][i] += std::complex<double>(n[3],0.0);
+		xi_local_x->u[6][i] += std::complex<double>(n[3],0.0);
+		xi_local_y->u[2][i] += std::complex<double>(m[3],0.0);
+		xi_local_y->u[6][i] += std::complex<double>(m[3],0.0);
+
+            //lambda_nr(5)%su3(1,3) = -iunit
+            //lambda_nr(5)%su3(3,1) =  iunit
+		xi_local_x->u[2][i] += std::complex<double>(0.0,n[4]);
+		xi_local_x->u[6][i] -= std::complex<double>(0.0,n[4]);
+		xi_local_y->u[2][i] += std::complex<double>(0.0,m[4]);
+		xi_local_y->u[6][i] -= std::complex<double>(0.0,m[4]);
+
+            //lambda_nr(6)%su3(2,3) =  runit
+            //lambda_nr(6)%su3(3,2) =  runit
+		xi_local_x->u[5][i] += std::complex<double>(n[5],0.0);
+		xi_local_x->u[7][i] += std::complex<double>(n[5],0.0);
+		xi_local_y->u[5][i] += std::complex<double>(m[5],0.0);
+		xi_local_y->u[7][i] += std::complex<double>(m[5],0.0);
+
+            //lambda_nr(7)%su3(2,3) = -iunit
+            //lambda_nr(7)%su3(3,2) =  iunit
+		xi_local_x->u[5][i] += std::complex<double>(0.0,n[6]);
+		xi_local_x->u[7][i] -= std::complex<double>(0.0,n[6]);
+		xi_local_y->u[5][i] += std::complex<double>(0.0,m[6]);
+		xi_local_y->u[7][i] -= std::complex<double>(0.0,m[6]);
+
+            //lambda_nr(8)%su3(1,1) =  cst8
+            //lambda_nr(8)%su3(2,2) =  cst8
+            //lambda_nr(8)%su3(3,3) =  -(two*cst8)
+		xi_local_x->u[0][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		xi_local_x->u[4][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		xi_local_x->u[8][i] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+		xi_local_y->u[0][i] += std::complex<double>(m[7]/sqrt(3.0),0.0);
+		xi_local_y->u[4][i] += std::complex<double>(m[7]/sqrt(3.0),0.0);
+		xi_local_y->u[8][i] += std::complex<double>(-2.0*m[7]/sqrt(3.0),0.0);
+
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setGaussian function\n");
+
+	}
+
+
+return 1;
+}
 #endif

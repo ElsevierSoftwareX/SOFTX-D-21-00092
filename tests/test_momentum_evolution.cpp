@@ -173,44 +173,54 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		//xi_local_x.setToZero();
 		//xi_local_y.setToZero();
 
-                xi_local_x.setGaussian(mpi, cnfg);
-                xi_local_y.setGaussian(mpi, cnfg);
+//              xi_local_x.setGaussian(mpi, cnfg);
+//              xi_local_y.setGaussian(mpi, cnfg);
+
+		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
 
                 fourier2->execute2D(&xi_local_x, 1);
                 fourier2->execute2D(&xi_local_y, 1);
 
-                xi_local_x_tmp = kernel_pbarx * xi_local_x;
-                xi_local_y_tmp = kernel_pbary * xi_local_y;
+//              xi_local_x_tmp = kernel_pbarx * xi_local_x;
+//              xi_local_y_tmp = kernel_pbary * xi_local_y;
 
-                A_local = xi_local_x_tmp + xi_local_y_tmp;
+//              A_local = xi_local_x_tmp + xi_local_y_tmp;
+
+		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, &kernel_pbarx, &kernel_pbary);
 
                 fourier2->execute2D(&A_local, 0);
                 fourier2->execute2D(&xi_local_x, 0);
                 fourier2->execute2D(&xi_local_y, 0);
 
-                uf_hermitian = uf.hermitian();
+//              uf_hermitian = uf.hermitian();
+//
+//              uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
+//		uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
+//
+//              delete uf_hermitian;
 
-                uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
-		uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
-
-                delete uf_hermitian;
+		uxiulocal(&uxiulocal_x, &uxiulocal_y, &uf, &xi_local_x, &xi_local_y);
 
                 fourier2->execute2D(&uxiulocal_x, 1);
                 fourier2->execute2D(&uxiulocal_y, 1);
 
-                uxiulocal_x = kernel_pbarx * uxiulocal_x;
-                uxiulocal_y = kernel_pbary * uxiulocal_y;
+                //uxiulocal_x = kernel_pbarx * uxiulocal_x;
+                //uxiulocal_y = kernel_pbary * uxiulocal_y;
 
-                B_local = uxiulocal_x + uxiulocal_y;
+                //B_local = uxiulocal_x + uxiulocal_y;
+
+		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
 
                 fourier2->execute2D(&B_local, 0);
 	        
- 		A_local.exponentiate(sqrt(step));
+// 		A_local.exponentiate(sqrt(step));
 
-        	B_local.exponentiate(-sqrt(step));
+//        	B_local.exponentiate(-sqrt(step));
 
-        	uf = B_local * uf * A_local;
-		
+//        	uf = B_local * uf * A_local;
+	
+		update_uf(&uf, &B_local, &A_local, step);
+	
 		std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
 	}
 
