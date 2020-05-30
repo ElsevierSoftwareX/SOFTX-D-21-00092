@@ -30,7 +30,7 @@ template<class T, int t> class field {
 
 	public:
 
-		std::complex<T>** u;		
+		std::complex<T>* u;		
 
 		int Nxl, Nyl;
 
@@ -45,16 +45,16 @@ template<class T, int t> field<T,t>::field(int NNx, int NNy) {
 
 	int i;
 
-	u = (std::complex<T>**)malloc(t*sizeof(std::complex<T>*));
+	u = (std::complex<T>*)malloc(t*NNx*NNy*sizeof(std::complex<T>));
 
-	for(i = 0; i < t; i++){
+//	for(i = 0; i < t; i++){
+//
+//		u[i] = (std::complex<T>*)malloc(NNx*NNy*sizeof(std::complex<T>));
+//
+	for(int j = 0; j < t*NNx*NNy; j++)
+			u[j] = 0.0;
 
-		u[i] = (std::complex<T>*)malloc(NNx*NNy*sizeof(std::complex<T>));
-
-		for(int j = 0; j < NNx*NNy; j++)
-			u[i][j] = 0.0;
-
-	}
+//	}
 
 	Nxl = NNx;
 	Nyl = NNy;
@@ -112,10 +112,10 @@ template<class T, int t> class gfield: public field<T,t> {
 		lfield<T,t>* reduce(int NNx, int NNy, mpi_class* mpi);
 
 		int setToZero(void){
-			for(int i = 0; i < Nxg*Nyg; i ++){
-				for(int k = 0; k < t; k++){
-					this->u[k][i] = 0.0;
-				}
+			for(int i = 0; i < t*Nxg*Nyg; i ++){
+//				for(int k = 0; k < t; k++){
+					this->u[i] = 0.0;
+//				}
 			}
 		return 1;
 		}
@@ -128,11 +128,11 @@ template<class T, int t> gfield<T,t>::~gfield() {
 
 	int i;
 
-	for(i = 0; i < t; i++){
-
-		free(this->u[i]);
-
-	}
+//	for(i = 0; i < t; i++){
+//
+//		free(this->u[i]);
+//
+//	}
 
 	free(this->u);
 
@@ -174,10 +174,10 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setToZero(void){
 
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < Nxl*Nyl; i ++){
-				for(int k = 0; k < t; k++){
-					this->u[k][i] = 0.0;
-				}
+			for(int i = 0; i < t*Nxl*Nyl; i ++){
+//				for(int k = 0; k < t; k++){
+					this->u[i] = 0.0;
+//				}
 			}
 		return 1;
 		}
@@ -185,26 +185,26 @@ template<class T, int t> class lfield: public field<T,t> {
 
 		int setToUnit(void){
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < Nxl*Nyl; i ++){
-				this->u[0][i] = 1.0;
-				this->u[4][i] = 1.0;
-				this->u[8][i] = 1.0;
+			for(int i = 0; i < t*Nxl*Nyl; i+=t){
+				this->u[i+0] = 1.0;
+				this->u[i+4] = 1.0;
+				this->u[i+8] = 1.0;
 
-				this->u[1][i] = 0.0;
-				this->u[2][i] = 0.0;
-				this->u[3][i] = 0.0;
-				this->u[5][i] = 0.0;
-				this->u[6][i] = 0.0;
-				this->u[7][i] = 0.0;
+				this->u[i+1] = 0.0;
+				this->u[i+2] = 0.0;
+				this->u[i+3] = 0.0;
+				this->u[i+5] = 0.0;
+				this->u[i+6] = 0.0;
+				this->u[i+7] = 0.0;
 			}
 		return 1;
 		}
 		int setToOne(void){
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < Nxl*Nyl; i ++){
-				for(int k = 0; k < t; k++){
-					this->u[k][i] = 1.0;
-				}
+			for(int i = 0; i < t*Nxl*Nyl; i ++){
+//				for(int k = 0; k < t; k++){
+					this->u[i] = 1.0;
+//				}
 			}
 		return 1;
 		}
@@ -215,16 +215,16 @@ template<class T, int t> class lfield: public field<T,t> {
 
 					for(int k = 0; k < t; k++){
 						if( ix < Nxl/2 && iy < Nyl/2 ){
-							this->u[k][ix*Nyl + iy] = ((ix)%Nxl)*((ix)%Nxl) + ((iy)%Nyl)*((iy)%Nyl);
+							this->u[(ix*Nyl + iy)*t+k] = ((ix)%Nxl)*((ix)%Nxl) + ((iy)%Nyl)*((iy)%Nyl);
 						}
 						if( ix > Nxl/2 && iy < Nyl/2 ){
-							this->u[k][ix*Nyl + iy] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy)%Nyl)*((iy)%Nyl);
+							this->u[(ix*Nyl + iy)*t+k] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy)%Nyl)*((iy)%Nyl);
 						}
 						if( ix < Nxl/2 && iy > Nyl/2 ){
-							this->u[k][ix*Nyl + iy] = ((ix)%Nxl)*((ix)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl);
+							this->u[(ix*Nyl + iy)*t+k] = ((ix)%Nxl)*((ix)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl);
 						}
 						if( ix > Nxl/2 && iy > Nyl/2 ){
-							this->u[k][ix*Nyl + iy] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl);
+							this->u[(ix*Nyl + iy)*t+k] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl);
 						}
 
 						//this->u[k][ix*Nyl + iy] = (ix-Nxl)*(ix-Nxl) + (iy-Nyl)*(iy-Nyl) + I*0.0;
@@ -278,11 +278,11 @@ template<class T, int t> lfield<T,t>::~lfield() {
 
 	int i;
 
-	for(i = 0; i < t; i++){
-
-		free(this->u[i]);
-
-	}
+//	for(i = 0; i < t; i++){
+//
+//		free(this->u[i]);
+//
+//	}
 
 	free(this->u);
 
@@ -297,7 +297,7 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator= ( const lfield<T,t>
 		
 				for(int k = 0; k < t; k++){
 
-					this->u[k][i] = f.u[k][i];
+					this->u[i*t+k] = f.u[i*t+k];
 				}
 			}
 
@@ -315,7 +315,7 @@ template<class T, int t> gfield<T,t>& gfield<T,t>::operator= ( const gfield<T,t>
 			for(int i = 0; i < f.Nxg*f.Nyg; i ++){
 				for(int k = 0; k < t; k++){
 
-					this->u[k][i] = f.u[k][i];
+					this->u[i*t+k] = f.u[i*t+k];
 				}
 			}
 
@@ -335,8 +335,8 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator*= ( const lfield<T,t
 
 				for(int k = 0; k < t; k++){
 
-					A.m[k] = this->u[k][i];
-					B.m[k] = f.u[k][i];
+					A.m[k] = this->u[i*t+k];
+					B.m[k] = f.u[i*t+k];
 				}
 
 		                B.exponentiate(1.0);
@@ -345,7 +345,7 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator*= ( const lfield<T,t
 
 				for(int k = 0; k < t; k++){
 
-					this->u[k][i] = C.m[k];
+					this->u[i*t+k] = C.m[k];
 				}
 			}
 
@@ -362,7 +362,7 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator+= ( const lfield<T,t
 			for(int i = 0; i < f.Nxl*f.Nyl; i++){
 				for(int k = 0; k < t; k++){
 
-					this->u[k][i] += f.u[k][i];
+					this->u[i*t+k] += f.u[i*t+k];
 				}
 			}
 
@@ -396,15 +396,15 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 
 //					printf("direction %i\n", k);
 
-					A.m[k] = f.u[k][i]; //this->u[k][i];
-					B.m[k] = g.u[k][i];
+					A.m[k] = f.u[i*t+k]; //this->u[k][i];
+					B.m[k] = g.u[i*t+k];
 				}
 		
 				C = A*B;
 
 				for(int k = 0; k < t; k++){
 
-					result.u[k][i] = C.m[k];
+					result.u[i*t+k] = C.m[k];
 				}
 			}
 
@@ -443,15 +443,15 @@ template<class T, int t> gfield<T,t> operator * ( const gfield<T,t> &f , const g
 
 //					printf("direction %i\n", k);
 
-					A.m[k] = f.u[k][i]; //this->u[k][i];
-					B.m[k] = g.u[k][i];
+					A.m[k] = f.u[i*t+k]; //this->u[k][i];
+					B.m[k] = g.u[i*t+k];
 				}
 		
 				C = A*B;
 
 				for(int k = 0; k < t; k++){
 
-					result.u[k][i] = C.m[k];
+					result.u[i*t+k] = C.m[k];
 				}
 			}
 
@@ -488,15 +488,15 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 		
 				for(int k = 0; k < t; k++){
 
-					A.m[k] = f.u[k][i];
-					B.m[k] = g.u[k][i];
+					A.m[k] = f.u[i*t+k];
+					B.m[k] = g.u[i*t+k];
 				}
 		
 				C = A+B;
 
 				for(int k = 0; k < t; k++){
 
-					result.u[k][i] = C.m[k];
+					result.u[i*t+k] = C.m[k];
 				}
 			}
 
@@ -534,15 +534,15 @@ template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gf
 
 				for(int k = 0; k < t; k++){
 
-					A.m[k] = f.u[k][i];
-					B.m[k] = g.u[k][i];
+					A.m[k] = f.u[i*t+k];
+					B.m[k] = g.u[i*t+k];
 				}
 		
 				C = A+B;
 
 				for(int k = 0; k < t; k++){
 
-					result.u[k][i] = C.m[k];
+					result.u[i*t+k] = C.m[k];
 				}
 			}
 
@@ -576,8 +576,8 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_cla
 		#pragma omp parallel for simd default(shared)
 		for(i = 0; i < ulocal->Nxl*ulocal->Nyl; i++){
 
-			data_local_re[i] = ulocal->u[k][i].real();
-			data_local_im[i] = ulocal->u[k][i].imag();
+			data_local_re[i] = ulocal->u[i*t+k].real();
+			data_local_im[i] = ulocal->u[i*t+k].imag();
 
 		}
 
@@ -602,7 +602,7 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_cla
 					//will only work for parallelization in x direction
 					int ii = (xx + kk*ulocal->Nxl)*Nyg + yy;
 
-					this->u[k][ii] = std::complex<double>(data_global_re[i+kk*local_volume], data_global_im[i+kk*local_volume]);
+					this->u[ii*t+k] = std::complex<double>(data_global_re[i+kk*local_volume], data_global_im[i+kk*local_volume]);
 					//this->u[k][i] = ulocal->u[k][i]; //data_global_re[i] + I*data_global_im[i];
 
 				}
@@ -636,7 +636,7 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
 	    bufor_receive_n = (double*) malloc(Nyl_buf*sizeof(double));
 
   	    for(yy = 0; yy < Nyl; yy++){
-		bufor_send_n[yy] = this->u[0][buf_pos(Nxl-1,yy)].real();
+		bufor_send_n[yy] = this->u[buf_pos(Nxl-1,yy)].real();
 	    }
 
 	    printf("X data exchange: rank %i sending to %i\n", mpi->getRank(), mpi->getXNeighbourNext());
@@ -646,14 +646,14 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
     	    MPI_Recv(bufor_receive_n, Nyl_buf, MPI_DOUBLE, mpi->getXNeighbourPrevious(), 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   	    for(yy = 0; yy < Nyl; yy++){
-		this->u[0][buf_pos_ex(0,yy)] = bufor_receive_n[yy];
+		this->u[buf_pos_ex(0,yy)] = bufor_receive_n[yy];
 	    }
 
    	    bufor_send_p = (double*) malloc(Nyl_buf*sizeof(double));
 	    bufor_receive_p = (double*) malloc(Nyl_buf*sizeof(double));
 
 	    for(yy = 0; yy < Nyl; yy++){
-		bufor_send_p[yy] = this->u[0][buf_pos(0,yy)].real();
+		bufor_send_p[yy] = this->u[buf_pos(0,yy)].real();
 	    }
 	
  	    printf("X data exchange: rank %i sending to %i\n", mpi->getRank(), mpi->getXNeighbourPrevious());
@@ -663,7 +663,7 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
     	    MPI_Recv(bufor_receive_p, Nyl_buf, MPI_DOUBLE, mpi->getXNeighbourNext(), 12, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   	    for(yy = 0; yy < Nyl; yy++){
-		this->u[0][buf_pos_ex(Nxl+1,yy)] = bufor_receive_p[yy];
+		this->u[buf_pos_ex(Nxl+1,yy)] = bufor_receive_p[yy];
 	    }
     }
 
@@ -675,7 +675,7 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
 	    bufor_receive_n = (double*) malloc(Nxl_buf*sizeof(double));
 
   	    for(xx = 0; xx < Nxl; xx++){
-		bufor_send_n[xx] = this->u[0][buf_pos(xx,Nyl-1)].real();
+		bufor_send_n[xx] = this->u[buf_pos(xx,Nyl-1)].real();
 	    }
 
 	    printf("Y data exchange: rank %i sending to %i\n", mpi->getRank(), mpi->getYNeighbourNext());
@@ -685,14 +685,14 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
     	    MPI_Recv(bufor_receive_n, Nxl_buf, MPI_DOUBLE, mpi->getYNeighbourPrevious(), 13, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
             for(xx = 0; xx < Nxl; xx++){
-		this->u[0][buf_pos_ex(xx,0)] = bufor_receive_n[xx];
+		this->u[buf_pos_ex(xx,0)] = bufor_receive_n[xx];
 	    }
 
 	    bufor_send_p = (double*) malloc(Nxl_buf*sizeof(double));
 	    bufor_receive_p = (double*) malloc(Nxl_buf*sizeof(double));
 
 	    for(xx = 0; xx < Nxl; xx++){
-		bufor_send_p[xx] = this->u[0][buf_pos(xx,0)].real();
+		bufor_send_p[xx] = this->u[buf_pos(xx,0)].real();
 	    }
 	
  	    printf("Y data exchange: rank %i sending to %i\n", mpi->getRank(), mpi->getYNeighbourPrevious());
@@ -702,7 +702,7 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
     	    MPI_Recv(bufor_receive_p, Nxl_buf, MPI_DOUBLE, mpi->getYNeighbourNext(), 14, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   	    for(xx = 0; xx < Nxl; xx++){
-		this->u[0][buf_pos_ex(xx,Nyl+1)] = bufor_receive_p[xx];
+		this->u[buf_pos_ex(xx,Nyl+1)] = bufor_receive_p[xx];
 	    }
     }
 
@@ -728,7 +728,7 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
 	    //set to zero
             for(int j = 0; j < t; j++)
-                this->u[j][i] = 0.0;
+                this->u[i*t+j] = 0.0;
 
 	        double n[8];
 
@@ -744,53 +744,53 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
             //lambda_nr(1)%su3(1,2) =  runit
             //lambda_nr(1)%su3(2,1) =  runit
-		this->u[1][i] += std::complex<double>(n[0],0.0);
-		this->u[3][i] += std::complex<double>(n[0],0.0);
+		this->u[i*t+1] += std::complex<double>(n[0],0.0);
+		this->u[i*t+3] += std::complex<double>(n[0],0.0);
 
 
             //lambda_nr(2)%su3(1,2) = -iunit
             //lambda_nr(2)%su3(2,1) =  iunit
-		this->u[1][i] += std::complex<double>(0.0,n[1]);
-		this->u[3][i] -= std::complex<double>(0.0,n[1]);
+		this->u[i*t+1] += std::complex<double>(0.0,n[1]);
+		this->u[i*t+3] -= std::complex<double>(0.0,n[1]);
 
 
             //lambda_nr(3)%su3(1,1) =  runit
             //lambda_nr(3)%su3(2,2) = -runit
-		this->u[0][i] += std::complex<double>(n[2],0.0);
-		this->u[4][i] -= std::complex<double>(n[2],0.0);
+		this->u[i*t+0] += std::complex<double>(n[2],0.0);
+		this->u[i*t+4] -= std::complex<double>(n[2],0.0);
 
 
             //lambda_nr(4)%su3(1,3) =  runit
             //lambda_nr(4)%su3(3,1) =  runit
-		this->u[2][i] += std::complex<double>(n[3],0.0);
-		this->u[6][i] += std::complex<double>(n[3],0.0);
+		this->u[i*t+2] += std::complex<double>(n[3],0.0);
+		this->u[i*t+6] += std::complex<double>(n[3],0.0);
 
 
             //lambda_nr(5)%su3(1,3) = -iunit
             //lambda_nr(5)%su3(3,1) =  iunit
-		this->u[2][i] += std::complex<double>(0.0,n[4]);
-		this->u[6][i] -= std::complex<double>(0.0,n[4]);
+		this->u[i*t+2] += std::complex<double>(0.0,n[4]);
+		this->u[i*t+6] -= std::complex<double>(0.0,n[4]);
 
 
             //lambda_nr(6)%su3(2,3) =  runit
             //lambda_nr(6)%su3(3,2) =  runit
-		this->u[5][i] += std::complex<double>(n[5],0.0);
-		this->u[7][i] += std::complex<double>(n[5],0.0);
+		this->u[i*t+5] += std::complex<double>(n[5],0.0);
+		this->u[i*t+7] += std::complex<double>(n[5],0.0);
 
 
             //lambda_nr(7)%su3(2,3) = -iunit
             //lambda_nr(7)%su3(3,2) =  iunit
-		this->u[5][i] += std::complex<double>(0.0,n[6]);
-		this->u[7][i] -= std::complex<double>(0.0,n[6]);
+		this->u[i*t+5] += std::complex<double>(0.0,n[6]);
+		this->u[i*t+7] -= std::complex<double>(0.0,n[6]);
 
 
             //lambda_nr(8)%su3(1,1) =  cst8
             //lambda_nr(8)%su3(2,2) =  cst8
             //lambda_nr(8)%su3(3,3) =  -(two*cst8)
 
-		this->u[0][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		this->u[4][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		this->u[8][i] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+		this->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[i*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[i*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 	}
 
 //	fclose(f);
@@ -826,7 +826,7 @@ template<class T, int t> int lfield<T,t>::setUnitModel(rand_class* rr){
 //                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
 
 		for(int k = 0; k < 8; k++)
-                	this->u[k][i] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+                	this->u[i*t+k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
 		
 	}
 
@@ -875,7 +875,7 @@ template<class T, int t> int lfield<T,t>::setGaussian(mpi_class* mpi, config* cn
 
 	    //set to zero
 	    for(int j = 0; j < t; j++)
-		this->u[j][i] = 0.0;
+		this->u[i*t+j] = 0.0;
 
 
 	    double n[8];
@@ -888,53 +888,53 @@ template<class T, int t> int lfield<T,t>::setGaussian(mpi_class* mpi, config* cn
 
             //lambda_nr(1)%su3(1,2) =  runit
             //lambda_nr(1)%su3(2,1) =  runit
-		this->u[1][i] += std::complex<double>(n[0],0.0);
-		this->u[3][i] += std::complex<double>(n[0],0.0);
+		this->u[i*t+1] += std::complex<double>(n[0],0.0);
+		this->u[i*t+3] += std::complex<double>(n[0],0.0);
 
 
             //lambda_nr(2)%su3(1,2) = -iunit
             //lambda_nr(2)%su3(2,1) =  iunit
-		this->u[1][i] += std::complex<double>(0.0,n[1]);
-		this->u[3][i] -= std::complex<double>(0.0,n[1]);
+		this->u[i*t+1] += std::complex<double>(0.0,n[1]);
+		this->u[i*t+3] -= std::complex<double>(0.0,n[1]);
 
 
             //lambda_nr(3)%su3(1,1) =  runit
             //lambda_nr(3)%su3(2,2) = -runit
-		this->u[0][i] += std::complex<double>(n[2],0.0);
-		this->u[4][i] -= std::complex<double>(n[2],0.0);
+		this->u[i*t+0] += std::complex<double>(n[2],0.0);
+		this->u[i*t+4] -= std::complex<double>(n[2],0.0);
 
 
             //lambda_nr(4)%su3(1,3) =  runit
             //lambda_nr(4)%su3(3,1) =  runit
-		this->u[2][i] += std::complex<double>(n[3],0.0);
-		this->u[6][i] += std::complex<double>(n[3],0.0);
+		this->u[i*t+2] += std::complex<double>(n[3],0.0);
+		this->u[i*t+6] += std::complex<double>(n[3],0.0);
 
 
             //lambda_nr(5)%su3(1,3) = -iunit
             //lambda_nr(5)%su3(3,1) =  iunit
-		this->u[2][i] += std::complex<double>(0.0,n[4]);
-		this->u[6][i] -= std::complex<double>(0.0,n[4]);
+		this->u[i*t+2] += std::complex<double>(0.0,n[4]);
+		this->u[i*t+6] -= std::complex<double>(0.0,n[4]);
 
 
             //lambda_nr(6)%su3(2,3) =  runit
             //lambda_nr(6)%su3(3,2) =  runit
-		this->u[5][i] += std::complex<double>(n[5],0.0);
-		this->u[7][i] += std::complex<double>(n[5],0.0);
+		this->u[i*t+5] += std::complex<double>(n[5],0.0);
+		this->u[i*t+7] += std::complex<double>(n[5],0.0);
 
 
             //lambda_nr(7)%su3(2,3) = -iunit
             //lambda_nr(7)%su3(3,2) =  iunit
-		this->u[5][i] += std::complex<double>(0.0,n[6]);
-		this->u[7][i] -= std::complex<double>(0.0,n[6]);
+		this->u[i*t+5] += std::complex<double>(0.0,n[6]);
+		this->u[i*t+7] -= std::complex<double>(0.0,n[6]);
 
 
             //lambda_nr(8)%su3(1,1) =  cst8
             //lambda_nr(8)%su3(2,2) =  cst8
             //lambda_nr(8)%su3(3,3) =  -(two*cst8)
 
-		this->u[0][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		this->u[4][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		this->u[8][i] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+		this->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[i*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[i*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 	}
 
 	}else{
@@ -953,7 +953,7 @@ template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, m
 	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 		for(int k = 0; k < t; k++){
-			this->u[k][i] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass), 0.0);
+			this->u[i*t+k] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass), 0.0);
 		}
 	}
 
@@ -969,14 +969,14 @@ template<class T, int t > int lfield<T, t>::exponentiate(){
 
 		for(int k = 0; k < t; k++){
 
-			A.m[k] = this->u[k][i];
+			A.m[k] = this->u[i*t+k];
 		}
 		
 		A.exponentiate(1.0);
 
 		for(int k = 0; k < t; k++){
 
-			this->u[k][i] = A.m[k];
+			this->u[i*t+k] = A.m[k];
 		}
 
 	}
@@ -993,14 +993,14 @@ template<class T, int t> int lfield<T, t>::exponentiate(double s){
 
 		for(int k = 0; k < t; k++){
 
-			A.m[k] = s*(this->u[k][i]);
+			A.m[k] = s*(this->u[i*t+k]);
 		}
 		
 		A.exponentiate(-1.0);
 
 		for(int k = 0; k < t; k++){
 
-			this->u[k][i] = A.m[k];
+			this->u[i*t+k] = A.m[k];
 		}
 
 	}
@@ -1027,15 +1027,15 @@ template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
 
 		if( fabs(mom->phat2(i)) > 10e-9 ){
 
-			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarX(i)/mom->phat2(i));
-			this->u[4][i] = this->u[0][i];
-			this->u[8][i] = this->u[0][i];
+			this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarX(i)/mom->phat2(i));
+			this->u[i*t+4] = this->u[i*t+0];
+			this->u[i*t+8] = this->u[i*t+0];
 
 		}else{
 
-			this->u[0][i] = std::complex<double>(0.0, 0.0);
-			this->u[4][i] = this->u[0][i];
-			this->u[8][i] = this->u[0][i];
+			this->u[i*t+0] = std::complex<double>(0.0, 0.0);
+			this->u[i*t+4] = this->u[i*t+0];
+			this->u[i*t+8] = this->u[i*t+0];
 
 		}
 	}
@@ -1070,15 +1070,15 @@ template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 
 		if( fabs(mom->phat2(i)) > 10e-9 ){
 
-			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarY(i)/mom->phat2(i));
-			this->u[4][i] = this->u[0][i];
-			this->u[8][i] = this->u[0][i];
+			this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarY(i)/mom->phat2(i));
+			this->u[i*t+4] = this->u[i*t+0];
+			this->u[i*t+8] = this->u[i*t+0];
 
 		}else{
 
-			this->u[0][i] = std::complex<double>(0.0, 0.0);
-			this->u[4][i] = this->u[0][i];
-			this->u[8][i] = this->u[0][i];
+			this->u[i*t+0] = std::complex<double>(0.0, 0.0);
+			this->u[i*t+4] = this->u[i*t+0];
+			this->u[i*t+8] = this->u[i*t+0];
 
 		}
 	}
@@ -1121,15 +1121,15 @@ template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(mom
 
 			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
 
-			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
-			this->u[4][i] = this->u[0][i];
-			this->u[8][i] = this->u[0][i];
+			this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
+			this->u[i*t+4] = this->u[i*t+0];
+			this->u[i*t+8] = this->u[i*t+0];
 
 		}else{
 
-			this->u[0][i] = std::complex<double>(0.0, 0.0);
-			this->u[4][i] = this->u[0][i];
-			this->u[8][i] = this->u[0][i];
+			this->u[i*t+0] = std::complex<double>(0.0, 0.0);
+			this->u[i*t+4] = this->u[i*t+0];
+			this->u[i*t+8] = this->u[i*t+0];
 
 		}
 	}
@@ -1166,15 +1166,15 @@ template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(mom
 	
 			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
 
-			this->u[0][i] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
-			this->u[4][i] = this->u[0][i];
-			this->u[8][i] = this->u[0][i];
+			this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
+			this->u[i*t+4] = this->u[i*t+0];
+			this->u[i*t+8] = this->u[i*t+0];
 
 		}else{
 
-			this->u[0][i] = std::complex<double>(0.0, 0.0);
-			this->u[4][i] = this->u[0][i];
-			this->u[8][i] = this->u[0][i];
+			this->u[i*t+0] = std::complex<double>(0.0, 0.0);
+			this->u[i*t+4] = this->u[i*t+0];
+			this->u[i*t+8] = this->u[i*t+0];
 
 		}
 	}
@@ -1227,9 +1227,9 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 
 			if( rrr > 10e-9 ){
 
-				this->u[0][i] = std::complex<double>(dx/rrr, 0.0);
-				this->u[4][i] = this->u[0][i];
-				this->u[8][i] = this->u[0][i];
+				this->u[i*t+0] = std::complex<double>(dx/rrr, 0.0);
+				this->u[i*t+4] = this->u[i*t+0];
+				this->u[i*t+8] = this->u[i*t+0];
 
 			}//else{
 			//
@@ -1286,9 +1286,9 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
 
 			if( rrr > 10e-9 ){
 
-				this->u[0][i] = std::complex<double>(dy/rrr, 0.0);
-				this->u[4][i] = this->u[0][i];
-				this->u[8][i] = this->u[0][i];
+				this->u[i*t+0] = std::complex<double>(dy/rrr, 0.0);
+				this->u[i*t+4] = this->u[i*t+0];
+				this->u[i*t+8] = this->u[i*t+0];
 
 			}//else{
 			//
@@ -1339,15 +1339,15 @@ template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int
 
 			if( rrr > 10e-9 ){
 
-				this->u[0][i] = std::complex<double>(0.0, sqrt(coupling_constant)*dx/rrr);
-				this->u[4][i] = this->u[0][i];
-				this->u[8][i] = this->u[0][i];
+				this->u[i*t+0] = std::complex<double>(0.0, sqrt(coupling_constant)*dx/rrr);
+				this->u[i*t+4] = this->u[i*t+0];
+				this->u[i*t+8] = this->u[i*t+0];
 
 			}else{
 	
-				this->u[0][i] = std::complex<double>(0.0, 0.0);
-				this->u[4][i] = this->u[0][i];
-				this->u[8][i] = this->u[0][i];
+				this->u[i*t+0] = std::complex<double>(0.0, 0.0);
+				this->u[i*t+4] = this->u[i*t+0];
+				this->u[i*t+8] = this->u[i*t+0];
 	
 			}
 		}
@@ -1384,15 +1384,15 @@ template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int
 
 			if( rrr > 10e-9 ){
 
-				this->u[0][i] = std::complex<double>(0.0, sqrt(coupling_constant)*dy/rrr);
-				this->u[4][i] = this->u[0][i];
-				this->u[8][i] = this->u[0][i];
+				this->u[i*t+0] = std::complex<double>(0.0, sqrt(coupling_constant)*dy/rrr);
+				this->u[i*t+4] = this->u[i*t+0];
+				this->u[i*t+8] = this->u[i*t+0];
 
 			}else{
 
-				this->u[0][i] = std::complex<double>(0.0, 0.0);
-				this->u[4][i] = this->u[0][i];
-				this->u[8][i] = this->u[0][i];
+				this->u[i*t+0] = std::complex<double>(0.0, 0.0);
+				this->u[i*t+4] = this->u[i*t+0];
+				this->u[i*t+8] = this->u[i*t+0];
 
 			}
 		}
@@ -1423,15 +1423,15 @@ template<class T, int t> lfield<T,t>* lfield<T,t>::hermitian(void){
 	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
-		result->u[0][i] = std::conj(this->u[0][i]);
-		result->u[1][i] = std::conj(this->u[3][i]);
-		result->u[2][i] = std::conj(this->u[6][i]);
-		result->u[3][i] = std::conj(this->u[1][i]);
-		result->u[4][i] = std::conj(this->u[4][i]);
-		result->u[5][i] = std::conj(this->u[7][i]);
-		result->u[6][i] = std::conj(this->u[2][i]);
-		result->u[7][i] = std::conj(this->u[5][i]);
-		result->u[8][i] = std::conj(this->u[8][i]);
+		result->u[i*t+0] = std::conj(this->u[i*t+0]);
+		result->u[i*t+1] = std::conj(this->u[i*t+3]);
+		result->u[i*t+2] = std::conj(this->u[i*t+6]);
+		result->u[i*t+3] = std::conj(this->u[i*t+1]);
+		result->u[i*t+4] = std::conj(this->u[i*t+4]);
+		result->u[i*t+5] = std::conj(this->u[i*t+7]);
+		result->u[i*t+6] = std::conj(this->u[i*t+2]);
+		result->u[i*t+7] = std::conj(this->u[i*t+5]);
+		result->u[i*t+8] = std::conj(this->u[i*t+8]);
 
 	}
 
@@ -1457,15 +1457,15 @@ template<class T, int t> gfield<T,t>* gfield<T,t>::hermitian(void){
 	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nx*Ny; i++){
 
-		result->u[0][i] = std::conj(this->u[0][i]);
-		result->u[1][i] = std::conj(this->u[3][i]);
-		result->u[2][i] = std::conj(this->u[6][i]);
-		result->u[3][i] = std::conj(this->u[1][i]);
-		result->u[4][i] = std::conj(this->u[4][i]);
-		result->u[5][i] = std::conj(this->u[7][i]);
-		result->u[6][i] = std::conj(this->u[2][i]);
-		result->u[7][i] = std::conj(this->u[5][i]);
-		result->u[8][i] = std::conj(this->u[8][i]);
+		result->u[i*t+0] = std::conj(this->u[i*t+0]);
+		result->u[i*t+1] = std::conj(this->u[i*t+3]);
+		result->u[i*t+2] = std::conj(this->u[i*t+6]);
+		result->u[i*t+3] = std::conj(this->u[i*t+1]);
+		result->u[i*t+4] = std::conj(this->u[i*t+4]);
+		result->u[i*t+5] = std::conj(this->u[i*t+7]);
+		result->u[i*t+6] = std::conj(this->u[i*t+2]);
+		result->u[i*t+7] = std::conj(this->u[i*t+5]);
+		result->u[i*t+8] = std::conj(this->u[i*t+8]);
 
 	}
 
@@ -1498,18 +1498,18 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
                 su3_matrix<double> C;
 
                 for(int k = 0; k < t; k++){
-                        A.m[k] = this->u[k][i];
+                        A.m[k] = this->u[i*t+k];
                 }
 
-		B.m[0] = std::conj(this->u[0][i]);
-		B.m[1] = std::conj(this->u[3][i]);
-		B.m[2] = std::conj(this->u[6][i]);
-		B.m[3] = std::conj(this->u[1][i]);
-		B.m[4] = std::conj(this->u[4][i]);
-		B.m[5] = std::conj(this->u[7][i]);
-		B.m[6] = std::conj(this->u[2][i]);
-		B.m[7] = std::conj(this->u[5][i]);
-		B.m[8] = std::conj(this->u[8][i]);
+		B.m[0] = std::conj(this->u[i*t+0]);
+		B.m[1] = std::conj(this->u[i*t+3]);
+		B.m[2] = std::conj(this->u[i*t+6]);
+		B.m[3] = std::conj(this->u[i*t+1]);
+		B.m[4] = std::conj(this->u[i*t+4]);
+		B.m[5] = std::conj(this->u[i*t+7]);
+		B.m[6] = std::conj(this->u[i*t+2]);
+		B.m[7] = std::conj(this->u[i*t+5]);
+		B.m[8] = std::conj(this->u[i*t+8]);
 
 		//printf("A.m[0].r = %f, A.m[1].r = %f, A.m[2].r = %f\n", A.m[0].real(), A.m[1].real(), A.m[2].real());
 		//printf("A.m[0].i = %f, A.m[1].i = %f, A.m[2].i = %f\n", A.m[0].imag(), A.m[1].imag(), A.m[2].imag());
@@ -1526,7 +1526,7 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 		//printf("C.m[0].r = %f, C.m[4].r = %f, C.m[8].r = %f\n", C.m[0].real(), C.m[4].real(), C.m[8].real());
 		//printf("C.m[0].i = %f, C.m[4].i = %f, C.m[8].i = %f\n", C.m[0].imag(), C.m[4].imag(), C.m[8].imag());
 
-                cc->u[0][i] = C.m[0] + C.m[4] + C.m[8];
+                cc->u[i*1+0] = C.m[0] + C.m[4] + C.m[8];
 	}
 
 	}else{
@@ -1549,7 +1549,7 @@ template<class T, int t> int lfield<T,t>::average(lfield<double,1>* cc){
 //                for(int k = 0; k < t; k++){
 //                         cc->u[0][i] += this->u[k][i];
 //                }
-                         cc->u[0][i] = this->u[0][i];
+                         cc->u[i*1+0] = this->u[i*t+0];
 
 	}
 
@@ -1576,7 +1576,7 @@ template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < Nx; i++){
 		for(int j = 0; j < Ny; j++){
-			corr_tmp->u[0][i*Ny+j] = 0.5*(this->u[0][i*Ny+j] + this->u[0][j*Ny+i]);
+			corr_tmp->u[(i*Ny+j)*t+0] = 0.5*(this->u[(i*Ny+j)*t+0] + this->u[(j*Ny+i)*t+0]);
 		}
 	}
 
@@ -1587,10 +1587,10 @@ template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 			int a = abs(i-Nx)%Nx;
 			int b = abs(j-Ny)%Ny;
 
-			this->u[0][i*Ny+j] = 0.25*(	corr_tmp->u[0][i*Ny+j] +
-							corr_tmp->u[0][a*Ny+j] + 
-							corr_tmp->u[0][i*Ny+b] + 
-							corr_tmp->u[0][a*Ny+b]);
+			this->u[(i*Ny+j)*t+0] = 0.25*(	corr_tmp->u[(i*Ny+j)*t+0] +
+							corr_tmp->u[(a*Ny+j)*t+0] + 
+							corr_tmp->u[(i*Ny+b)*t+0] + 
+							corr_tmp->u[(a*Ny+b)*t+0]);
 		}
 	}
 
@@ -1616,7 +1616,7 @@ template<class T, int t> lfield<T,t>* gfield<T,t>::reduce(int NNx, int NNy, mpi_
 	for(int i = 0; i < NNx; i++){
 		for(int j = 0; j < NNy; j++){
 			//x += this->u[(i+mpi->getPosX()*NNx)*Nyg+j+mpi->getPosY()*NNy][0];
-			corr_tmp->u[0][i*NNy+j] = this->u[0][(i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy];
+			corr_tmp->u[(i*NNy+j)*t+0] = this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+0];
 		}
 	}
 
@@ -1636,13 +1636,13 @@ template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local,
 		for(int xx = 0; xx < f->Nxg; xx++){
 			for(int yy = 0; yy < f->Nyg; yy++){
 
-				sum_re += f->u[k][xx*f->Nyg+yy].real();		
-				sum_im += f->u[k][xx*f->Nyg+yy].imag();		
+				sum_re += f->u[(xx*f->Nyg+yy)*t+k].real();		
+				sum_im += f->u[(xx*f->Nyg+yy)*t+k].imag();		
 
 			}
 		}
 
-		this->u[k][x_local*Nyl+y_local] = std::complex<double>(sum_re, sum_im);
+		this->u[(x_local*Nyl+y_local)*t+k] = std::complex<double>(sum_re, sum_im);
 
 		}
 
@@ -1662,7 +1662,7 @@ template<class T, int t> int gfield<T,t>::setCorrelationsForCouplingConstant(){
 
 			double coupling_constant = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + 1.26/pow(6.0*6.0*(dx*dx+dy*dy)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
         
-			this->u[0][i] = coupling_constant;
+			this->u[i*t+0] = coupling_constant;
 		}
 	}
 
@@ -1679,7 +1679,7 @@ template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(mom
 
 			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
        
-			this->u[0][i] = coupling_constant;
+			this->u[i*t+0] = coupling_constant;
 		}
 	}
 
@@ -1695,12 +1695,12 @@ template<class T, int t> int gfield<T,t>::multiplyByCholesky(gmatrix<T>* mm){
 		for(int xx = 0; xx < Nxg; xx++){
 			for(int yy = 0; yy < Nyg; yy++){
 	
-				tmp->u[tt][xx*Nyg+yy] = 0;
+				tmp->u[(xx*Nyg+yy)*t+tt] = 0;
 
 				for(int xxi = 0; xxi < Nxg; xxi++){
 					for(int yyi = 0; yyi < Nyg; yyi++){
 	
-						tmp->u[tt][xx*Nyg+yy] += mm->u[(xx*Nyg+yy)*Nxg*Nyg + xxi*Nyg+yyi] * this->u[tt][xxi*Nyg+yyi];
+						tmp->u[(xx*Nyg+yy)*t+tt] += mm->u[(xx*Nyg+yy)*Nxg*Nyg + xxi*Nyg+yyi] * this->u[(xxi*Nyg+yyi)*t+tt];
 
 					}
 				}
@@ -1710,7 +1710,7 @@ template<class T, int t> int gfield<T,t>::multiplyByCholesky(gmatrix<T>* mm){
 		for(int xx = 0; xx < Nxg; xx++){
 			for(int yy = 0; yy < Nyg; yy++){
 	
-				this->u[tt][xx*Nyg+yy] = tmp->u[tt][xx*Nyg+yy];
+				this->u[(xx*Nyg+yy)*t+tt] = tmp->u[(xx*Nyg+yy)*t+tt];
 
 			}
 		}	
@@ -1731,7 +1731,7 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom){
 			int i = xx*Nyl+yy;
 //			if((yy+xx)%2 == 0)       
 			//printf("%f %f %f\n", Nx*Ny*(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
-			printf("%i %i %f %f\n", xx+1, yy+1, this->u[k][i].real(), this->u[k][i].imag());
+			printf("%i %i %f %f\n", xx+1, yy+1, this->u[i*t+k].real(), this->u[i*t+k].imag());
 
 		}
 	}
@@ -1761,7 +1761,7 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom, double x, mpi_clas
       
 			if( fabs(xx + mpi->getPosX()*Nxl - yy - mpi->getPosY()*Nyl) <= 4 ){
  
-				printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[0][i].real()), x*(mom->phat2(i))*(this->u[0][i].imag()));
+				printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[i*t+0].real()), x*(mom->phat2(i))*(this->u[i*t+0].imag()));
 
 			}
 		}
@@ -1777,7 +1777,7 @@ template<class T, int t> int lfield<T,t>::printDebug(){
 
 			int i = xx*Nyl+yy;
        
-			printf("%i %i %f %f\n",xx, yy, this->u[0][i].real(), this->u[0][i].imag());
+			printf("%i %i %f %f\n",xx, yy, this->u[i*t+0].real(), this->u[i*t+0].imag());
 		}
 	}
 
@@ -1791,7 +1791,7 @@ template<class T, int t> int lfield<T,t>::printDebug(double x, mpi_class* mpi){
 
 			int i = xx*Nyl+yy;
        
-			printf("%i %i %f %f\n",xx+mpi->getPosX()*Nxl, yy+mpi->getPosY()*Nyl, x*(this->u[0][i].real()), x*(this->u[0][i].imag()));
+			printf("%i %i %f %f\n",xx+mpi->getPosX()*Nxl, yy+mpi->getPosY()*Nyl, x*(this->u[i*t+0].real()), x*(this->u[i*t+0].imag()));
 		}
 	}
 
@@ -1819,7 +1819,7 @@ template<class T, int t> int lfield<T,t>::printDebugRadial(double x){
 				z = x/pow(((xx-Nxl)%Nxl)*((xx-Nxl)%Nxl) + ((yy-Nyl)%Nyl)*((yy-Nyl)%Nyl),2.0)/3.0;
 			}
 
-			printf("%i %i %f %f\n",xx, yy, z*(this->u[0][i].real()), z*(this->u[0][i].imag()));
+			printf("%i %i %f %f\n",xx, yy, z*(this->u[i*t+0].real()), z*(this->u[i*t+0].imag()));
 		}
 	}
 
@@ -1841,28 +1841,28 @@ template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* ux
 
                 su3_matrix<double> A,B,C,D,E,F;
 
-                D.m[0] = std::conj(uf->u[0][i]);
-                D.m[1] = std::conj(uf->u[3][i]);
-                D.m[2] = std::conj(uf->u[6][i]);
-                D.m[3] = std::conj(uf->u[1][i]);
-                D.m[4] = std::conj(uf->u[4][i]);
-                D.m[5] = std::conj(uf->u[7][i]);
-                D.m[6] = std::conj(uf->u[2][i]);
-                D.m[7] = std::conj(uf->u[5][i]);
-                D.m[8] = std::conj(uf->u[8][i]);
+                D.m[0] = std::conj(uf->u[i*t+0]);
+                D.m[1] = std::conj(uf->u[i*t+3]);
+                D.m[2] = std::conj(uf->u[i*t+6]);
+                D.m[3] = std::conj(uf->u[i*t+1]);
+                D.m[4] = std::conj(uf->u[i*t+4]);
+                D.m[5] = std::conj(uf->u[i*t+7]);
+                D.m[6] = std::conj(uf->u[i*t+2]);
+                D.m[7] = std::conj(uf->u[i*t+5]);
+                D.m[8] = std::conj(uf->u[i*t+8]);
 
                 for(int k = 0; k < t; k++){
-			A.m[k] = uf->u[k][i];
-	                B.m[k] = xi_local_x->u[k][i];
-        	        C.m[k] = xi_local_y->u[k][i];
+			A.m[k] = uf->u[i*t+k];
+	                B.m[k] = xi_local_x->u[i*t+k];
+        	        C.m[k] = xi_local_y->u[i*t+k];
 		}
 
 		E = A * B * D;
 		F = A * C * D;
 
                 for(int k = 0; k < t; k++){
- 	              	uxiulocal_x->u[k][i] = E.m[k];
-                	uxiulocal_y->u[k][i] = F.m[k];
+ 	              	uxiulocal_x->u[i*t+k] = E.m[k];
+                	uxiulocal_y->u[i*t+k] = F.m[k];
                 }
 	}
 
@@ -1883,17 +1883,17 @@ template<class T, int t> int prepare_B_local(lfield<T,t>* B_local, lfield<T,t>* 
                 su3_matrix<double> A,B,C,D,E,F;
 
                 for(int k = 0; k < t; k++){
-			A.m[k] = kernel_pbarx->u[k][i];
-			B.m[k] = kernel_pbary->u[k][i];
+			A.m[k] = kernel_pbarx->u[i*t+k];
+			B.m[k] = kernel_pbary->u[i*t+k];
 
-	                C.m[k] = uxiulocal_x->u[k][i];
-        	        D.m[k] = uxiulocal_y->u[k][i];
+	                C.m[k] = uxiulocal_x->u[i*t+k];
+        	        D.m[k] = uxiulocal_y->u[i*t+k];
 		}
 
 		E = A * C + B * D;
 
                 for(int k = 0; k < t; k++){
- 	              	B_local->u[k][i] = E.m[k];
+ 	              	B_local->u[i*t+k] = E.m[k];
                 }
 	}
 
@@ -1915,9 +1915,9 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
                 su3_matrix<double> A,B,C,D,E,F;
 
                 for(int k = 0; k < t; k++){
-                        A.m[k] = uf->u[k][i];
-                        B.m[k] = -sqrt(step)*B_local->u[k][i];
-                        C.m[k] = sqrt(step)*A_local->u[k][i];
+                        A.m[k] = uf->u[i*t+k];
+                        B.m[k] = -sqrt(step)*B_local->u[i*t+k];
+                        C.m[k] = sqrt(step)*A_local->u[i*t+k];
                 }
 
                 B.exponentiate(-1.0);
@@ -1926,7 +1926,7 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
                 E = B * A * C;
 
                 for(int k = 0; k < t; k++){
-                        uf->u[k][i] = E.m[k];
+                        uf->u[i*t+k] = E.m[k];
                 }
         }
 
@@ -1946,17 +1946,17 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
                 su3_matrix<double> A,B,C,D,E,F;
 
                 for(int k = 0; k < t; k++){
-			A.m[k] = kernel_pbarx->u[k][i];
-			B.m[k] = kernel_pbary->u[k][i];
+			A.m[k] = kernel_pbarx->u[i*t+k];
+			B.m[k] = kernel_pbary->u[i*t+k];
 
-	                C.m[k] = xi_local_x->u[k][i];
-        	        D.m[k] = xi_local_y->u[k][i];
+	                C.m[k] = xi_local_x->u[i*t+k];
+        	        D.m[k] = xi_local_y->u[i*t+k];
 		}
 
 		E = A * C + B * D;
 
                 for(int k = 0; k < t; k++){
- 	              	A_local->u[k][i] = E.m[k];
+ 	              	A_local->u[i*t+k] = E.m[k];
                 }
 	}
 
@@ -2000,8 +2000,8 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 
 	    //set to zero
 	    for(int j = 0; j < t; j++){
-		xi_local_x->u[j][i] = 0.0;
-		xi_local_y->u[j][i] = 0.0;
+		xi_local_x->u[i*t+j] = 0.0;
+		xi_local_y->u[i*t+j] = 0.0;
 	    }
 
 	    double n[8];
@@ -2018,62 +2018,62 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 
             //lambda_nr(1)%su3(1,2) =  runit
             //lambda_nr(1)%su3(2,1) =  runit
-		xi_local_x->u[1][i] += std::complex<double>(n[0],0.0);
-		xi_local_x->u[3][i] += std::complex<double>(n[0],0.0);
-		xi_local_y->u[1][i] += std::complex<double>(m[0],0.0);
-		xi_local_y->u[3][i] += std::complex<double>(m[0],0.0);
+		xi_local_x->u[i*t+1] += std::complex<double>(n[0],0.0);
+		xi_local_x->u[i*t+3] += std::complex<double>(n[0],0.0);
+		xi_local_y->u[i*t+1] += std::complex<double>(m[0],0.0);
+		xi_local_y->u[i*t+3] += std::complex<double>(m[0],0.0);
 
             //lambda_nr(2)%su3(1,2) = -iunit
             //lambda_nr(2)%su3(2,1) =  iunit
-		xi_local_x->u[1][i] += std::complex<double>(0.0,n[1]);
-		xi_local_x->u[3][i] -= std::complex<double>(0.0,n[1]);
-		xi_local_y->u[1][i] += std::complex<double>(0.0,m[1]);
-		xi_local_y->u[3][i] -= std::complex<double>(0.0,m[1]);
+		xi_local_x->u[i*t+1] += std::complex<double>(0.0,n[1]);
+		xi_local_x->u[i*t+3] -= std::complex<double>(0.0,n[1]);
+		xi_local_y->u[i*t+1] += std::complex<double>(0.0,m[1]);
+		xi_local_y->u[i*t+3] -= std::complex<double>(0.0,m[1]);
 
             //lambda_nr(3)%su3(1,1) =  runit
             //lambda_nr(3)%su3(2,2) = -runit
-		xi_local_x->u[0][i] += std::complex<double>(n[2],0.0);
-		xi_local_x->u[4][i] -= std::complex<double>(n[2],0.0);
-		xi_local_y->u[0][i] += std::complex<double>(m[2],0.0);
-		xi_local_y->u[4][i] -= std::complex<double>(m[2],0.0);
+		xi_local_x->u[i*t+0] += std::complex<double>(n[2],0.0);
+		xi_local_x->u[i*t+4] -= std::complex<double>(n[2],0.0);
+		xi_local_y->u[i*t+0] += std::complex<double>(m[2],0.0);
+		xi_local_y->u[i*t+4] -= std::complex<double>(m[2],0.0);
 
             //lambda_nr(4)%su3(1,3) =  runit
             //lambda_nr(4)%su3(3,1) =  runit
-		xi_local_x->u[2][i] += std::complex<double>(n[3],0.0);
-		xi_local_x->u[6][i] += std::complex<double>(n[3],0.0);
-		xi_local_y->u[2][i] += std::complex<double>(m[3],0.0);
-		xi_local_y->u[6][i] += std::complex<double>(m[3],0.0);
+		xi_local_x->u[i*t+2] += std::complex<double>(n[3],0.0);
+		xi_local_x->u[i*t+6] += std::complex<double>(n[3],0.0);
+		xi_local_y->u[i*t+2] += std::complex<double>(m[3],0.0);
+		xi_local_y->u[i*t+6] += std::complex<double>(m[3],0.0);
 
             //lambda_nr(5)%su3(1,3) = -iunit
             //lambda_nr(5)%su3(3,1) =  iunit
-		xi_local_x->u[2][i] += std::complex<double>(0.0,n[4]);
-		xi_local_x->u[6][i] -= std::complex<double>(0.0,n[4]);
-		xi_local_y->u[2][i] += std::complex<double>(0.0,m[4]);
-		xi_local_y->u[6][i] -= std::complex<double>(0.0,m[4]);
+		xi_local_x->u[i*t+2] += std::complex<double>(0.0,n[4]);
+		xi_local_x->u[i*t+6] -= std::complex<double>(0.0,n[4]);
+		xi_local_y->u[i*t+2] += std::complex<double>(0.0,m[4]);
+		xi_local_y->u[i*t+6] -= std::complex<double>(0.0,m[4]);
 
             //lambda_nr(6)%su3(2,3) =  runit
             //lambda_nr(6)%su3(3,2) =  runit
-		xi_local_x->u[5][i] += std::complex<double>(n[5],0.0);
-		xi_local_x->u[7][i] += std::complex<double>(n[5],0.0);
-		xi_local_y->u[5][i] += std::complex<double>(m[5],0.0);
-		xi_local_y->u[7][i] += std::complex<double>(m[5],0.0);
+		xi_local_x->u[i*t+5] += std::complex<double>(n[5],0.0);
+		xi_local_x->u[i*t+7] += std::complex<double>(n[5],0.0);
+		xi_local_y->u[i*t+5] += std::complex<double>(m[5],0.0);
+		xi_local_y->u[i*t+7] += std::complex<double>(m[5],0.0);
 
             //lambda_nr(7)%su3(2,3) = -iunit
             //lambda_nr(7)%su3(3,2) =  iunit
-		xi_local_x->u[5][i] += std::complex<double>(0.0,n[6]);
-		xi_local_x->u[7][i] -= std::complex<double>(0.0,n[6]);
-		xi_local_y->u[5][i] += std::complex<double>(0.0,m[6]);
-		xi_local_y->u[7][i] -= std::complex<double>(0.0,m[6]);
+		xi_local_x->u[i*t+5] += std::complex<double>(0.0,n[6]);
+		xi_local_x->u[i*t+7] -= std::complex<double>(0.0,n[6]);
+		xi_local_y->u[i*t+5] += std::complex<double>(0.0,m[6]);
+		xi_local_y->u[i*t+7] -= std::complex<double>(0.0,m[6]);
 
             //lambda_nr(8)%su3(1,1) =  cst8
             //lambda_nr(8)%su3(2,2) =  cst8
             //lambda_nr(8)%su3(3,3) =  -(two*cst8)
-		xi_local_x->u[0][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		xi_local_x->u[4][i] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		xi_local_x->u[8][i] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
-		xi_local_y->u[0][i] += std::complex<double>(m[7]/sqrt(3.0),0.0);
-		xi_local_y->u[4][i] += std::complex<double>(m[7]/sqrt(3.0),0.0);
-		xi_local_y->u[8][i] += std::complex<double>(-2.0*m[7]/sqrt(3.0),0.0);
+		xi_local_x->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		xi_local_x->u[i*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		xi_local_x->u[i*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+		xi_local_y->u[i*t+0] += std::complex<double>(m[7]/sqrt(3.0),0.0);
+		xi_local_y->u[i*t+4] += std::complex<double>(m[7]/sqrt(3.0),0.0);
+		xi_local_y->u[i*t+8] += std::complex<double>(-2.0*m[7]/sqrt(3.0),0.0);
 
 	}
 
