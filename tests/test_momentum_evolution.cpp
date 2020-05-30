@@ -24,6 +24,8 @@
 
 #include "../momenta.h"
 
+#include <time.h>
+
 #include "../rand_class.h"
 
 #include "../MV_class.h"
@@ -40,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 36;
+    cnfg->stat = 16;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -64,7 +66,7 @@ int main(int argc, char *argv[]) {
 
     printf("MVModel\n");
 
-    MV_class* MVmodel = new MV_class(1.0, 0.03, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.015, 50);
 
 //    fftw1D* fourier = new fftw1D(cnfg);
 
@@ -106,12 +108,12 @@ int main(int argc, char *argv[]) {
     lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
 
-    lfield<double,9>* uf_hermitian;
+//    lfield<double,9>* uf_hermitian;
 
 
 //    lfield<double,9> uf_tmp(cnfg->Nxl, cnfg->Nyl);
-    lfield<double,9> xi_local_x_tmp(cnfg->Nxl, cnfg->Nyl);
-    lfield<double,9> xi_local_y_tmp(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> xi_local_x_tmp(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> xi_local_y_tmp(cnfg->Nxl, cnfg->Nyl);
 //    lfield<double,9> uxiulocal_x_tmp(cnfg->Nxl, cnfg->Nyl);
 //    lfield<double,9> uxiulocal_y_tmp(cnfg->Nxl, cnfg->Nyl);
 
@@ -127,20 +129,33 @@ int main(int argc, char *argv[]) {
 //------ACCUMULATE STATISTICS----------------------------
 //-------------------------------------------------------
 
-    std::vector<lfield<double,1>*> accumulator;
+//    std::vector<lfield<double,1>*> accumulator;
 
 //-------------------------------------------------------
 //-------------------------------------------------------
+
+    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+
+    sum.setToZero();
 
 for(int stat = 0; stat < cnfg->stat; stat++){
 
-	const clock_t begin_time_stat = std::clock();
+//	const clock_t begin_time_stat = std::clock();
+	struct timespec start, finish;
+	double elapsed;
+
+	clock_gettime(CLOCK_MONOTONIC, &start);	
 
 	printf("Gatherting stat sample no. %i\n", stat);
 
 	//-------------------------------------------------------
 	//------INITIAL STATE------------------------------------
 	//-------------------------------------------------------
+
+	struct timespec starti, finishi;
+	double elapsedi;
+
+	clock_gettime(CLOCK_MONOTONIC, &starti);		
 
 	uf.setToUnit();
 
@@ -161,12 +176,24 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		uf *= f;
     	}
 
-        double step = 0.0001;
+	clock_gettime(CLOCK_MONOTONIC, &finishi);
+		
+	elapsedi = (finishi.tv_sec - starti.tv_sec);
+	elapsedi += (finishi.tv_nsec - starti.tv_nsec) / 1000000000.0;		
+
+	std::cout<<"Initial condition time: " << elapsedi << std::endl;
+
+        double step = 0.0004;
 
         //evolution
-        for(int langevin = 0; langevin < 400; langevin++){
+        for(int langevin = 0; langevin < 100; langevin++){
 
-		const clock_t begin_time = std::clock();
+//		const clock_t begin_time = std::clock();
+		struct timespec starte, finishe;
+		double elapsede;
+
+		clock_gettime(CLOCK_MONOTONIC, &starte);		
+
 
                 printf("Performing evolution step no. %i\n", langevin);
 
@@ -221,7 +248,13 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	
 		update_uf(&uf, &B_local, &A_local, step);
 	
-		std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+//		std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+		clock_gettime(CLOCK_MONOTONIC, &finishe);
+		
+		elapsede = (finishe.tv_sec - starte.tv_sec);
+		elapsede += (finishe.tv_nsec - starte.tv_nsec) / 1000000000.0;		
+
+		std::cout<<"Evolution time: " << elapsede << std::endl;
 	}
 
     	//-------------------------------------------------------
@@ -240,23 +273,31 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//store stat in the accumulator
 	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
 
-	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
-	accumulator.push_back(corr_ptr);
+	sum += *corr_ptr;
 
-	std::cout << "ONE STAT TIME: " << float( std::clock () - begin_time_stat ) /  CLOCKS_PER_SEC << std::endl;
+	delete corr_ptr;
+
+	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
+//	accumulator.push_back(corr_ptr);
+
+//	std::cout << "ONE STAT TIME: " << float( std::clock () - begin_time_stat ) /  CLOCKS_PER_SEC << std::endl;
+
+	clock_gettime(CLOCK_MONOTONIC, &finish);
+		
+	elapsed = (finish.tv_sec - start.tv_sec);
+	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;		
+
+	std::cout<<"Statistics time: " << elapsed << std::endl;
 
     }
 
-    printf("accumulator size = %i\n", accumulator.size());
+//    printf("accumulator size = %i\n", accumulator.size());
 
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+//    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
+//	sum += **it;
 
-    sum.setToZero();
-
-    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
-	sum += **it;
-
-    sum.print(momtable, 1.0/3.0/accumulator.size(), mpi);
+//    sum.print(momtable, 1.0/3.0/accumulator.size(), mpi);
+    sum.print(momtable, 1.0/3.0/cnfg->stat, mpi);
 
 
 //-------------------------------------------------------

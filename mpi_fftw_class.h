@@ -47,7 +47,7 @@ class fftw {
     fftw(config *cnfg){
 
 
-	int nthreads = 6;
+	int nthreads = 12;
 
         fftw_init_threads();
         fftw_mpi_init();

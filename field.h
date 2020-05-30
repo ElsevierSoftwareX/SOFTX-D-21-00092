@@ -38,7 +38,7 @@ template<class T, int t> class field {
 
 		field(int NNx, int NNy);
 
-		~field(void);
+		virtual ~field(void){};
 };
 
 template<class T, int t> field<T,t>::field(int NNx, int NNy) {
@@ -59,7 +59,7 @@ template<class T, int t> field<T,t>::field(int NNx, int NNy) {
 	Nxl = NNx;
 	Nyl = NNy;
 }
-
+/*
 template<class T, int t> field<T,t>::~field() {
 
 	int i;
@@ -70,8 +70,9 @@ template<class T, int t> field<T,t>::~field() {
 
 	}
 
+	free(u);
 }
-
+*/
 template<class T, int t> class lfield;
 
 template<class T> class gmatrix;
@@ -88,6 +89,8 @@ template<class T, int t> class gfield: public field<T,t> {
 		int allgather(lfield<T,t>* ulocal, mpi_class* mpi);
 
 		gfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxg = NNx; Nyg = NNy;};
+
+		~gfield();
 
 		friend class fftw2D;
 
@@ -121,6 +124,19 @@ template<class T, int t> class gfield: public field<T,t> {
 
 };
 
+template<class T, int t> gfield<T,t>::~gfield() {
+
+	int i;
+
+	for(i = 0; i < t; i++){
+
+		free(this->u[i]);
+
+	}
+
+	free(this->u);
+
+}
 
 template<class T, int t> class lfield: public field<T,t> {
 
@@ -130,6 +146,8 @@ template<class T, int t> class lfield: public field<T,t> {
 		int Nxl_buf, Nyl_buf;
 
 		lfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxl = NNx; Nyl = NNy; };
+
+		~lfield();
 
 		friend class fftw1D;
 
@@ -255,6 +273,20 @@ template<class T, int t> class lfield: public field<T,t> {
 
 
 };
+
+template<class T, int t> lfield<T,t>::~lfield() {
+
+	int i;
+
+	for(i = 0; i < t; i++){
+
+		free(this->u[i]);
+
+	}
+
+	free(this->u);
+
+}
 
 template<class T, int t> lfield<T,t>& lfield<T,t>::operator= ( const lfield<T,t>& f ){
 
@@ -531,11 +563,11 @@ template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gf
 template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_class* mpi){
 
 
-	static T* data_local_re = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
-	static T* data_local_im = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
+	T* data_local_re = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
+	T* data_local_im = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
 
-	static T* data_global_re = (T*)malloc(Nxg*Nyg*sizeof(T));
-	static T* data_global_im = (T*)malloc(Nxg*Nyg*sizeof(T));
+	T* data_global_re = (T*)malloc(Nxg*Nyg*sizeof(T));
+	T* data_global_im = (T*)malloc(Nxg*Nyg*sizeof(T));
 
 	int i,k;
 
@@ -578,11 +610,11 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_cla
 		}
 	}
 
-//	free(data_local_re);
-//	free(data_local_im);
+	free(data_local_re);
+	free(data_local_im);
 
-//	free(data_global_re);
-//	free(data_global_im);
+	free(data_global_re);
+	free(data_global_im);
 
 	return 1;
 }
@@ -683,7 +715,7 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 
 	const double EPS = 10e-12;
 
-//	#pragma omp parallel for simd default(shared)
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
                 static __thread std::ranlux24* generator = nullptr;
@@ -1539,7 +1571,7 @@ template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 
 	gfield<T,t>* corr_tmp = new gfield(Nx,Ny);
 
-	corr_tmp->setToZero();
+	//corr_tmp->setToZero();
 	
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < Nx; i++){

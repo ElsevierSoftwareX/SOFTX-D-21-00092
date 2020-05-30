@@ -1,8 +1,8 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 2048
-#define Ny 2048
+#define Nx 4096
+#define Ny 4096
 
 #include <iostream>
 
