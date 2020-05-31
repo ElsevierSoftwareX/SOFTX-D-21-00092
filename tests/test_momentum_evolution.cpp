@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
     printf("MVModel\n");
 
-    MV_class* MVmodel = new MV_class(1.0, 0.015, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.48, 50);
 
 //    fftw1D* fourier = new fftw1D(cnfg);
 
@@ -165,11 +165,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		f.setMVModel(MVmodel, random_generator);
 
-//		fourier2->execute2D(&f,1);
+		fourier2->execute2D(&f,1);
 
 		f.solvePoisson(0.0001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
 
-//		fourier2->execute2D(&f,0);
+		fourier2->execute2D(&f,0);
 
 		//f.exponentiate();
 
@@ -205,8 +205,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
 
-//                fourier2->execute2D(&xi_local_x, 1);
-//                fourier2->execute2D(&xi_local_y, 1);
+                fourier2->execute2D(&xi_local_x, 1);
+                fourier2->execute2D(&xi_local_y, 1);
 
 //              xi_local_x_tmp = kernel_pbarx * xi_local_x;
 //              xi_local_y_tmp = kernel_pbary * xi_local_y;
@@ -215,9 +215,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, &kernel_pbarx, &kernel_pbary);
 
-//                fourier2->execute2D(&A_local, 0);
-//                fourier2->execute2D(&xi_local_x, 0);
-//                fourier2->execute2D(&xi_local_y, 0);
+                fourier2->execute2D(&A_local, 0);
+                fourier2->execute2D(&xi_local_x, 0);
+                fourier2->execute2D(&xi_local_y, 0);
 
 //              uf_hermitian = uf.hermitian();
 //
@@ -228,8 +228,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		uxiulocal(&uxiulocal_x, &uxiulocal_y, &uf, &xi_local_x, &xi_local_y);
 
-//                fourier2->execute2D(&uxiulocal_x, 1);
-//                fourier2->execute2D(&uxiulocal_y, 1);
+                fourier2->execute2D(&uxiulocal_x, 1);
+                fourier2->execute2D(&uxiulocal_y, 1);
 
                 //uxiulocal_x = kernel_pbarx * uxiulocal_x;
                 //uxiulocal_y = kernel_pbary * uxiulocal_y;
@@ -238,7 +238,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
 
-//                fourier2->execute2D(&B_local, 0);
+                fourier2->execute2D(&B_local, 0);
 	        
 // 		A_local.exponentiate(sqrt(step));
 
@@ -262,7 +262,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//-------------------------------------------------------
 
 	//compute correlation function
-//	fourier2->execute2D(&uf,1);
+	fourier2->execute2D(&uf,1);
     
 	uf.trace(corr);
 
