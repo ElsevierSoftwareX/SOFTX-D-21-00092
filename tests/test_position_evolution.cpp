@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 32;
+    cnfg->stat = 1;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -61,13 +61,13 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.24, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.48, 50);
 
-    fftw1D* fourier = new fftw1D(cnfg);
+    //fftw1D* fourier = new fftw1D(cnfg);
 
     fftw2D* fourier2 = new fftw2D(cnfg);
 
-    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+    //fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
 
     fourier2->init2D();    
 
@@ -124,14 +124,24 @@ int main(int argc, char *argv[]) {
 //------ACCUMULATE STATISTICS----------------------------
 //-------------------------------------------------------
 
-    std::vector<lfield<double,1>*> accumulator;
+    //std::vector<lfield<double,1>*> accumulator;
+
+    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+
+    sum.setToZero();
+
+
 
 //-------------------------------------------------------
 //-------------------------------------------------------
 
 for(int stat = 0; stat < cnfg->stat; stat++){
 
-	const clock_t begin_time_stat = std::clock();
+	//const clock_t begin_time_stat = std::clock();
+        struct timespec start, finish;
+        double elapsed;
+
+        clock_gettime(CLOCK_MONOTONIC, &start);
 
 	printf("Gatherting stat sample no. %i\n", stat);
 
@@ -139,11 +149,16 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//------INITIAL STATE------------------------------------
 	//-------------------------------------------------------
 
+        struct timespec starti, finishi;
+        double elapsedi;
+
+        clock_gettime(CLOCK_MONOTONIC, &starti);
+
 	uf.setToUnit();
 
     	for(int i = 0; i < MVmodel->Ny_parameter; i++){
 	
-		f.setToZero();
+		//f.setToZero();
 
 		f.setMVModel(MVmodel, random_generator);
 
@@ -153,25 +168,38 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		fourier2->execute2D(&f,0);
 
-		f.exponentiate();
+		//f.exponentiate();
 
 		uf *= f;
     	}
 
-        double step = 0.0001;
+        clock_gettime(CLOCK_MONOTONIC, &finishi);
+
+        elapsedi = (finishi.tv_sec - starti.tv_sec);
+        elapsedi += (finishi.tv_nsec - starti.tv_nsec) / 1000000000.0;
+
+        std::cout<<"Initial condition time: " << elapsedi << std::endl;
+
+        double step = 0.0004;
 
         //evolution
-        for(int langevin = 0; langevin < 400; langevin++){
+        for(int langevin = 0; langevin < 100; langevin++){
 
-		const clock_t begin_time = std::clock();
+		//const clock_t begin_time = std::clock();
+                struct timespec starte, finishe;
+                double elapsede;
+
+                clock_gettime(CLOCK_MONOTONIC, &starte);
 
                 printf("Performing evolution step no. %i\n", langevin);
 
-		xi_local_x.setToZero();
-		xi_local_y.setToZero();
+		//xi_local_x.setToZero();
+		//xi_local_y.setToZero();
 
-                xi_local_x.setGaussian(random_generator,1);
-                xi_local_y.setGaussian(random_generator,2);
+                //xi_local_x.setGaussian(random_generator,1);
+                //xi_local_y.setGaussian(random_generator,2);
+
+		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
 
                 printf("gathering local xi to global\n");
                 xi_global_x.allgather(&xi_local_x, mpi);
@@ -183,8 +211,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		A_local.setToZero();
 		B_local.setToZero();
 
-                uf_global_hermitian = uf_global.hermitian();
-
                 printf("starting iteration over global lattice\n");
                 //for(int i = 0; i < cnfg->Nxl*cnfg->Nyl; i++){
                 for(int x = 0; x < cnfg->Nxl; x++){
@@ -193,37 +219,47 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         	                int x_global = x + mpi->getPosX()*cnfg->Nxl;
                                 int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-				kernel_xbarx.setToZero();
-				kernel_xbary.setToZero();
+				//kernel_xbarx.setToZero();
+				//kernel_xbary.setToZero();
 
-                                kernel_xbarx.setKernelXbarX(x_global, y_global, postable);
-                                kernel_xbary.setKernelXbarY(x_global, y_global, postable);
+                                //kernel_xbarx.setKernelXbarX(x_global, y_global, postable);
+                                //kernel_xbary.setKernelXbarY(x_global, y_global, postable);
 
-                                xi_global_x_tmp = kernel_xbarx * xi_global_x;
-                                xi_global_y_tmp = kernel_xbary * xi_global_y;
-
-
-                                xi_global_tmp = xi_global_x_tmp + xi_global_y_tmp;
+                                //xi_global_x_tmp = kernel_xbarx * xi_global_x;
+                                //xi_global_y_tmp = kernel_xbary * xi_global_y;
 
 
-                                A_local.reduceAndSet(x, y, &xi_global_tmp);
+                                //xi_global_tmp = xi_global_x_tmp + xi_global_y_tmp;
 
 
-                                uxiu_global_tmp = uf_global * xi_global_tmp * (*uf_global_hermitian);
+                                //A_local.reduceAndSet(x, y, &xi_global_tmp);
 
-                                B_local.reduceAndSet(x, y, &uxiu_global_tmp);
+
+                                //uxiu_global_tmp = uf_global * xi_global_tmp * (*uf_global_hermitian);
+
+                                //B_local.reduceAndSet(x, y, &uxiu_global_tmp);
+
+				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, postable);
+
                         }
                 }
 
-                delete uf_global_hermitian;
+		//A_local.exponentiate(sqrt(step));
+		//
+        	//B_local.exponentiate(-sqrt(step));
+		//
+        	//uf = B_local * uf * A_local;
 
-		A_local.exponentiate(sqrt(step));
-
-        	B_local.exponentiate(-sqrt(step));
-
-        	uf = B_local * uf * A_local;
+		update_uf(&uf, &B_local, &A_local, step);
 		
-		std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
+	        clock_gettime(CLOCK_MONOTONIC, &finishe);
+
+        	elapsede = (finishe.tv_sec - starte.tv_sec);
+	        elapsede += (finishe.tv_nsec - starte.tv_nsec) / 1000000000.0;
+
+        	std::cout<<"Evolution time: " << elapsede << std::endl;
+
+		//std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
 	}
 
     	//-------------------------------------------------------
@@ -244,23 +280,29 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//store stat in the accumulator
 	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
 
+        sum += *corr_ptr;
+
+        delete corr_ptr;
+
 	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
-	accumulator.push_back(corr_ptr);
+	//accumulator.push_back(corr_ptr);
 
-	std::cout << "ONE STAT TIME: " << float( std::clock () - begin_time_stat ) /  CLOCKS_PER_SEC << std::endl;
+	//std::cout << "ONE STAT TIME: " << float( std::clock () - begin_time_stat ) /  CLOCKS_PER_SEC << std::endl;
 
+        clock_gettime(CLOCK_MONOTONIC, &finish);
+
+        elapsed = (finish.tv_sec - start.tv_sec);
+        elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+
+        std::cout<<"Statistics time: " << elapsed << std::endl;
     }
 
-    printf("accumulator size = %i\n", accumulator.size());
+    //printf("accumulator size = %i\n", accumulator.size());
 
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+    //for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
+	//sum += **it;
 
-    sum.setToZero();
-
-    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
-	sum += **it;
-
-    sum.print(momtable, 1.0/3.0/accumulator.size(), mpi);
+    sum.print(momtable, 1.0/3.0/cnfg->stat, mpi);
 
 
 //-------------------------------------------------------
@@ -275,7 +317,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     delete MVmodel;
 
-    delete fourier;
+    delete fourier2;
 
     delete mpi;
 

@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
     printf("MVModel\n");
 
-    MV_class* MVmodel = new MV_class(1.0, 0.48, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.06, 50);
 
 //    fftw1D* fourier = new fftw1D(cnfg);
 

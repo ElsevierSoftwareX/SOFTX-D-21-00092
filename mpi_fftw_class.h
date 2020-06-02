@@ -56,7 +56,7 @@ class fftw {
     fftw(config *cnfg){
 
 
-	int nthreads = 1;
+	int nthreads = 12;
 
         fftw_init_threads();
         fftw_mpi_init();
@@ -224,9 +224,9 @@ if( !COPY ){
 		#pragma omp parallel for simd collapse(2) default(shared)
 		for (i = 0; i < Nxl; ++i){
 			for(j = 0; j < Nyl; j++){
-                        	f->u[(i*Nyl+j)] *= scale_after_fft;
+        	              	f->u[(i*Nyl+j)] *= scale_after_fft;
 			}
-        	}
+      		}
 
 
         }else{
@@ -278,7 +278,7 @@ if( !COPY ){
 		for (i = 0; i < Nxl; ++i){
 			for(j = 0; j < Nyl; j++){
 				for(k = 0; k < 9; k++){
-        	                	f->u[(i*Nyl+j)*t+k] *= scale_after_fft;
+	      	                	f->u[(i*Nyl+j)*t+k] *= scale_after_fft;
 				}
 			}
         	}

@@ -1646,6 +1646,7 @@ template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local,
 
 		}
 
+
 return 1;
 }
 
@@ -1851,7 +1852,7 @@ template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* ux
                 D.m[7] = std::conj(uf->u[i*t+5]);
                 D.m[8] = std::conj(uf->u[i*t+8]);
 
-                for(int k = 0; k < t; k++){
+               for(int k = 0; k < t; k++){
 			A.m[k] = uf->u[i*t+k];
 	                B.m[k] = xi_local_x->u[i*t+k];
         	        C.m[k] = xi_local_y->u[i*t+k];
@@ -1959,6 +1960,8 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
  	              	A_local->u[i*t+k] = E.m[k];
                 }
 	}
+
+
 
 return 1;
 }
@@ -2086,4 +2089,134 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 
 return 1;
 }
+
+template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, int y_global, gfield<T,t>* xi_global_x, gfield<T,t>* xi_global_y, 
+				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable){
+
+                                //kernel_xbarx.setToZero();
+                                //kernel_xbary.setToZero();
+
+                                //kernel_xbarx.setKernelXbarX(x_global, y_global, postable);
+                                //kernel_xbary.setKernelXbarY(x_global, y_global, postable);
+
+                                //xi_global_x_tmp = kernel_xbarx * xi_global_x;
+                                //xi_global_y_tmp = kernel_xbary * xi_global_y;
+
+
+                                //xi_global_tmp = xi_global_x_tmp + xi_global_y_tmp;
+
+
+                                //A_local.reduceAndSet(x, y, &xi_global_tmp);
+
+
+                                //uxiu_global_tmp = uf_global * xi_global_tmp * (*uf_global_hermitian);
+
+                                //B_local.reduceAndSet(x, y, &uxiu_global_tmp);
+
+	double sumAlocalRe[9];
+	double sumAlocalIm[9];
+	double sumBlocalRe[9];
+	double sumBlocalIm[9];
+
+        for(int k = 0; k < t; k++){
+
+		sumAlocalRe[k] = 0.0;
+		sumAlocalIm[k] = 0.0;
+		sumBlocalRe[k] = 0.0;
+		sumBlocalIm[k] = 0.0;
+
+	}
+
+        #pragma omp parallel for simd collapse(2) default(shared) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
+        for(int xx = 0; xx < Nx; xx++){
+                for(int yy = 0; yy < Ny; yy++){
+
+                        int i = xx*Ny+yy;
+
+	                su3_matrix<double> A,B,C,D,E,F,G,H,K;
+
+                        int ii = fabs(x_global - xx)*Ny + fabs(y_global - yy);
+
+                        //double dx2 = 0.5*Nxg*sin(2.0*M_PI*(x_global-xx)/Nxg)/M_PI;
+                        //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
+/*
+                        double dx = pos->xhatX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+                        //double dy = pos->xbarY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+
+                        double rrr = pos->xbar2(ii); //1.0*(dx2*dx2+dy2*dy2);
+*/
+                                         double dx = x_global - xx;
+                                         if( dx >= Nx/2 )
+                                                dx = dx - Nx;
+                                         if( dx < -Nx/2 )
+                                                dx = dx + Nx;
+
+                                         double dy = y_global - yy;
+                                         if( dy >= Ny/2 )
+                                                dy = dy - Ny;
+                                         if( dy < -Ny/2 )
+                                                dy = dy + Ny;
+
+                                         double rrr = 1.0*(dx*dx+dy*dy);
+			//kernel_x i kernel_y
+                        if( rrr > 10e-9 ){
+
+                                A.m[0] = std::complex<double>(dx/rrr, 0.0);
+                                A.m[4] = A.m[0];
+                                A.m[8] = A.m[0];
+
+                                B.m[0] = std::complex<double>(dy/rrr, 0.0);
+                                B.m[4] = B.m[0];
+                                B.m[8] = B.m[0];
+
+
+                        }
+
+	                for(int k = 0; k < t; k++){
+
+		                C.m[k] = xi_global_x->u[i*t+k];
+        		        D.m[k] = xi_global_y->u[i*t+k];
+
+				G.m[k] = uf_global->u[i*t+k];
+
+		                H.m[0] = std::conj(uf->u[i*t+0]);
+                		H.m[1] = std::conj(uf->u[i*t+3]);
+		                H.m[2] = std::conj(uf->u[i*t+6]);
+		                H.m[3] = std::conj(uf->u[i*t+1]);
+		                H.m[4] = std::conj(uf->u[i*t+4]);
+		                H.m[5] = std::conj(uf->u[i*t+7]);
+		                H.m[6] = std::conj(uf->u[i*t+2]);
+		                H.m[7] = std::conj(uf->u[i*t+5]);
+		                H.m[8] = std::conj(uf->u[i*t+8]);
+
+				//H.m[k] = uf_global_hermitian->u[i*t+k];
+
+			}
+
+			E = A * C + B * D;
+
+			K = G * E * H;
+
+	                for(int k = 0; k < t; k++){
+
+		                sumAlocalRe[k] += E.m[k].real();
+        		        sumAlocalIm[k] += E.m[k].imag();
+
+		                sumBlocalRe[k] += K.m[k].real();
+        		        sumBlocalIm[k] += K.m[k].imag();
+			}
+		}
+	}
+
+        for(int k = 0; k < t; k++){
+              	A_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumAlocalRe[k], sumAlocalIm[k]);
+              	B_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumBlocalRe[k], sumBlocalIm[k]);
+
+	}
+
+
+
+return 1;
+}
+
 #endif
