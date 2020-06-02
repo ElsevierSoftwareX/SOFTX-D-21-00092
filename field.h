@@ -953,7 +953,7 @@ template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, m
 	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 		for(int k = 0; k < t; k++){
-			this->u[i*t+k] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass), 0.0);
+			this->u[i*t+k] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass)/(1.0*Nx*Ny), 0.0);
 		}
 	}
 
@@ -1498,18 +1498,18 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
                 su3_matrix<double> C;
 
                 for(int k = 0; k < t; k++){
-                        A.m[k] = this->u[i*t+k];
+                        A.m[k] = this->u[i*t+k]/(1.0*Nx*Ny);
                 }
 
-		B.m[0] = std::conj(this->u[i*t+0]);
-		B.m[1] = std::conj(this->u[i*t+3]);
-		B.m[2] = std::conj(this->u[i*t+6]);
-		B.m[3] = std::conj(this->u[i*t+1]);
-		B.m[4] = std::conj(this->u[i*t+4]);
-		B.m[5] = std::conj(this->u[i*t+7]);
-		B.m[6] = std::conj(this->u[i*t+2]);
-		B.m[7] = std::conj(this->u[i*t+5]);
-		B.m[8] = std::conj(this->u[i*t+8]);
+		B.m[0] = std::conj(this->u[i*t+0]/(1.0*Nx*Ny));
+		B.m[1] = std::conj(this->u[i*t+3]/(1.0*Nx*Ny));
+		B.m[2] = std::conj(this->u[i*t+6]/(1.0*Nx*Ny));
+		B.m[3] = std::conj(this->u[i*t+1]/(1.0*Nx*Ny));
+		B.m[4] = std::conj(this->u[i*t+4]/(1.0*Nx*Ny));
+		B.m[5] = std::conj(this->u[i*t+7]/(1.0*Nx*Ny));
+		B.m[6] = std::conj(this->u[i*t+2]/(1.0*Nx*Ny));
+		B.m[7] = std::conj(this->u[i*t+5]/(1.0*Nx*Ny));
+		B.m[8] = std::conj(this->u[i*t+8]/(1.0*Nx*Ny));
 
 		//printf("A.m[0].r = %f, A.m[1].r = %f, A.m[2].r = %f\n", A.m[0].real(), A.m[1].real(), A.m[2].real());
 		//printf("A.m[0].i = %f, A.m[1].i = %f, A.m[2].i = %f\n", A.m[0].imag(), A.m[1].imag(), A.m[2].imag());
@@ -1754,17 +1754,31 @@ return 1;
 
 template<class T, int t> int lfield<T,t>::print(momenta* mom, double x, mpi_class* mpi){
 
-	for(int xx = 0; xx < Nxl; xx++){
-		for(int yy = 0; yy < Nyl; yy++){
 
-			int i = xx*Nyl+yy;
+	for(int k = 0; k < mpi->getSize(); k++){
+
+		if( mpi->getRank() == k ){
+
+			for(int xx = 0; xx < Nxl; xx++){
+				for(int yy = 0; yy < Nyl; yy++){
+
+					int i = xx*Nyl+yy;
       
-			if( fabs(xx + mpi->getPosX()*Nxl - yy - mpi->getPosY()*Nyl) <= 4 ){
+					if( fabs(xx + mpi->getPosX()*Nxl - yy - mpi->getPosY()*Nyl) <= 4 ){
  
-				printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[i*t+0].real()), x*(mom->phat2(i))*(this->u[i*t+0].imag()));
+						printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(this->u[i*t+0].real()), x*(mom->phat2(i))*(this->u[i*t+0].imag()));
 
+					}
+				}
 			}
+
+		}else{
+
+			printf("###\n");
 		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
 	}
 
 return 1;
@@ -1853,8 +1867,8 @@ template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* ux
 
                 for(int k = 0; k < t; k++){
 			A.m[k] = uf->u[i*t+k];
-	                B.m[k] = xi_local_x->u[i*t+k];
-        	        C.m[k] = xi_local_y->u[i*t+k];
+	                B.m[k] = xi_local_x->u[i*t+k]/(1.0*Nx*Ny);
+        	        C.m[k] = xi_local_y->u[i*t+k]/(1.0*Nx*Ny);
 		}
 
 		E = A * B * D;
@@ -1886,8 +1900,8 @@ template<class T, int t> int prepare_B_local(lfield<T,t>* B_local, lfield<T,t>* 
 			A.m[k] = kernel_pbarx->u[i*t+k];
 			B.m[k] = kernel_pbary->u[i*t+k];
 
-	                C.m[k] = uxiulocal_x->u[i*t+k];
-        	        D.m[k] = uxiulocal_y->u[i*t+k];
+	                C.m[k] = uxiulocal_x->u[i*t+k]/(1.0*Nx*Ny);
+        	        D.m[k] = uxiulocal_y->u[i*t+k]/(1.0*Nx*Ny);
 		}
 
 		E = A * C + B * D;
@@ -1949,8 +1963,8 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 			A.m[k] = kernel_pbarx->u[i*t+k];
 			B.m[k] = kernel_pbary->u[i*t+k];
 
-	                C.m[k] = xi_local_x->u[i*t+k];
-        	        D.m[k] = xi_local_y->u[i*t+k];
+	                C.m[k] = xi_local_x->u[i*t+k]/(1.0*Nx*Ny);
+        	        D.m[k] = xi_local_y->u[i*t+k]/(1.0*Nx*Ny);
 		}
 
 		E = A * C + B * D;
