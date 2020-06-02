@@ -2179,19 +2179,19 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 
 				G.m[k] = uf_global->u[i*t+k];
 
-		                H.m[0] = std::conj(uf->u[i*t+0]);
-                		H.m[1] = std::conj(uf->u[i*t+3]);
-		                H.m[2] = std::conj(uf->u[i*t+6]);
-		                H.m[3] = std::conj(uf->u[i*t+1]);
-		                H.m[4] = std::conj(uf->u[i*t+4]);
-		                H.m[5] = std::conj(uf->u[i*t+7]);
-		                H.m[6] = std::conj(uf->u[i*t+2]);
-		                H.m[7] = std::conj(uf->u[i*t+5]);
-		                H.m[8] = std::conj(uf->u[i*t+8]);
-
 				//H.m[k] = uf_global_hermitian->u[i*t+k];
-
 			}
+
+	                H.m[0] = std::conj(G.m[0]);
+               		H.m[1] = std::conj(G.m[3]);
+	                H.m[2] = std::conj(G.m[6]);
+	                H.m[3] = std::conj(G.m[1]);
+	                H.m[4] = std::conj(G.m[4]);
+	                H.m[5] = std::conj(G.m[7]);
+	                H.m[6] = std::conj(G.m[2]);
+	                H.m[7] = std::conj(G.m[5]);
+	                H.m[8] = std::conj(G.m[8]);
+
 
 			E = A * C + B * D;
 

@@ -12,8 +12,8 @@
 #include <math.h>
 #include <complex.h>
 #include <float.h>
-#include "zheevc3.h"
-#include "zheevq3.h"
+#include "zheevh3-C-1.1/zheevc3.h"
+#include "zheevh3-C-1.1/zheevq3.h"
 //#include "zheevh3.h"
 
 // Macros
