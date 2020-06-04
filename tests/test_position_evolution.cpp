@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 1;
+    cnfg->stat = 16;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.48, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.32, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
 
@@ -85,28 +85,28 @@ int main(int argc, char *argv[]) {
 
     gfield<double,9> xi_global_x(Nx, Ny);
     gfield<double,9> xi_global_y(Nx, Ny);
-    gfield<double,9> xi_global_x_tmp(Nx, Ny);
-    gfield<double,9> xi_global_y_tmp(Nx, Ny);
+//    gfield<double,9> xi_global_x_tmp(Nx, Ny);
+//    gfield<double,9> xi_global_y_tmp(Nx, Ny);
 
-    gfield<double,9> uxiu_global_tmp(Nx,Ny);
-    gfield<double,9> xi_global_tmp(Nx,Ny);
+//    gfield<double,9> uxiu_global_tmp(Nx,Ny);
+//    gfield<double,9> xi_global_tmp(Nx,Ny);
 
     //initiaization of kernel fields
-    gfield<double,9> kernel_xbarx(Nx, Ny);
-    gfield<double,9> kernel_xbary(Nx, Ny);
+//    gfield<double,9> kernel_xbarx(Nx, Ny);
+//    gfield<double,9> kernel_xbary(Nx, Ny);
 
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
 
-    lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
-    lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
 
-    gfield<double,9>* uf_global_hermitian;
+//    gfield<double,9>* uf_global_hermitian;
 
 
 //    lfield<double,9> uf_tmp(cnfg->Nxl, cnfg->Nyl);
-    lfield<double,9> xi_local_x_tmp(cnfg->Nxl, cnfg->Nyl);
-    lfield<double,9> xi_local_y_tmp(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> xi_local_x_tmp(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> xi_local_y_tmp(cnfg->Nxl, cnfg->Nyl);
 //    lfield<double,9> uxiulocal_x_tmp(cnfg->Nxl, cnfg->Nyl);
 //    lfield<double,9> uxiulocal_y_tmp(cnfg->Nxl, cnfg->Nyl);
 

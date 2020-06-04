@@ -1851,10 +1851,10 @@ template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* ux
 //
 //                delete uf_hermitian;
 
-        #pragma omp parallel for simd default(shared)
-        for(int i = 0; i < uf->Nxl*uf->Nyl; i++){
+        su3_matrix<double> A,B,C,D,E,F;
 
-                su3_matrix<double> A,B,C,D,E,F;
+        #pragma omp parallel for simd default(shared) private(A,B,C,D,E,F)
+        for(int i = 0; i < uf->Nxl*uf->Nyl; i++){
 
                 D.m[0] = std::conj(uf->u[i*t+0]);
                 D.m[1] = std::conj(uf->u[i*t+3]);
@@ -1892,10 +1892,10 @@ template<class T, int t> int prepare_B_local(lfield<T,t>* B_local, lfield<T,t>* 
 
                 //B_local = uxiulocal_x + uxiulocal_y;
 
-        #pragma omp parallel for simd default(shared)
-        for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
+        su3_matrix<double> A,B,C,D,E,F;
 
-                su3_matrix<double> A,B,C,D,E,F;
+        #pragma omp parallel for simd default(shared) private(A,B,C,D,E,F)
+        for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
 
                 for(int k = 0; k < t; k++){
 			A.m[k] = kernel_pbarx->u[i*t+k];
@@ -1924,10 +1924,10 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 
 //              uf = B_local * uf * A_local;
 
-        #pragma omp parallel for simd default(shared)
-        for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
+        su3_matrix<double> A,B,C,D,E,F;
 
-                su3_matrix<double> A,B,C,D,E,F;
+        #pragma omp parallel for simd default(shared) private(A,B,C,D,E,F)
+        for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
 
                 for(int k = 0; k < t; k++){
                         A.m[k] = uf->u[i*t+k];
@@ -1955,10 +1955,10 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 
 //              A_local = xi_local_x_tmp + xi_local_y_tmp;
 
-        #pragma omp parallel for simd default(shared)
-        for(int i = 0; i < A_local->Nxl*A_local->Nyl; i++){
+        su3_matrix<double> A,B,C,D,E,F;
 
-                su3_matrix<double> A,B,C,D,E,F;
+        #pragma omp parallel for simd default(shared) private(A,B,C,D,E,F)
+        for(int i = 0; i < A_local->Nxl*A_local->Nyl; i++){
 
                 for(int k = 0; k < t; k++){
 			A.m[k] = kernel_pbarx->u[i*t+k];
@@ -2033,64 +2033,67 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 	
    	    //these are the LAMBDAs and not the generators t^a = lambda/2.
 
+	    std::complex<double> unit(0.0,1.0);
+	    double sqrt_3 = sqrt(3.0);
+
             //lambda_nr(1)%su3(1,2) =  runit
             //lambda_nr(1)%su3(2,1) =  runit
-		xi_local_x->u[i*t+1] += std::complex<double>(n[0],0.0);
-		xi_local_x->u[i*t+3] += std::complex<double>(n[0],0.0);
-		xi_local_y->u[i*t+1] += std::complex<double>(m[0],0.0);
-		xi_local_y->u[i*t+3] += std::complex<double>(m[0],0.0);
+		xi_local_x->u[i*t+1] += n[0];
+		xi_local_x->u[i*t+3] += n[0];
+		xi_local_y->u[i*t+1] += m[0];
+		xi_local_y->u[i*t+3] += m[0];
 
             //lambda_nr(2)%su3(1,2) = -iunit
             //lambda_nr(2)%su3(2,1) =  iunit
-		xi_local_x->u[i*t+1] += std::complex<double>(0.0,n[1]);
-		xi_local_x->u[i*t+3] -= std::complex<double>(0.0,n[1]);
-		xi_local_y->u[i*t+1] += std::complex<double>(0.0,m[1]);
-		xi_local_y->u[i*t+3] -= std::complex<double>(0.0,m[1]);
+		xi_local_x->u[i*t+1] += unit*n[1];
+		xi_local_x->u[i*t+3] -= unit*n[1];
+		xi_local_y->u[i*t+1] += unit*m[1];
+		xi_local_y->u[i*t+3] -= unit*m[1];
 
             //lambda_nr(3)%su3(1,1) =  runit
             //lambda_nr(3)%su3(2,2) = -runit
-		xi_local_x->u[i*t+0] += std::complex<double>(n[2],0.0);
-		xi_local_x->u[i*t+4] -= std::complex<double>(n[2],0.0);
-		xi_local_y->u[i*t+0] += std::complex<double>(m[2],0.0);
-		xi_local_y->u[i*t+4] -= std::complex<double>(m[2],0.0);
+		xi_local_x->u[i*t+0] += n[2];
+		xi_local_x->u[i*t+4] -= n[2];
+		xi_local_y->u[i*t+0] += m[2];
+		xi_local_y->u[i*t+4] -= m[2];
 
             //lambda_nr(4)%su3(1,3) =  runit
             //lambda_nr(4)%su3(3,1) =  runit
-		xi_local_x->u[i*t+2] += std::complex<double>(n[3],0.0);
-		xi_local_x->u[i*t+6] += std::complex<double>(n[3],0.0);
-		xi_local_y->u[i*t+2] += std::complex<double>(m[3],0.0);
-		xi_local_y->u[i*t+6] += std::complex<double>(m[3],0.0);
+		xi_local_x->u[i*t+2] += n[3];
+		xi_local_x->u[i*t+6] += n[3];
+		xi_local_y->u[i*t+2] += m[3];
+		xi_local_y->u[i*t+6] += m[3];
 
             //lambda_nr(5)%su3(1,3) = -iunit
             //lambda_nr(5)%su3(3,1) =  iunit
-		xi_local_x->u[i*t+2] += std::complex<double>(0.0,n[4]);
-		xi_local_x->u[i*t+6] -= std::complex<double>(0.0,n[4]);
-		xi_local_y->u[i*t+2] += std::complex<double>(0.0,m[4]);
-		xi_local_y->u[i*t+6] -= std::complex<double>(0.0,m[4]);
+		xi_local_x->u[i*t+2] += unit*n[4];
+		xi_local_x->u[i*t+6] -= unit*n[4];
+		xi_local_y->u[i*t+2] += unit*m[4];
+		xi_local_y->u[i*t+6] -= unit*m[4];
 
             //lambda_nr(6)%su3(2,3) =  runit
             //lambda_nr(6)%su3(3,2) =  runit
-		xi_local_x->u[i*t+5] += std::complex<double>(n[5],0.0);
-		xi_local_x->u[i*t+7] += std::complex<double>(n[5],0.0);
-		xi_local_y->u[i*t+5] += std::complex<double>(m[5],0.0);
-		xi_local_y->u[i*t+7] += std::complex<double>(m[5],0.0);
+		xi_local_x->u[i*t+5] += n[5];
+		xi_local_x->u[i*t+7] += n[5];
+		xi_local_y->u[i*t+5] += m[5];
+		xi_local_y->u[i*t+7] += m[5];
 
             //lambda_nr(7)%su3(2,3) = -iunit
             //lambda_nr(7)%su3(3,2) =  iunit
-		xi_local_x->u[i*t+5] += std::complex<double>(0.0,n[6]);
-		xi_local_x->u[i*t+7] -= std::complex<double>(0.0,n[6]);
-		xi_local_y->u[i*t+5] += std::complex<double>(0.0,m[6]);
-		xi_local_y->u[i*t+7] -= std::complex<double>(0.0,m[6]);
+		xi_local_x->u[i*t+5] += unit*n[6];
+		xi_local_x->u[i*t+7] -= unit*n[6];
+		xi_local_y->u[i*t+5] += unit*m[6];
+		xi_local_y->u[i*t+7] -= unit*m[6];
 
             //lambda_nr(8)%su3(1,1) =  cst8
             //lambda_nr(8)%su3(2,2) =  cst8
             //lambda_nr(8)%su3(3,3) =  -(two*cst8)
-		xi_local_x->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		xi_local_x->u[i*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		xi_local_x->u[i*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
-		xi_local_y->u[i*t+0] += std::complex<double>(m[7]/sqrt(3.0),0.0);
-		xi_local_y->u[i*t+4] += std::complex<double>(m[7]/sqrt(3.0),0.0);
-		xi_local_y->u[i*t+8] += std::complex<double>(-2.0*m[7]/sqrt(3.0),0.0);
+		xi_local_x->u[i*t+0] += n[7]/sqrt_3;
+		xi_local_x->u[i*t+4] += n[7]/sqrt_3;
+		xi_local_x->u[i*t+8] += -2.0*n[7]/sqrt_3;
+		xi_local_y->u[i*t+0] += m[7]/sqrt_3;
+		xi_local_y->u[i*t+4] += m[7]/sqrt_3;
+		xi_local_y->u[i*t+8] += -2.0*m[7]/sqrt_3;
 
 	}
 
@@ -2141,55 +2144,57 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 
 	}
 
-        #pragma omp parallel for simd collapse(2) default(shared) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
+	std::complex<double> A,B;
+        su3_matrix<double> C,D,E,F,G,H,K;
+
+        #pragma omp parallel for simd collapse(2) default(shared) private(A,B,C,D,E,F,G,H,K) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
         for(int xx = 0; xx < Nx; xx++){
                 for(int yy = 0; yy < Ny; yy++){
 
                         int i = xx*Ny+yy;
-
-	                su3_matrix<double> A,B,C,D,E,F,G,H,K;
-
-                        int ii = fabs(x_global - xx)*Ny + fabs(y_global - yy);
-
-                        //double dx2 = 0.5*Nxg*sin(2.0*M_PI*(x_global-xx)/Nxg)/M_PI;
-                        //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
 /*
-                        double dx = pos->xhatX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-                        //double dy = pos->xbarY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+                        double dx2 = Nx*sin(M_PI*(x_global-xx)/Nx)/M_PI;
+                        double dy2 = Ny*sin(M_PI*(y_global-yy)/Ny)/M_PI;
 
-                        double rrr = pos->xbar2(ii); //1.0*(dx2*dx2+dy2*dy2);
+                        double dx = 0.5*Nx*sin(2.0*M_PI*(x_global-xx)/Nx)/M_PI;
+                        double dy = 0.5*Ny*sin(2.0*M_PI*(y_global-yy)/Ny)/M_PI;
+
+                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
 */
-                                         double dx = x_global - xx;
-                                         if( dx >= Nx/2 )
-                                                dx = dx - Nx;
-                                         if( dx < -Nx/2 )
-                                                dx = dx + Nx;
 
-                                         double dy = y_global - yy;
-                                         if( dy >= Ny/2 )
-                                                dy = dy - Ny;
-                                         if( dy < -Ny/2 )
-                                                dy = dy + Ny;
+                        double dx = x_global - xx;
+                        if( dx >= Nx/2 )
+                              dx = dx - Nx;
+                        if( dx < -Nx/2 )
+                  	      dx = dx + Nx;
 
-                                         double rrr = 1.0*(dx*dx+dy*dy);
+                        double dy = y_global - yy;
+                        if( dy >= Ny/2 )
+                                dy = dy - Ny;
+                        if( dy < -Ny/2 )
+                        	dy = dy + Ny;
+						
+                        double rrr = 1.0*(dx*dx+dy*dy);
+					
+			//const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+
+			//double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+			double sqrt_coupling_constant = 1.0;
+
 			//kernel_x i kernel_y
                         if( rrr > 10e-9 ){
 
-                                A.m[0] = std::complex<double>(dx/rrr, 0.0);
-                                A.m[4] = A.m[0];
-                                A.m[8] = A.m[0];
+                                A.real(sqrt_coupling_constant*dx/rrr);
+				A.imag(0.0);
 
-                                B.m[0] = std::complex<double>(dy/rrr, 0.0);
-                                B.m[4] = B.m[0];
-                                B.m[8] = B.m[0];
-
-
+                                B.real(sqrt_coupling_constant*dy/rrr);
+				B.imag(0.0);
                         }
 
 	                for(int k = 0; k < t; k++){
 
-		                C.m[k] = xi_global_x->u[i*t+k];
-        		        D.m[k] = xi_global_y->u[i*t+k];
+		                C.m[k] = A*xi_global_x->u[i*t+k];
+        		        D.m[k] = B*xi_global_y->u[i*t+k];
 
 				G.m[k] = uf_global->u[i*t+k];
 
@@ -2207,7 +2212,7 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 	                H.m[8] = std::conj(G.m[8]);
 
 
-			E = A * C + B * D;
+			E = C + D;
 
 			K = G * E * H;
 
@@ -2223,8 +2228,13 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 	}
 
         for(int k = 0; k < t; k++){
-              	A_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumAlocalRe[k], sumAlocalIm[k]);
-              	B_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumBlocalRe[k], sumBlocalIm[k]);
+//              	A_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumAlocalRe[k], sumAlocalIm[k]);
+//              	B_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumBlocalRe[k], sumBlocalIm[k]);
+
+              	A_local->u[(x*A_local->Nyl+y)*t+k].real(sumAlocalRe[k]);
+              	B_local->u[(x*A_local->Nyl+y)*t+k].real(sumBlocalRe[k]);
+              	A_local->u[(x*A_local->Nyl+y)*t+k].imag(sumAlocalIm[k]);
+              	B_local->u[(x*A_local->Nyl+y)*t+k].imag(sumBlocalIm[k]);
 
 	}
 
