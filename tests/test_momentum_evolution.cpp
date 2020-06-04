@@ -50,8 +50,6 @@ int main(int argc, char *argv[]) {
 
     mpi->mpi_exchange_grid();
 
-    mpi->mpi_exchange_groups();
-
     printf("MOMTABLE\n");
 
     momenta* momtable = new momenta(cnfg, mpi);

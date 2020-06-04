@@ -220,15 +220,6 @@ if( !COPY ){
 
         if( dir ){
                 fftw_mpi_execute_dft(planX2K_single, reinterpret_cast<fftw_complex*>(ptr), reinterpret_cast<fftw_complex*>(ptr));
-
-//		#pragma omp parallel for simd collapse(2) default(shared)
-//		for (i = 0; i < Nxl; ++i){
-//			for(j = 0; j < Nyl; j++){
-//                        	f->u[(i*Nyl+j)] *= scale_after_fft;
-//			}
-//        	}
-
-
         }else{
                 fftw_mpi_execute_dft(planK2X_single, reinterpret_cast<fftw_complex*>(ptr), reinterpret_cast<fftw_complex*>(ptr));
         }
@@ -273,16 +264,6 @@ if( !COPY ){
 
         if( dir ){
                 fftw_mpi_execute_dft(planX2K, reinterpret_cast<fftw_complex*>(ptr), reinterpret_cast<fftw_complex*>(ptr));
-
-//		#pragma omp parallel for simd collapse(2) default(shared)
-//		for (i = 0; i < Nxl; ++i){
-//			for(j = 0; j < Nyl; j++){
-//				for(k = 0; k < 9; k++){
-//        	                	f->u[(i*Nyl+j)*t+k] *= scale_after_fft;
-//				}
-//			}
-//        	}
-
         }else{
                 fftw_mpi_execute_dft(planK2X, reinterpret_cast<fftw_complex*>(ptr), reinterpret_cast<fftw_complex*>(ptr));
         }
