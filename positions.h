@@ -76,50 +76,54 @@ int positions::set(){
 			jg = (j+pos_y*Nyl);
 
 
-    			//constructs the different kinds of momenta that are needed: 
-    			//phat2 = sum_\mu 4 sin(pi k_\mu / N_\mu)^2
-    			//pbar2 = sum_\mu sin(2pi k_\mu / N_\mu)^2
-    			//pbar_\mu = sin(2pi k_\mu / N_\mu)
+                        //double dx2 = Nx*sin(M_PI*(x_global-xx)/Nx)/M_PI;
+                        //double dy2 = Ny*sin(M_PI*(y_global-yy)/Ny)/M_PI;
+                        //double dx = 0.5*Nx*sin(2.0*M_PI*(x_global-xx)/Nx)/M_PI;
+                        //double dy = 0.5*Ny*sin(2.0*M_PI*(y_global-yy)/Ny)/M_PI;
 
-                        //double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
-                        //double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+		        //double rrr = 1.0*(dx2*dx2+dy2*dy2);
+                      
+                        //int ii = fabs(x_global - xx)*Nyg + fabs(y_global - yy);
 
-                        //double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-                        //double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+                        //double dx = pos->xhatX(ii);
+                        //double dy = pos->xhatY(ii);
+
+                        //double rrr = pos->xbar2(ii);
+
+
+			sargx = 0.5*Nx * sin( 2.0*M_PI * ig / (1.0 * Nx) ) / M_PI;
+			sargy = 0.5*Ny * sin( 2.0*M_PI * jg / (1.0 * Ny) ) / M_PI;
+
+			//tbl_xhat2[i*Nyl+j] = 4.0*pow(sargx,2.0) + 4.0*pow(sargy,2.0);
+			tbl_xhatx[i*Nyl+j] = sargx;
+			tbl_xhaty[i*Nyl+j] = sargy;
 
 			sargx = Nx * sin( M_PI * ig / (1.0 * Nx) ) / M_PI;
 			sargy = Ny * sin( M_PI * jg / (1.0 * Ny) ) / M_PI;
 
-			tbl_xhat2[i*Nyl+j] = 4.0*pow(sargx,2.0) + 4.0*pow(sargy,2.0);
-			tbl_xhatx[i*Nyl+j] = sargx;
-			tbl_xhaty[i*Nyl+j] = sargy;
-
-			sargx = 2.0 * Nx * sin( 0.5 * M_PI * ig / (1.0 * Nx) ) / M_PI;
-			sargy = 2.0 * Ny * sin( 0.5 * M_PI * jg / (1.0 * Ny) ) / M_PI;
-
 			tbl_xbar2[i*Nyl+j] = pow(sargx,2.0) + pow(sargy,2.0);
-			tbl_xbarx[i*Nyl+j] = sargx;
-			tbl_xbary[i*Nyl+j] = sargy;
+			//tbl_xbarx[i*Nyl+j] = sargx;
+			//tbl_xbary[i*Nyl+j] = sargy;
 		}
 	}
 
 return 1;
 }
 
-double positions::xhat2(int i){
+//double positions::xhat2(int i){
+//
+//	return tbl_xhat2[i]; 
+//}
 
-	return tbl_xhat2[i]; 
-}
+//double positions::xbarX(int i){
+//
+//	return tbl_xbarx[i]; 
+//}
 
-double positions::xbarX(int i){
-
-	return tbl_xbarx[i]; 
-}
-
-double positions::xbarY(int i){
-
-	return tbl_xbary[i]; 
-}
+//double positions::xbarY(int i){
+//
+//	return tbl_xbary[i]; 
+//}
 
 double positions::xbar2(int i){
 

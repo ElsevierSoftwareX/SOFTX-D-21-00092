@@ -2161,7 +2161,23 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 
                         double rrr = 1.0*(dx2*dx2+dy2*dy2);
 */
+			int ii = 0;
+			if( x_global > xx)
+				ii += (x_global - xx)*Ny;
+			else
+				ii += (Nx + x_global - xx)*Ny;
 
+			if( y_global > yy)
+				ii += (y_global - yy);
+			else
+				ii += (Ny + y_global - yy);
+
+                        double dx = postable->xhatX(ii); 
+                        double dy = postable->xhatY(ii); 
+                        
+                        double rrr = postable->xbar2(ii);
+
+/*
                         double dx = x_global - xx;
                         if( dx >= Nx/2 )
                               dx = dx - Nx;
@@ -2175,11 +2191,11 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
                         	dy = dy + Ny;
 						
                         double rrr = 1.0*(dx*dx+dy*dy);
-					
-			//const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+*/					
+			const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 
-			//double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
-			double sqrt_coupling_constant = 1.0;
+			double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+			//double sqrt_coupling_constant = 1.0;
 
 			//kernel_x i kernel_y
                         if( rrr > 10e-9 ){
