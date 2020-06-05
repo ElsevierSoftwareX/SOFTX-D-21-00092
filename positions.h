@@ -12,12 +12,9 @@ class positions {
 
 private:
 
-	double* tbl_xhat2;
 	double* tbl_xhatx;
 	double* tbl_xhaty;
 	double* tbl_xbar2;
-	double* tbl_xbarx;
-	double* tbl_xbary;
 
 	int Nxl, Nyl;
 	int pos_x, pos_y;
@@ -26,39 +23,49 @@ public:
 
 	positions(config* cnfg, mpi_class* mpi){
 
-		tbl_xhat2 = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
 		tbl_xhatx = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
 		tbl_xhaty = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
 		tbl_xbar2 = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
-		tbl_xbarx = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
-		tbl_xbary = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
 
 		Nxl = cnfg->Nxl;
 		Nyl = cnfg->Nyl;
 
 		pos_x = mpi->getPosX();
 		pos_y = mpi->getPosY();
+
+	}
+
+	positions(const positions &in){
+
+		this->tbl_xhatx = (double*)malloc(in.Nxl*in.Nyl*sizeof(double));
+		this->tbl_xhaty = (double*)malloc(in.Nxl*in.Nyl*sizeof(double));
+		this->tbl_xbar2 = (double*)malloc(in.Nxl*in.Nyl*sizeof(double));
+
+		for(int i = 0; i < in.Nxl*in.Nyl; i++){
+			this->tbl_xhatx[i] = in.tbl_xhatx[i];
+			this->tbl_xhaty[i] = in.tbl_xhaty[i];
+			this->tbl_xbar2[i] = in.tbl_xbar2[i];
+		}
+
+		this->Nxl = in.Nxl;
+		this->Nyl = in.Nyl;
+
+		this->pos_x = in.pos_x;
+		this->pos_y = in.pos_y;
 	}
 
 	~positions(){
 
-		free(tbl_xhat2);
 		free(tbl_xhatx);
 		free(tbl_xhaty);
 		free(tbl_xbar2);
-		free(tbl_xbarx);
-		free(tbl_xbary);
-
 	}
 
 	int set();
 
-	double xhat2(int i);
-	double xbarX(int i);
-	double xbarY(int i);
-	double xbar2(int i);
 	double xhatX(int i);
 	double xhatY(int i);
+	double xbar2(int i);
 
 
 };
