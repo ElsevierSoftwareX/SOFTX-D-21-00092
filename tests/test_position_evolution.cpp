@@ -53,9 +53,9 @@ int main(int argc, char *argv[]) {
 
     momtable->set();
 
-    positions* postable = new positions(cnfg, mpi);
+    positions postable(cnfg, mpi);
 
-    postable->set();
+    postable.set();
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 

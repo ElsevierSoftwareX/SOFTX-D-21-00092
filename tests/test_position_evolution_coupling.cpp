@@ -53,13 +53,13 @@ int main(int argc, char *argv[]) {
 
     momtable->set();
 
-    positions* postable = new positions(cnfg, mpi);
+    positions postable(cnfg, mpi);
 
-    postable->set();
+    postable.set();
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.32, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.08, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
 
