@@ -110,6 +110,7 @@ template<class T, int t> class gfield: public field<T,t> {
 		int multiplyByCholesky(gmatrix<T>* mm);
 
 		lfield<T,t>* reduce(int NNx, int NNy, mpi_class* mpi);
+		int reduce(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi);
 
 		int setToZero(void){
 			for(int i = 0; i < t*Nxg*Nyg; i ++){
@@ -1624,6 +1625,29 @@ template<class T, int t> lfield<T,t>* gfield<T,t>::reduce(int NNx, int NNy, mpi_
 
 return corr_tmp;
 }
+
+
+template<class T, int t> int gfield<T,t>::reduce(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi){
+
+	int NNx = sum->Nxl;
+	int NNy = sum->Nyl;
+
+	#pragma omp parallel for simd collapse(2) default(shared)
+	for(int i = 0; i < NNx; i++){
+		for(int j = 0; j < NNy; j++){
+			//x += this->u[(i+mpi->getPosX()*NNx)*Nyg+j+mpi->getPosY()*NNy][0];
+			sum->u[(i*NNy+j)*t+0] += this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+0];
+			err->u[(i*NNy+j)*t+0] += pow(this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+0],2.0);
+		}
+	}
+
+return 1;
+}
+
+
+
+
+
 
 template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local, gfield<T,t>* f){
 

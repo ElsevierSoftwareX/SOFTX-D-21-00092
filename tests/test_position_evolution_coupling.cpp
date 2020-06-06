@@ -102,10 +102,10 @@ int main(int argc, char *argv[]) {
     //std::vector<lfield<double,1>*> accumulator;
 
     lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,1> err(cnfg->Nxl, cnfg->Nyl);
 
     sum.setToZero();
-
-
+    err.setToZero();
 
 //-------------------------------------------------------
 //-------------------------------------------------------
@@ -253,11 +253,13 @@ for(int stat = 0; stat < cnfg->stat; stat++){
    	corr_global->average_and_symmetrize();
 
 	//store stat in the accumulator
-	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
-
-        sum += *corr_ptr;
-
-        delete corr_ptr;
+	//lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
+	//
+        //sum += *corr_ptr;
+	//
+        //delete corr_ptr;
+		
+	corr_global->reduce(&sum, &err, mpi);
 
 	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
 	//accumulator.push_back(corr_ptr);
