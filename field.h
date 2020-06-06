@@ -37,28 +37,36 @@ template<class T, int t> class field {
 	public:
 
 		field(int NNx, int NNy);
-
+		field(const field<T,t> &in);
 		virtual ~field(void){};
 };
 
 template<class T, int t> field<T,t>::field(int NNx, int NNy) {
 
-	int i;
 
 	u = (std::complex<T>*)malloc(t*NNx*NNy*sizeof(std::complex<T>));
 
-//	for(i = 0; i < t; i++){
-//
-//		u[i] = (std::complex<T>*)malloc(NNx*NNy*sizeof(std::complex<T>));
-//
 	for(int j = 0; j < t*NNx*NNy; j++)
 			u[j] = 0.0;
-
-//	}
 
 	Nxl = NNx;
 	Nyl = NNy;
 }
+
+template<class T, int t> field<T,t>::field(const field<T,t> &in) {
+
+	std::cout<<"Executing base class copy constructor"<<std::endl;
+
+	this->u = (std::complex<T>*)malloc(t*in.Nxl*in.Nyl*sizeof(std::complex<T>));
+
+	for(int j = 0; j < t*in.Nxl*in.Nyl; j++)
+			this->u[j] = in.u[j];
+
+	this->Nxl = in.Nxl;
+	this->Nyl = in.Nyl;
+
+}
+
 /*
 template<class T, int t> field<T,t>::~field() {
 
@@ -127,14 +135,6 @@ template<class T, int t> class gfield: public field<T,t> {
 
 template<class T, int t> gfield<T,t>::~gfield() {
 
-	int i;
-
-//	for(i = 0; i < t; i++){
-//
-//		free(this->u[i]);
-//
-//	}
-
 	free(this->u);
 
 }
@@ -147,6 +147,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int Nxl_buf, Nyl_buf;
 
 		lfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxl = NNx; Nyl = NNy; };
+		lfield(const lfield<T,t> &in);
 
 		~lfield();
 
@@ -275,15 +276,26 @@ template<class T, int t> class lfield: public field<T,t> {
 
 };
 
-template<class T, int t> lfield<T,t>::~lfield() {
+template<class T, int t> lfield<T,t>::lfield(const lfield<T,t> &in) : field<T,t>(in) {
 
+	std::cout<<"Executing derived class copy constructor"<<std::endl;
+
+//not needed because it is in the base copy conrtuctor
+/*
 	int i;
 
-//	for(i = 0; i < t; i++){
-//
-//		free(this->u[i]);
-//
-//	}
+	this->u = (std::complex<T>*)malloc(t*in.Nxl*in.Nyl*sizeof(std::complex<T>));
+
+	for(int j = 0; j < t*in.Nxl*in.Nyl; j++)
+			this->u[j] = in.u[j];
+*/
+	this->Nxl = in.Nxl;
+	this->Nyl = in.Nyl;
+
+}
+
+
+template<class T, int t> lfield<T,t>::~lfield() {
 
 	free(this->u);
 
@@ -1808,6 +1820,42 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom, double x, mpi_clas
 
 return 1;
 }
+
+template<class T, int t> int print(lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double x, mpi_class* mpi){
+
+
+	printf("### object size = %i, %i\n", sum->Nxl, sum->Nyl);
+
+	for(int k = 0; k < mpi->getSize(); k++){
+
+		if( mpi->getRank() == k ){
+
+			for(int xx = 0; xx < sum->Nxl; xx++){
+				for(int yy = 0; yy < sum->Nyl; yy++){
+
+					int i = xx*(sum->Nyl)+yy;
+      
+					if( fabs(xx + mpi->getPosX()*(sum->Nxl) - yy - mpi->getPosY()*(sum->Nyl)) <= 4 ){
+ 
+						printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(sum->u[i*t+0].real()), x*(mom->phat2(i))*(err->u[i*t+0].real()));
+
+					}
+				}
+			}
+
+		}else{
+
+			printf("###\n");
+		}
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
+	}
+
+return 1;
+}
+
+
 
 template<class T, int t> int lfield<T,t>::printDebug(){
 
