@@ -1,0 +1,10 @@
+set term postscript color enhanced
+set xlabel 'x'
+set ylabel 'x, period = 20'
+set output 'xhat.ps'
+plot [-20:20] x > 10? x-20: x< -10?x+20:x t 'x periodic', 0.5*20*sin(2.0*3.1415*x/20)/3.1415 t 'x hat'
+
+set xlabel 'x'
+set ylabel 'x^2, period = 20'
+set output 'xbar2.ps'
+plot [-20:20] x > 10? (x-20)**2: x< -10?(x+20)**2:x**2 t 'x^2 periodic', (20*sin(3.1415*x/20)/3.1415)**2 t 'xbar^2'
