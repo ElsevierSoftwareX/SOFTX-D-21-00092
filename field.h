@@ -2038,6 +2038,10 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 
 	                C.m[k] = xi_local_x->u[i*t+k]/(1.0*Nx*Ny);
         	        D.m[k] = xi_local_y->u[i*t+k]/(1.0*Nx*Ny);
+//	                C.m[k] = xi_local_x->u[i*t+k];
+//        	        D.m[k] = xi_local_y->u[i*t+k];
+
+
 		}
 
 		E = A * C + B * D;
@@ -2178,6 +2182,126 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 
 return 1;
 }
+
+template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom, mpi_class* mpi, config* cnfg){
+
+	if(t == 9){
+
+	const double EPS = 10e-12;
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+        //rand_class* rr = new rand_class(mpi,cnfg);
+
+	const double tmp = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+	const double tmp2 = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
+
+	#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < xi_local_x->Nxl*xi_local_x->Nyl; i++){
+
+	    static __thread std::ranlux24* generator = nullptr;
+	    if (!generator){
+		  	 std::hash<std::thread::id> hasher;
+			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+	    }
+    	    std::normal_distribution<double> distribution{0.0,1.0};
+
+	    double sqrt_coupling_constant = sqrt( tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+
+	    //set to zero
+	    for(int j = 0; j < t; j++){
+		xi_local_x->u[i*t+j] = 0.0;
+		xi_local_y->u[i*t+j] = 0.0;
+	    }
+
+	    double n[8];
+	    double m[8];
+
+	    for(int k = 0; k < 8; k++){
+                	n[k] = distribution(*generator)*sqrt_coupling_constant;
+                	m[k] = distribution(*generator)*sqrt_coupling_constant;
+	    }
+//sqrt( -2.0 * log( EPS + distribution(*generator) ) ) * cos( distribution(*generator) * 2.0 * M_PI);
+//                	n[k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+	
+   	    //these are the LAMBDAs and not the generators t^a = lambda/2.
+
+	    std::complex<double> unit(0.0,1.0);
+	    double sqrt_3 = sqrt(3.0);
+
+            //lambda_nr(1)%su3(1,2) =  runit
+            //lambda_nr(1)%su3(2,1) =  runit
+		xi_local_x->u[i*t+1] += n[0];
+		xi_local_x->u[i*t+3] += n[0];
+		xi_local_y->u[i*t+1] += m[0];
+		xi_local_y->u[i*t+3] += m[0];
+
+            //lambda_nr(2)%su3(1,2) = -iunit
+            //lambda_nr(2)%su3(2,1) =  iunit
+		xi_local_x->u[i*t+1] += unit*n[1];
+		xi_local_x->u[i*t+3] -= unit*n[1];
+		xi_local_y->u[i*t+1] += unit*m[1];
+		xi_local_y->u[i*t+3] -= unit*m[1];
+
+            //lambda_nr(3)%su3(1,1) =  runit
+            //lambda_nr(3)%su3(2,2) = -runit
+		xi_local_x->u[i*t+0] += n[2];
+		xi_local_x->u[i*t+4] -= n[2];
+		xi_local_y->u[i*t+0] += m[2];
+		xi_local_y->u[i*t+4] -= m[2];
+
+            //lambda_nr(4)%su3(1,3) =  runit
+            //lambda_nr(4)%su3(3,1) =  runit
+		xi_local_x->u[i*t+2] += n[3];
+		xi_local_x->u[i*t+6] += n[3];
+		xi_local_y->u[i*t+2] += m[3];
+		xi_local_y->u[i*t+6] += m[3];
+
+            //lambda_nr(5)%su3(1,3) = -iunit
+            //lambda_nr(5)%su3(3,1) =  iunit
+		xi_local_x->u[i*t+2] += unit*n[4];
+		xi_local_x->u[i*t+6] -= unit*n[4];
+		xi_local_y->u[i*t+2] += unit*m[4];
+		xi_local_y->u[i*t+6] -= unit*m[4];
+
+            //lambda_nr(6)%su3(2,3) =  runit
+            //lambda_nr(6)%su3(3,2) =  runit
+		xi_local_x->u[i*t+5] += n[5];
+		xi_local_x->u[i*t+7] += n[5];
+		xi_local_y->u[i*t+5] += m[5];
+		xi_local_y->u[i*t+7] += m[5];
+
+            //lambda_nr(7)%su3(2,3) = -iunit
+            //lambda_nr(7)%su3(3,2) =  iunit
+		xi_local_x->u[i*t+5] += unit*n[6];
+		xi_local_x->u[i*t+7] -= unit*n[6];
+		xi_local_y->u[i*t+5] += unit*m[6];
+		xi_local_y->u[i*t+7] -= unit*m[6];
+
+            //lambda_nr(8)%su3(1,1) =  cst8
+            //lambda_nr(8)%su3(2,2) =  cst8
+            //lambda_nr(8)%su3(3,3) =  -(two*cst8)
+		xi_local_x->u[i*t+0] += n[7]/sqrt_3;
+		xi_local_x->u[i*t+4] += n[7]/sqrt_3;
+		xi_local_x->u[i*t+8] += -2.0*n[7]/sqrt_3;
+		xi_local_y->u[i*t+0] += m[7]/sqrt_3;
+		xi_local_y->u[i*t+4] += m[7]/sqrt_3;
+		xi_local_y->u[i*t+8] += -2.0*m[7]/sqrt_3;
+
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setGaussian function\n");
+
+	}
+
+
+return 1;
+}
+
 
 template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, int y_global, gfield<T,t>* xi_global_x, gfield<T,t>* xi_global_y, 
 				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions postable){
