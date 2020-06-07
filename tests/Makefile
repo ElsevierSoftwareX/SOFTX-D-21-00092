@@ -1,9 +1,9 @@
 CXX=mpicxx
-INC=-I../zheevh3-C-1.1/ -I/home/pk/Desktop/nspt/fftw/install/include 
-#INC=-I../zheevh3-C-1.1/ -I/net/people/plgpkorcyl/fftw/install_gcc3/include
+#INC=-I../zheevh3-C-1.1/ -I/home/pk/Desktop/nspt/fftw/install/include 
+INC=-I../zheevh3-C-1.1/ -I/net/people/plgpkorcyl/fftw/install_gcc3/include
 CXXFLAGS=-g -O3 -std=gnu++11 -fopenmp $(INC)
-LIBS=/home/pk/Desktop/nspt/fftw/install/lib/libfftw3_mpi.a /home/pk/Desktop/nspt/fftw/install/lib/libfftw3.a /home/pk/Desktop/nspt/fftw/install/lib/libfftw3_omp.a 
-#LIBS=/net/people/plgpkorcyl/fftw/install_gcc3/lib/libfftw3_mpi.a /net/people/plgpkorcyl/fftw/install_gcc3/lib/libfftw3.a /net/people/plgpkorcyl/fftw/install_gcc3/lib/libfftw3_omp.a
+#LIBS=/home/pk/Desktop/nspt/fftw/install/lib/libfftw3_mpi.a /home/pk/Desktop/nspt/fftw/install/lib/libfftw3.a /home/pk/Desktop/nspt/fftw/install/lib/libfftw3_omp.a 
+LIBS=/net/people/plgpkorcyl/fftw/install_gcc3/lib/libfftw3_mpi.a /net/people/plgpkorcyl/fftw/install_gcc3/lib/libfftw3.a /net/people/plgpkorcyl/fftw/install_gcc3/lib/libfftw3_omp.a
 LDFLAGS=$(LIBS) -lm 
 
 .PHONY: clean test_position_evolution test_momentum_evolution test_position_evolution_coupling

@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.08, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.16, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
 
@@ -101,11 +101,13 @@ int main(int argc, char *argv[]) {
 
     //std::vector<lfield<double,1>*> accumulator;
 
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
-    lfield<double,1> err(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
+//    zero.setToZero();
 
-    sum.setToZero();
-    err.setToZero();
+    int langevin_steps = 100;
+
+    std::vector<lfield<double,1>> sum(langevin_steps, zero);
+    std::vector<lfield<double,1>> err(langevin_steps, zero);
 
 //-------------------------------------------------------
 //-------------------------------------------------------
@@ -160,19 +162,12 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         //evolution
         for(int langevin = 0; langevin < 100; langevin++){
 
-		//const clock_t begin_time = std::clock();
                 struct timespec starte, finishe;
                 double elapsede;
 
                 clock_gettime(CLOCK_MONOTONIC, &starte);
 
                 printf("Performing evolution step no. %i\n", langevin);
-
-		//xi_local_x.setToZero();
-		//xi_local_y.setToZero();
-
-                //xi_local_x.setGaussian(random_generator,1);
-                //xi_local_y.setGaussian(random_generator,2);
 
 		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
 
@@ -187,43 +182,16 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		B_local.setToZero();
 
                 printf("starting iteration over global lattice\n");
-                //for(int i = 0; i < cnfg->Nxl*cnfg->Nyl; i++){
                 for(int x = 0; x < cnfg->Nxl; x++){
 	                for(int y = 0; y < cnfg->Nyl; y++){
 
         	                int x_global = x + mpi->getPosX()*cnfg->Nxl;
                                 int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-				//kernel_xbarx.setToZero();
-				//kernel_xbary.setToZero();
-
-                                //kernel_xbarx.setKernelXbarX(x_global, y_global, postable);
-                                //kernel_xbary.setKernelXbarY(x_global, y_global, postable);
-
-                                //xi_global_x_tmp = kernel_xbarx * xi_global_x;
-                                //xi_global_y_tmp = kernel_xbary * xi_global_y;
-
-
-                                //xi_global_tmp = xi_global_x_tmp + xi_global_y_tmp;
-
-
-                                //A_local.reduceAndSet(x, y, &xi_global_tmp);
-
-
-                                //uxiu_global_tmp = uf_global * xi_global_tmp * (*uf_global_hermitian);
-
-                                //B_local.reduceAndSet(x, y, &uxiu_global_tmp);
-
 				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, postable);
 
                         }
                 }
-
-		//A_local.exponentiate(sqrt(step));
-		//
-        	//B_local.exponentiate(-sqrt(step));
-		//
-        	//uf = B_local * uf * A_local;
 
 		update_uf(&uf, &B_local, &A_local, step);
 		
@@ -234,53 +202,36 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         	std::cout<<"Evolution time: " << elapsede << std::endl;
 
-		//std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-	}
+	    	//-------------------------------------------------------
+		//------CORRELATION FUNCTION-----------------------------
+		//-------------------------------------------------------
 
-    	//-------------------------------------------------------
-	//------CORRELATION FUNCTION-----------------------------
-	//-------------------------------------------------------
+		lfield<double,9> uf_copy(uf);
 
-	//compute correlation function
-	//should be X2K
-//   	fourier->execute1D(&uf, 0);
-	fourier2->execute2D(&uf,1);
+		fourier2->execute2D(&uf_copy,1);
     
-	uf.trace(corr);
+		uf.trace(corr);
 
-    	corr_global->allgather(corr, mpi);	
+	    	corr_global->allgather(corr, mpi);	
 
-   	corr_global->average_and_symmetrize();
+   		corr_global->average_and_symmetrize();
 
-	//store stat in the accumulator
-	//lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
-	//
-        //sum += *corr_ptr;
-	//
-        //delete corr_ptr;
-		
-	corr_global->reduce(&sum, &err, mpi);
+		corr_global->reduce(&sum[langevin], &err[langevin], mpi);
 
-	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
-	//accumulator.push_back(corr_ptr);
-
-	//std::cout << "ONE STAT TIME: " << float( std::clock () - begin_time_stat ) /  CLOCKS_PER_SEC << std::endl;
+	}
 
         clock_gettime(CLOCK_MONOTONIC, &finish);
 
-        elapsed = (finish.tv_sec - start.tv_sec);
+       	elapsed = (finish.tv_sec - start.tv_sec);
         elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 
-        std::cout<<"Statistics time: " << elapsed << std::endl;
+       	std::cout<<"Statistics time: " << elapsed << std::endl;
+
     }
 
-    //printf("accumulator size = %i\n", accumulator.size());
-
-    //for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
-	//sum += **it;
-
-    sum.print(momtable, 1.0/3.0/cnfg->stat, mpi);
-
+    for(int i = 0; i < langevin_steps; i++){
+            print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
+    }
 
 //-------------------------------------------------------
 //------DEALLOCATE AND CLEAN UP--------------------------
