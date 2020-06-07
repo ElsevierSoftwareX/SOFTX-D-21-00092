@@ -1824,38 +1824,36 @@ return 1;
 template<class T, int t> int print(lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double x, mpi_class* mpi){
 
 
-	printf("### object size = %i, %i\n", sum->Nxl, sum->Nyl);
+        printf("### object size = %i, %i\n", sum->Nxl, sum->Nyl);
 
-	for(int k = 0; k < mpi->getSize(); k++){
+        for(int k = 0; k < mpi->getSize(); k++){
 
-		if( mpi->getRank() == k ){
+                if( mpi->getRank() == k ){
 
-			for(int xx = 0; xx < sum->Nxl; xx++){
-				for(int yy = 0; yy < sum->Nyl; yy++){
+                        for(int xx = 0; xx < sum->Nxl; xx++){
+                                for(int yy = 0; yy < sum->Nyl; yy++){
 
-					int i = xx*(sum->Nyl)+yy;
-      
-					if( fabs(xx + mpi->getPosX()*(sum->Nxl) - yy - mpi->getPosY()*(sum->Nyl)) <= 4 ){
- 
-						printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(sum->u[i*t+0].real()), x*(mom->phat2(i))*(err->u[i*t+0].real()));
+                                        int i = xx*(sum->Nyl)+yy;
 
-					}
-				}
-			}
+                                        if( fabs(xx + mpi->getPosX()*(sum->Nxl) - yy - mpi->getPosY()*(sum->Nyl)) <= 4 ){
 
-		}else{
+                                                printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(sum->u[i*t+0].real()), x*(mom->phat2(i))*(err->u[i*t+0].real()));
 
-			printf("###\n");
-		}
+                                        }
+                                }
+                        }
 
-		MPI_Barrier(MPI_COMM_WORLD);
+                }else{
 
-	}
+                        printf("###\n");
+                }
+
+                MPI_Barrier(MPI_COMM_WORLD);
+
+        }
 
 return 1;
 }
-
-
 
 template<class T, int t> int lfield<T,t>::printDebug(){
 
