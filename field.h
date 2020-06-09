@@ -2341,7 +2341,7 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 	std::complex<double> A,B;
         su3_matrix<double> C,D,E,F,G,H,K;
 
-        #pragma omp parallel for simd collapse(2) default(shared) private(A,B,C,D,E,F,G,H,K) firstprivate(postable) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
+        #pragma omp parallel for simd collapse(2) default(shared) private(A,B,C,D,E,F,G,H,K) shared(postable) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
         for(int xx = 0; xx < Nx; xx++){
                 for(int yy = 0; yy < Ny; yy++){
 
