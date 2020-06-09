@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.16, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.64, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
 
@@ -105,9 +105,10 @@ int main(int argc, char *argv[]) {
 //    zero.setToZero();
 
     int langevin_steps = 100;
+    int measurements = 20;
 
-    std::vector<lfield<double,1>> sum(langevin_steps, zero);
-    std::vector<lfield<double,1>> err(langevin_steps, zero);
+    std::vector<lfield<double,1>> sum(measurements, zero);
+    std::vector<lfield<double,1>> err(measurements, zero);
 
 //-------------------------------------------------------
 //-------------------------------------------------------
@@ -160,7 +161,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         double step = 0.0004;
 
         //evolution
-        for(int langevin = 0; langevin < 100; langevin++){
+        for(int langevin = 0; langevin < langevin_steps; langevin++){
 
                 struct timespec starte, finishe;
                 double elapsede;
@@ -206,18 +207,22 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		//------CORRELATION FUNCTION-----------------------------
 		//-------------------------------------------------------
 
-		lfield<double,9> uf_copy(uf);
+		if( langevin % (int)(langevin_steps / measurements) == 0 ){
 
-		fourier2->execute2D(&uf_copy,1);
+			int time = (int)(langevin * measurements / langevin_steps);
+
+			lfield<double,9> uf_copy(uf);
+
+			fourier2->execute2D(&uf_copy,1);
     
-		uf.trace(corr);
+			uf.trace(corr);
 
-	    	corr_global->allgather(corr, mpi);	
+		    	corr_global->allgather(corr, mpi);	
 
-   		corr_global->average_and_symmetrize();
+   			corr_global->average_and_symmetrize();
 
-		corr_global->reduce(&sum[langevin], &err[langevin], mpi);
-
+			corr_global->reduce(&sum[time], &err[time], mpi);
+		}
 	}
 
         clock_gettime(CLOCK_MONOTONIC, &finish);
@@ -229,7 +234,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
-    for(int i = 0; i < langevin_steps; i++){
+    for(int i = 0; i < measurements; i++){
             print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
     }
 
