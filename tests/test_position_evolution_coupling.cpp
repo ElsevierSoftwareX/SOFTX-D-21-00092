@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 4;
+    cnfg->stat = 16;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.64, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.32, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
 
@@ -189,7 +189,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         	                int x_global = x + mpi->getPosX()*cnfg->Nxl;
                                 int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, postable);
+				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable);
 
                         }
                 }
@@ -215,7 +215,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 			fourier2->execute2D(&uf_copy,1);
     
-			uf.trace(corr);
+			uf_copy.trace(corr);
 
 		    	corr_global->allgather(corr, mpi);	
 
@@ -223,6 +223,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 			corr_global->reduce(&sum[time], &err[time], mpi);
 		}
+
+
 	}
 
         clock_gettime(CLOCK_MONOTONIC, &finish);

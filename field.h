@@ -2302,7 +2302,7 @@ return 1;
 
 
 template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, int y_global, gfield<T,t>* xi_global_x, gfield<T,t>* xi_global_y, 
-				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions postable){
+				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable){
 
                                 //kernel_xbarx.setToZero();
                                 //kernel_xbary.setToZero();
@@ -2341,7 +2341,7 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 	std::complex<double> A,B;
         su3_matrix<double> C,D,E,F,G,H,K;
 
-        #pragma omp parallel for simd collapse(2) default(shared) private(A,B,C,D,E,F,G,H,K) shared(postable) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
+        #pragma omp parallel for simd collapse(2) default(shared) private(A,B,C,D,E,F,G,H,K) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
         for(int xx = 0; xx < Nx; xx++){
                 for(int yy = 0; yy < Ny; yy++){
 
@@ -2356,20 +2356,22 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
                         double rrr = 1.0*(dx2*dx2+dy2*dy2);
 */
 			int ii = 0;
-			if( x_global > xx)
+			if( x_global >= xx)
 				ii += (x_global - xx)*Ny;
 			else
-				ii += (Nx + x_global - xx)*Ny;
+				ii += (x_global - xx + Nx)*Ny;
 
-			if( y_global > yy)
+			if( y_global >= yy)
 				ii += (y_global - yy);
 			else
-				ii += (Ny + y_global - yy);
+				ii += (y_global - yy + Ny);
 
-                        double dx = postable.xhatX(ii); 
-                        double dy = postable.xhatY(ii); 
+                        double dx = postable->xhatX(ii); 
+                        double dy = postable->xhatY(ii); 
                         
-                        double rrr = postable.xbar2(ii);
+                        double rrr = postable->xbar2(ii);
+
+//			printf("xx = %i, yy = %i, x_global = %i, y_global = %i, dx = %f, dy = %f, rr = %f, \t dxp = %f, dyp = %f, rr = %f\n", xx, yy, x_global, y_global, dx, dy, rrr, dxp, dyp, rrrp);
 
 /*
                         double dx = x_global - xx;

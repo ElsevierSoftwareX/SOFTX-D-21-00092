@@ -16,19 +16,19 @@ private:
 	double* tbl_xhaty;
 	double* tbl_xbar2;
 
-	int Nxl, Nyl;
+	int Nxg, Nyg;
 	int pos_x, pos_y;
 
 public:
 
 	positions(config* cnfg, mpi_class* mpi){
 
-		tbl_xhatx = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
-		tbl_xhaty = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
-		tbl_xbar2 = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
+		tbl_xhatx = (double*)malloc(Nx*Ny*sizeof(double));
+		tbl_xhaty = (double*)malloc(Nx*Ny*sizeof(double));
+		tbl_xbar2 = (double*)malloc(Nx*Ny*sizeof(double));
 
-		Nxl = cnfg->Nxl;
-		Nyl = cnfg->Nyl;
+		Nxg = Nx;
+		Nyg = Ny;
 
 		pos_x = mpi->getPosX();
 		pos_y = mpi->getPosY();
@@ -37,21 +37,26 @@ public:
 
 	positions(const positions &in){
 
-		this->tbl_xhatx = (double*)malloc(in.Nxl*in.Nyl*sizeof(double));
-		this->tbl_xhaty = (double*)malloc(in.Nxl*in.Nyl*sizeof(double));
-		this->tbl_xbar2 = (double*)malloc(in.Nxl*in.Nyl*sizeof(double));
+		printf("Copy constructor with Nxl = %i and Nyl = %i\n", in.Nxg, in.Nyg);
 
-		for(int i = 0; i < in.Nxl*in.Nyl; i++){
+		this->tbl_xhatx = (double*)malloc(in.Nxg*in.Nyg*sizeof(double));
+		this->tbl_xhaty = (double*)malloc(in.Nxg*in.Nyg*sizeof(double));
+		this->tbl_xbar2 = (double*)malloc(in.Nxg*in.Nyg*sizeof(double));
+
+//		this->set();
+
+		for(int i = 0; i < in.Nxg*in.Nyg; i++){
 			this->tbl_xhatx[i] = in.tbl_xhatx[i];
 			this->tbl_xhaty[i] = in.tbl_xhaty[i];
 			this->tbl_xbar2[i] = in.tbl_xbar2[i];
 		}
 
-		this->Nxl = in.Nxl;
-		this->Nyl = in.Nyl;
+		this->Nxg = in.Nxg;
+		this->Nyg = in.Nyg;
 
 		this->pos_x = in.pos_x;
 		this->pos_y = in.pos_y;
+
 	}
 
 	~positions(){
@@ -76,11 +81,11 @@ int positions::set(){
 	int ig, jg;
 	double sargx, sargy;
 
-	for(i = 0; i < Nxl; i++){
-		for(j = 0; j < Nyl; j++){
+	for(i = 0; i < Nx; i++){
+		for(j = 0; j < Ny; j++){
 
-			ig = (i+pos_x*Nxl);
-			jg = (j+pos_y*Nyl);
+			//ig = (i+pos_x*Nxl);
+			//jg = (j+pos_y*Nyl);
 
 
                         //double dx2 = Nx*sin(M_PI*(x_global-xx)/Nx)/M_PI;
@@ -98,17 +103,17 @@ int positions::set(){
                         //double rrr = pos->xbar2(ii);
 
 
-			sargx = 0.5*Nx * sin( 2.0*M_PI * ig / (1.0 * Nx) ) / M_PI;
-			sargy = 0.5*Ny * sin( 2.0*M_PI * jg / (1.0 * Ny) ) / M_PI;
+			sargx = 0.5*Nx * sin( 2.0*M_PI * i / (1.0 * Nx) ) / M_PI;
+			sargy = 0.5*Ny * sin( 2.0*M_PI * j / (1.0 * Ny) ) / M_PI;
 
 			//tbl_xhat2[i*Nyl+j] = 4.0*pow(sargx,2.0) + 4.0*pow(sargy,2.0);
-			tbl_xhatx[i*Nyl+j] = sargx;
-			tbl_xhaty[i*Nyl+j] = sargy;
+			tbl_xhatx[i*Ny+j] = sargx;
+			tbl_xhaty[i*Ny+j] = sargy;
 
-			sargx = Nx * sin( M_PI * ig / (1.0 * Nx) ) / M_PI;
-			sargy = Ny * sin( M_PI * jg / (1.0 * Ny) ) / M_PI;
+			sargx = Nx * sin( M_PI * i / (1.0 * Nx) ) / M_PI;
+			sargy = Ny * sin( M_PI * j / (1.0 * Ny) ) / M_PI;
 
-			tbl_xbar2[i*Nyl+j] = pow(sargx,2.0) + pow(sargy,2.0);
+			tbl_xbar2[i*Ny+j] = pow(sargx,2.0) + pow(sargy,2.0);
 			//tbl_xbarx[i*Nyl+j] = sargx;
 			//tbl_xbary[i*Nyl+j] = sargy;
 		}
