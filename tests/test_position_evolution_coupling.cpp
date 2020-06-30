@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.32, 50);
+    MV_class* MVmodel = new MV_class(1.0, 30.72/Nx, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
 
@@ -236,8 +236,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
+    const std::string file_name = "test_position_evolution_coupling_xkernel";
+
     for(int i = 0; i < measurements; i++){
-            print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
+            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
     }
 
 //-------------------------------------------------------

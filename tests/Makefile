@@ -8,8 +8,13 @@ LDFLAGS=$(LIBS) -lm
 
 .PHONY: clean test_position_evolution test_momentum_evolution test_position_evolution_coupling test_momentum_evolution_coupling_lambda test_initial_condition test_momentum_evolution_coupling_lambda_noise
 
-##default: test_momentum_evolution_coupling_lambda_noise 
-default: test_position_evolution_coupling
+##default: test_momentum_evolution_lambda
+##default: test_momentum_evolution_coupling_lambda
+
+#default: test_position_evolution
+
+
+default: test_position_evolution_coupling_noise
 
 all: test_position_evolution test_momentum_evolution test_position_evolution_coupling test_initial_condition test_momentum_evolution_coupling_lambda test_momentum_evolution_coupling_lambda_noise
 
@@ -22,11 +27,18 @@ test_position_evolution: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.c
 test_position_evolution_coupling: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_position_evolution_coupling.cpp
 	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
 
+test_position_evolution_coupling_noise: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_position_evolution_coupling_noise.cpp
+	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
+
 test_initial_condition: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_initial_condition.cpp
 	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
 
 test_momentum_evolution_coupling_lambda: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_momentum_evolution_coupling_lambda.cpp
 	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
+
+test_momentum_evolution_lambda: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_momentum_evolution_lambda.cpp
+	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
+
 
 test_momentum_evolution_coupling_lambda_noise: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_momentum_evolution_coupling_lambda_noise.cpp
 	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@

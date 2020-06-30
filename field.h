@@ -8,6 +8,7 @@
 
 //#include <complex.h>
 #include "config.h"
+#include <string>
 
 #include <omp.h>
 
@@ -1855,6 +1856,35 @@ template<class T, int t> int print(lfield<T,t>* sum, lfield<T,t>* err, momenta* 
 return 1;
 }
 
+
+template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double x, mpi_class* mpi, std::string const &fileroot){
+
+
+	FILE* f;
+	char filename[100];
+
+	sprintf(filename, "%s_%i_%i_mpi%i_r%i.dat", fileroot.c_str(), Nx, Ny, mpi->getSize(), mpi->getRank());
+	
+	f = fopen(filename, "a+");
+
+        for(int xx = 0; xx < sum->Nxl; xx++){
+	        for(int yy = 0; yy < sum->Nyl; yy++){
+
+        	        int i = xx*(sum->Nyl)+yy;
+
+                        if( fabs(xx + mpi->getPosX()*(sum->Nxl) - yy - mpi->getPosY()*(sum->Nyl)) <= 4 ){
+
+                	        fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->Nxl)), yy+(mpi->getPosY()*(sum->Nyl)), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(sum->u[i*t+0].real()), x*(mom->phat2(i))*(err->u[i*t+0].real()));
+
+                        }
+                }
+        }
+
+	fclose(f);
+
+return 1;
+}
+
 template<class T, int t> int lfield<T,t>::printDebug(){
 
 	for(int xx = 0; xx < Nxl; xx++){
@@ -2355,7 +2385,8 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 
                         double rrr = 1.0*(dx2*dx2+dy2*dy2);
 */
-			int ii = 0;
+/*
+  			int ii = 0;
 			if( x_global >= xx)
 				ii += (x_global - xx)*Ny;
 			else
@@ -2370,10 +2401,10 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
                         double dy = postable->xhatY(ii); 
                         
                         double rrr = postable->xbar2(ii);
-
+*/
 //			printf("xx = %i, yy = %i, x_global = %i, y_global = %i, dx = %f, dy = %f, rr = %f, \t dxp = %f, dyp = %f, rr = %f\n", xx, yy, x_global, y_global, dx, dy, rrr, dxp, dyp, rrrp);
 
-/*
+
                         double dx = x_global - xx;
                         if( dx >= Nx/2 )
                               dx = dx - Nx;
@@ -2387,7 +2418,7 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
                         	dy = dy + Ny;
 						
                         double rrr = 1.0*(dx*dx+dy*dy);
-*/					
+					
 			const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 
 			double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
