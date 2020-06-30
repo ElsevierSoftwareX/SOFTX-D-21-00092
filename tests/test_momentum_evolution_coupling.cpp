@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 16;
+    cnfg->stat = 4;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
     printf("MVModel\n");
 
-    MV_class* MVmodel = new MV_class(1.0, 0.08, 50);
+    MV_class* MVmodel = new MV_class(1.0, 30.72/Nx, 50);
 
 //    fftw1D* fourier = new fftw1D(cnfg);
 

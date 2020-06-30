@@ -181,7 +181,8 @@ double scale_after_fft;
 //            plan = plan_bw
 
 if( dir ){
-	scale_after_fft = 1.0/(1.0*N0*N1);
+//	scale_after_fft = 1.0/(1.0*N0*N1);
+	scale_after_fft = 1.0;
 } else {
 	scale_after_fft = 1.0;
 }
@@ -287,6 +288,41 @@ if( COPY ){
 return 1;
 }
 
+int execute2D(std::complex<double>* f, int dir){
+
+int i,j,k;
+const double scale_after_fft = 1.0;
+
+//if( dir ){
+//	scale_after_fft = 1.0/(1.0*N0*N1);
+//} else {
+//	scale_after_fft = 1.0;
+//}
+
+	#pragma omp parallel for simd collapse(2) default(shared)
+	for (i = 0; i < Nxl; ++i){
+		for(j = 0; j < Nyl; j++){
+                        data_local_single[i*Nyl+j][0] = f[i*Nyl+j].real(); //data_global[(i+pos_x*Nxl)*N1+j][0];
+                        data_local_single[i*Nyl+j][1] = f[i*Nyl+j].imag(); //data_global[(i+pos_x*Nxl)*N1+j][1];
+		}
+        }
+
+        if( dir ){
+                fftw_mpi_execute_dft(planX2K_single, data_local_single, data_local_single);
+        }else{
+                fftw_mpi_execute_dft(planK2X_single, data_local_single, data_local_single);
+        }
+
+	#pragma omp parallel for simd collapse(2) default(shared)
+	for (i = 0; i < Nxl; ++i){
+		for(j = 0; j < Nyl; j++){
+                        f[i*Nyl+j] = std::complex<double>(data_local_single[i*Nyl+j][0]*scale_after_fft, data_local_single[i*Nyl+j][1]*scale_after_fft);
+		}
+        }
+
+return 1;
+}
+
 };
-  
+ 
 #endif
