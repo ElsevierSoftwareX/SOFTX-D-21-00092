@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 1;
+    cnfg->stat = 32;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -105,8 +105,8 @@ int main(int argc, char *argv[]) {
     lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
 //    zero.setToZero();
 
-    int langevin_steps = 100;
-    int measurements = 100;
+    int langevin_steps = 50;
+    int measurements = 50;
 
     std::vector<lfield<double,1>> sum(measurements, zero);
     std::vector<lfield<double,1>> err(measurements, zero);
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
                 corr->setCorrelationsForCouplingConstant(momtable);
 	
 		//constructed in P space, transformed to X space
-                fourier2->execute2D(corr, 0);
+                //fourier2->execute2D(corr, 0);
 
                 corr_global->allgather(corr, mpi);
 
@@ -193,7 +193,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
-        double step = 0.0004;
+        double step = 0.0008;
 
         //evolution
         for(int langevin = 0; langevin < langevin_steps; langevin++){

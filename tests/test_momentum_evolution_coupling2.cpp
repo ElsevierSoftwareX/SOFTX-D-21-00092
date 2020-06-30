@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 4;
+    cnfg->stat = 32;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -94,11 +94,11 @@ int main(int argc, char *argv[]) {
     //initiaization of kernel fields
     lfield<double,9> kernel_pbarx(cnfg->Nxl, cnfg->Nyl);
     kernel_pbarx.setToZero();
-    kernel_pbarx.setKernelPbarXWithCouplingConstant(momtable); //setKernelPbarX(momtable);
+    kernel_pbarx.setKernelPbarX(momtable);
 
     lfield<double,9> kernel_pbary(cnfg->Nxl, cnfg->Nyl);
     kernel_pbary.setToZero();
-    kernel_pbary.setKernelPbarYWithCouplingConstant(momtable); //setKernelPbarY(momtable);
+    kernel_pbary.setKernelPbarY(momtable);
 
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
@@ -201,17 +201,18 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 //              xi_local_x.setGaussian(mpi, cnfg);
 //              xi_local_y.setGaussian(mpi, cnfg);
 
-		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
+//		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
+		generate_gaussian_with_noise_coupling_constant(&xi_local_x, &xi_local_y, momtable, mpi, cnfg);
 
-                fourier2->execute2D(&xi_local_x, 1);
-                fourier2->execute2D(&xi_local_y, 1);
+//                fourier2->execute2D(&xi_local_x, 1);
+//                fourier2->execute2D(&xi_local_y, 1);
 
 //              xi_local_x_tmp = kernel_pbarx * xi_local_x;
 //              xi_local_y_tmp = kernel_pbary * xi_local_y;
 
 //              A_local = xi_local_x_tmp + xi_local_y_tmp;
 
-		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, &kernel_pbarx, &kernel_pbary);
+		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable);
 
                 fourier2->execute2D(&A_local, 0);
                 fourier2->execute2D(&xi_local_x, 0);
@@ -234,7 +235,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
                 //B_local = uxiulocal_x + uxiulocal_y;
 
-		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
+//		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
+		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable);
 
                 fourier2->execute2D(&B_local, 0);
 	        

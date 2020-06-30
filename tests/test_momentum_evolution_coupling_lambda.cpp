@@ -141,7 +141,6 @@ int main(int argc, char *argv[]) {
     std::vector<lfield<double,1>> sum(measurements, zero);
     std::vector<lfield<double,1>> err(measurements, zero);
 
-
 for(int stat = 0; stat < cnfg->stat; stat++){
 
 //	const clock_t begin_time_stat = std::clock();

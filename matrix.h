@@ -58,6 +58,8 @@ template<class T> class gmatrix: public matrix<T> {
 
 		int decompose(gfield<T,1>* corr);
 
+		int print(void);
+
 };
 
 
@@ -103,6 +105,22 @@ template<class T> gmatrix<T>& gmatrix<T>::operator= ( const gmatrix<T>& f ){
 		return *this;
 		}
 
+template<class T> int gmatrix<T>::print(void){
+
+    for (int i = 0; i < Nxg; i++) { //x
+        for (int j = 0; j < Nyg; j++) {  //y
+
+		printf("%i %i %f %f\n", i, j, this->u[i*Nxg+j].real(), this->u[i*Nxg+j].imag());
+
+	}
+
+	printf("\n");
+
+    }
+
+return 1;
+}
+
 template<class T> int gmatrix<T>::decompose(gfield<T,1>* corr){
 
     //Nxg and Nyg are sizes of the global matrix!!! -> Nxg = Nxg*Nyg
@@ -118,7 +136,7 @@ template<class T> int gmatrix<T>::decompose(gfield<T,1>* corr){
                     sum += pow(this->u[i*Nyg+k], 2); 
 		}
 
-	        this->u[i*Nyg+i] = sqrt(corr->u[0][0] - sum);  //distance between i and j = 0
+	        this->u[i*Nyg+i] = sqrt(corr->u[0] - sum);  //distance between i and j = 0
 
             } else { 
  
@@ -129,15 +147,22 @@ template<class T> int gmatrix<T>::decompose(gfield<T,1>* corr){
                     sum += (this->u[i*Nyg+k] * this->u[j*Nyg+k]); 
 		}
 
-		int xi = i/Nyg;
-		int yi = i - xi*Nyg;
+		//Nyg and Nxg are dimensions of the matrix
+		//they are equal to the volume:
+		// Nyg = Nxg = Nx * Ny
+		//here, we look at the element (i,j) of the matrix
+		//so both i and j are in V
+		//we need to decompose them into x and y
 
-		int xj = j/Nyg;
-		int yj = j - xj*Nyg;
+		int xi = i/Ny;
+		int yi = i - xi*Ny;
 
-		int ii = abs(xi-xj)*Nyg + abs(yi-yj);
+		int xj = j/Ny;
+		int yj = j - xj*Ny;
 
-                this->u[i*Nyg+j] = (corr->u[0][ii] - sum) /  //distance between i and j
+		int ii = abs(xi-xj)*Ny + abs(yi-yj);
+
+                this->u[i*Nyg+j] = (corr->u[ii] - sum) /  //distance between i and j
                                       this->u[j*Nyg+j]; 
             } 
         } 

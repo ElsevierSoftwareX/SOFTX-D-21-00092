@@ -130,7 +130,7 @@ template<class T, int t> class gfield: public field<T,t> {
 		return 1;
 		}
 
-
+		int printDebug(void);
 
 };
 
@@ -270,7 +270,9 @@ template<class T, int t> class lfield: public field<T,t> {
 		int print(momenta* mom);
 		int print(momenta* mom, double x, mpi_class* mpi);
 
+
 		int printDebug();
+		int printDebug(int i);
 		int printDebug(double x, mpi_class* mpi);
 		int printDebugRadial(double x);
 
@@ -1689,25 +1691,43 @@ return 1;
 
 template<class T, int t> int gfield<T,t>::setCorrelationsForCouplingConstant(){
 
+	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+	const double f = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
+
+	printf("coupling constant at 0 = %f\n", pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2));
+	printf("coupling constant at 0 = %f\n", 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2));
+	printf("coupling constant at 0 = %f\n", w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2));
+	printf("coupling constant at 0 = %f\n", pow( w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2) , 0.2 ) );
+	printf("coupling constant at 0 = %f\n", log( pow( w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
+	printf("coupling constant at 0 = %f\n", f / log( pow( w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
+	printf("coupling constant at 0 = %f\n", sqrt( f / log( pow( w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2) , 0.2 ) )));
+
+
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxg; xx++){
 		for(int yy = 0; yy < Nxg; yy++){
 
 			int i = xx*Nyg+yy;
 
-                        double dx = Nxg*sin(M_PI*(xx)/Nxg)/M_PI;
-                        double dy = Nyg*sin(M_PI*(yy)/Nyg)/M_PI;
+                        //double dx = Nxg*sin(M_PI*(xx+1)/Nxg)/M_PI;
+                        //double dy = Nyg*sin(M_PI*(yy+1)/Nyg)/M_PI;
 
-			double coupling_constant = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + 1.26/pow(6.0*6.0*(dx*dx+dy*dy)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
+			double sqrt_coupling_constant = f / log( pow( w + 1.26/(1.0e-12+pow(6.0*6.0*(xx*xx+yy*yy)/Nxg/Nyg,1.0/0.2)) , 0.2 ) );
         
-			this->u[i*t+0] = coupling_constant;
+			this->u[i*t+0] = sqrt_coupling_constant;
 		}
 	}
+
+	//this->u[0] = 1.0;
+
 
 return 1;
 }
 
 template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(momenta* mom){
+
+	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+	const double f = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
 
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxl; xx++){
@@ -1715,9 +1735,9 @@ template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(mom
 
 			int i = xx*Nyl+yy;
 
-			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+			double sqrt_coupling_constant = sqrt(f / log( pow( w + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ));
        
-			this->u[i*t+0] = coupling_constant;
+			this->u[i*t+0] = sqrt_coupling_constant;
 		}
 	}
 
@@ -1891,8 +1911,55 @@ template<class T, int t> int lfield<T,t>::printDebug(){
 		for(int yy = 0; yy < Nxl; yy++){
 
 			int i = xx*Nyl+yy;
+
+			for(int k = 0; k < t; k++){
        
-			printf("%i %i %f %f\n",xx, yy, this->u[i*t+0].real(), this->u[i*t+0].imag());
+				printf("%i %i %f %f\n",xx, yy, this->u[i*t+k].real(), this->u[i*t+k].imag());
+			}
+		}
+	}
+
+return 1;
+}
+
+template<class T, int t> int gfield<T,t>::printDebug(){
+
+	for(int xx = 0; xx < Nxg; xx++){
+		for(int yy = 0; yy < Nxg; yy++){
+
+			int i = xx*Nyg+yy;
+
+			for(int k = 0; k < t; k++){
+       
+				printf("%i %i %f %f\n",xx, yy, this->u[i*t+k].real(), this->u[i*t+k].imag());
+			}
+		}
+	}
+
+return 1;
+}
+
+template<class T, int t> int lfield<T,t>::printDebug(int ii){
+
+	int xxx = ii/Nyl;
+	int yyy = ii-xxx*Nyl;
+
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nxl; yy++){
+
+			int i = xx*Nyl+yy;
+
+			for(int k = 0; k < t; k++){
+
+				int s1 = k/9;
+				int s2 = k-s1*9;
+
+				double a = this->u[i*t+k].real();
+				double b = this->u[i*t+k].imag();
+
+				if( a*a + b*b > 10.01 )      
+					printf("%i %i %i %i %i %i %f %f\n",xxx, yyy, xx, yy, s1, s2, a, b);
+			}
 		}
 	}
 
@@ -1951,10 +2018,10 @@ template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* ux
 //
 //                delete uf_hermitian;
 
-        su3_matrix<double> A,B,C,D,E,F;
-
-        #pragma omp parallel for simd default(shared) private(A,B,C,D,E,F)
+//        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
         for(int i = 0; i < uf->Nxl*uf->Nyl; i++){
+
+	        su3_matrix<double> A,B,C,D,E,F;
 
                 D.m[0] = std::conj(uf->u[i*t+0]);
                 D.m[1] = std::conj(uf->u[i*t+3]);
@@ -2024,10 +2091,10 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 
 //              uf = B_local * uf * A_local;
 
-        su3_matrix<double> A,B,C,D,E,F;
-
-        #pragma omp parallel for simd default(shared) private(A,B,C,D,E,F)
+//        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
         for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
+
+	        su3_matrix<double> A,B,C,D,E,F;
 
                 for(int k = 0; k < t; k++){
                         A.m[k] = uf->u[i*t+k];
@@ -2048,6 +2115,53 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 return 1;
 }
 
+template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom){
+
+//        #pragma omp parallel for simd default(shared) //private(C,D,E)
+        for(int i = 0; i < A_local->Nxl*A_local->Nyl; i++){
+
+	        su3_matrix<double> C,D,E;
+
+		if( fabs(mom->phat2(i)) > 10e-9 ){
+
+                        std::complex<double> AA(0.0, -2.0*M_PI*mom->pbarX(i)/mom->phat2(i));
+                        std::complex<double> BB(0.0, -2.0*M_PI*mom->pbarY(i)/mom->phat2(i));
+
+
+     		        for(int k = 0; k < t; k++){
+
+		                C.m[k] = AA*xi_local_x->u[i*t+k]/(1.0*Nx*Ny);
+        		        D.m[k] = BB*xi_local_y->u[i*t+k]/(1.0*Nx*Ny);
+			}
+
+			E = C + D;
+		}
+		/*
+		else{
+
+			std::complex<double> AA(0.0,0.0);
+			std::complex<double> BB(0.0,0.0);
+
+     		        for(int k = 0; k < t; k++){
+
+		                C.m[k] = AA;
+        		        D.m[k] = BB;
+	
+			}
+		}
+	
+		E = C + D;
+		*/
+
+                for(int k = 0; k < t; k++){
+ 	              	A_local->u[i*t+k] = E.m[k];
+                }
+	}
+
+
+
+return 1;
+}
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, lfield<T,t>* kernel_pbarx, lfield<T,t>* kernel_pbary){
 
 //              xi_local_x_tmp = kernel_pbarx * xi_local_x;
@@ -2107,7 +2221,12 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 		}
-    		std::normal_distribution<double> distribution{0.0,1.0};
+		//momentum evolution with FFT
+		//std::normal_distribution<double> distribution{0.0,1.0};	
+  		//momentum evolution without FFT
+    		//std::normal_distribution<double> distribution{0.0,sqrt(1.0*Nx*Ny)};
+		std::normal_distribution<double> distribution{0.0,1.0/sqrt(1.0*Nx*Ny)};	
+
     		//return distribution(*generator);
 
 //        std::ranlux24_base rgenerator;
@@ -2234,9 +2353,10 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 	    }
-    	    std::normal_distribution<double> distribution{0.0,1.0};
+//    	    std::normal_distribution<double> distribution{0.0, 1.0*Nx*Ny};
+    	    std::normal_distribution<double> distribution{0.0, sqrt(1.0*Nx*Ny)};
 
-	    double sqrt_coupling_constant = sqrt( tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+	    double sqrt_coupling_constant = sqrt(tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ));
 
 	    //set to zero
 	    for(int j = 0; j < t; j++){
@@ -2386,7 +2506,7 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
                         double rrr = 1.0*(dx2*dx2+dy2*dy2);
 */
 /*
-  			int ii = 0;
+			int ii = 0;
 			if( x_global >= xx)
 				ii += (x_global - xx)*Ny;
 			else
@@ -2419,10 +2539,10 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 						
                         double rrr = 1.0*(dx*dx+dy*dy);
 					
-			const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+			//const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 
-			double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
-			//double sqrt_coupling_constant = 1.0;
+			//double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+			const double sqrt_coupling_constant = 1.0;
 
 			//kernel_x i kernel_y
                         if( rrr > 10e-9 ){
