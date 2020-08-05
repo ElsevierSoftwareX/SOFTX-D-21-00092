@@ -1726,7 +1726,8 @@ return 1;
 
 template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(momenta* mom){
 
-	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+	const double power = 0.2;
+	const double w = pow(15.0*15.0/6.0/6.0,1.0/power);
 	const double f = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
 
 	#pragma omp parallel for simd collapse(2) default(shared)
@@ -1735,7 +1736,7 @@ template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(mom
 
 			int i = xx*Nyl+yy;
 
-			double sqrt_coupling_constant = sqrt(f / log( pow( w + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ));
+			double sqrt_coupling_constant = f / log( pow( w + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/power) , power) );
        
 			this->u[i*t+0] = sqrt_coupling_constant;
 		}
@@ -1757,7 +1758,8 @@ template<class T, int t> int gfield<T,t>::multiplyByCholesky(gmatrix<T>* mm){
 
 				for(int xxi = 0; xxi < Nxg; xxi++){
 					for(int yyi = 0; yyi < Nyg; yyi++){
-	
+		
+						//transposed!!
 						tmp->u[(xx*Nyg+yy)*t+tt] += mm->u[(xx*Nyg+yy)*Nxg*Nyg + xxi*Nyg+yyi] * this->u[(xxi*Nyg+yyi)*t+tt];
 
 					}
@@ -2342,7 +2344,9 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
 
         //rand_class* rr = new rand_class(mpi,cnfg);
 
-	const double tmp = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+
+	const double power = 0.2;
+	const double tmp = pow(15.0*15.0/6.0/6.0,1.0/power);
 	const double tmp2 = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
 
 	#pragma omp parallel for simd default(shared)
@@ -2353,10 +2357,10 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 	    }
-//    	    std::normal_distribution<double> distribution{0.0, 1.0*Nx*Ny};
+    	    //std::normal_distribution<double> distribution{0.0, 1.0};
     	    std::normal_distribution<double> distribution{0.0, sqrt(1.0*Nx*Ny)};
 
-	    double sqrt_coupling_constant = sqrt(tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ));
+	    double sqrt_coupling_constant = 0.2; //sqrt(tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/power) , power) ));
 
 	    //set to zero
 	    for(int j = 0; j < t; j++){
@@ -2505,7 +2509,7 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 
                         double rrr = 1.0*(dx2*dx2+dy2*dy2);
 */
-/*
+
 			int ii = 0;
 			if( x_global >= xx)
 				ii += (x_global - xx)*Ny;
@@ -2521,9 +2525,10 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
                         double dy = postable->xhatY(ii); 
                         
                         double rrr = postable->xbar2(ii);
-*/
-//			printf("xx = %i, yy = %i, x_global = %i, y_global = %i, dx = %f, dy = %f, rr = %f, \t dxp = %f, dyp = %f, rr = %f\n", xx, yy, x_global, y_global, dx, dy, rrr, dxp, dyp, rrrp);
 
+
+//			printf("xx = %i, yy = %i, x_global = %i, y_global = %i, dx = %f, dy = %f, rr = %f, \t dxp = %f, dyp = %f, rr = %f\n", xx, yy, x_global, y_global, dx, dy, rrr, dxp, dyp, rrrp);
+/*
 
                         double dx = x_global - xx;
                         if( dx >= Nx/2 )
@@ -2538,7 +2543,7 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
                         	dy = dy + Ny;
 						
                         double rrr = 1.0*(dx*dx+dy*dy);
-					
+*/					
 			//const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 
 			//double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );

@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 32;
+    cnfg->stat = 8;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 30.72/Nx, 50);
+    MV_class* MVmodel = new MV_class(1.0, 61.44/Nx, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
 
@@ -120,8 +120,8 @@ int main(int argc, char *argv[]) {
 //create sigma correlation matrix for the noise vectors in position space
 //perform cholesky decomposition to get the square root of the correlation matrix
 
-        int position_space = 1;
-        int momentum_space = 0;
+        int position_space = 0;
+        int momentum_space = 1;
 
         if( position_space == 1 ){
 
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
                 corr->setCorrelationsForCouplingConstant(momtable);
 	
 		//constructed in P space, transformed to X space
-                //fourier2->execute2D(corr, 0);
+                fourier2->execute2D(corr, 0);
 
                 corr_global->allgather(corr, mpi);
 
@@ -147,6 +147,8 @@ int main(int argc, char *argv[]) {
 
         cholesky->decompose(corr_global);
         printf("cholesky decomposition finished\n");
+
+	lfield<double,9> uf_copy(cnfg->Nxl, cnfg->Nyl);
 
 for(int stat = 0; stat < cnfg->stat; stat++){
 
@@ -267,7 +269,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 			int time = (int)(langevin * measurements / langevin_steps);
 
-			lfield<double,9> uf_copy(uf);
+			uf_copy = uf;
 
 			fourier2->execute2D(&uf_copy,1);
     
@@ -292,8 +294,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
+    const std::string file_name = "test_position_evolution_coupling_noise_final_long_sinkernel_double";
+
     for(int i = 0; i < measurements; i++){
-            print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
+            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
     }
 
 //-------------------------------------------------------

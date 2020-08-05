@@ -18,7 +18,7 @@ template<class T> class matrix {
 
 	public:
 
-		std::complex<T>* u;		
+		std::complex<T>* u = NULL;		
 
 		int Nxl, Nyl;
 
@@ -33,6 +33,11 @@ template<class T> matrix<T>::matrix(int NNx, int NNy) {
 
 	u = (std::complex<T>*)malloc(NNx*NNy*sizeof(std::complex<T>));
 
+	if(u == NULL){
+		printf("matrix allocation failed. Aborting\n");
+		exit(0);
+	}
+	
 	Nxl = NNx;
 	Nyl = NNy;
 }
