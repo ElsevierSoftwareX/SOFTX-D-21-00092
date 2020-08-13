@@ -1728,13 +1728,13 @@ template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(mom
 	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 	const double f = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
 
-	#pragma omp parallel for simd collapse(2) default(shared)
+	//#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxl; xx++){
-		for(int yy = 0; yy < Nxl; yy++){
+		for(int yy = 0; yy < Nyl; yy++){
 
 			int i = xx*Nyl+yy;
 
-			double sqrt_coupling_constant = sqrt(f / log( pow( w + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ));
+			double sqrt_coupling_constant = f / log( pow(w + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) );
        
 			this->u[i*t+0] = sqrt_coupling_constant;
 		}
@@ -1754,9 +1754,12 @@ template<class T, int t> int gfield<T,t>::multiplyByCholesky(gmatrix<T>* mm){
 	
 				tmp->u[(xx*Nyg+yy)*t+tt] = 0;
 
+				//printf("diagonal cholesky (%i, %i) = %f %f\n", xx, yy, mm->u[(xx*Nyg+yy)*Nxg*Nyg + xx*Nyg+yy].real(), mm->u[(xx*Nyg+yy)*Nxg*Nyg + xx*Nyg+yy].imag());
+
 				for(int xxi = 0; xxi < Nxg; xxi++){
 					for(int yyi = 0; yyi < Nyg; yyi++){
 	
+						//transposed 12.7.2020
 						tmp->u[(xx*Nyg+yy)*t+tt] += mm->u[(xx*Nyg+yy)*Nxg*Nyg + xxi*Nyg+yyi] * this->u[(xxi*Nyg+yyi)*t+tt];
 
 					}
@@ -1927,7 +1930,7 @@ template<class T, int t> int lfield<T,t>::printDebug(int ii){
 				double a = this->u[i*t+k].real();
 				double b = this->u[i*t+k].imag();
 
-				if( a*a + b*b > 10.01 )      
+				if( a*a + b*b > 0.01 )      
 					printf("%i %i %i %i %i %i %f %f\n",xxx, yyy, xx, yy, s1, s2, a, b);
 			}
 		}
@@ -2192,10 +2195,10 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 		}
 		//momentum evolution with FFT
-		//std::normal_distribution<double> distribution{0.0,1.0};	
+		std::normal_distribution<double> distribution{0.0,1.0};	
   		//momentum evolution without FFT
     		//std::normal_distribution<double> distribution{0.0,sqrt(1.0*Nx*Ny)};
-		std::normal_distribution<double> distribution{0.0,1.0/sqrt(1.0*Nx*Ny)};	
+		//std::normal_distribution<double> distribution{0.0,1.0/sqrt(1.0*Nx*Ny)};	
 
     		//return distribution(*generator);
 

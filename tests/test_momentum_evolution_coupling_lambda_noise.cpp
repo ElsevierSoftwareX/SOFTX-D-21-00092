@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 32;
+    cnfg->stat = 100;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -137,7 +137,8 @@ int main(int argc, char *argv[]) {
     lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
 //    zero.setToZero();
 
-    int langevin_steps = 100;
+//    int langevin_steps = 12;
+    int langevin_steps = 1;
 
     std::vector<lfield<double,1>> sum(langevin_steps, zero);
     std::vector<lfield<double,1>> err(langevin_steps, zero);
@@ -181,6 +182,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		uf *= f;
     	}
 
+	int langevin = 0;
+
+/*
 	clock_gettime(CLOCK_MONOTONIC, &finishi);
 		
 	elapsedi = (finishi.tv_sec - starti.tv_sec);
@@ -188,7 +192,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
-        double step = 0.0004;
+        double step = 0.0002;
 
         //evolution
         for(int langevin = 0; langevin < langevin_steps; langevin++){
@@ -266,7 +270,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	    	//-------------------------------------------------------
 		//------CORRELATION FUNCTION-----------------------------
 		//-------------------------------------------------------
-
+*/
 		lfield<double,9> uf_copy(uf);
 
 		//compute correlation function
@@ -278,10 +282,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
    		corr_global->average_and_symmetrize();
 
-		std::cout<<"Storing partial result at step = "<<langevin<<std::endl;
+		//std::cout<<"Storing partial result at step = "<<langevin<<std::endl;
 
 		corr_global->reduce(&sum[langevin], &err[langevin], mpi);
-
+/*
 		std::cout<<"One full evolution, iterating further"<<std::endl;
 
 	}
@@ -292,7 +296,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;		
 
 	std::cout<<"Statistics time: " << elapsed << std::endl;
-
+*/
     }
 
     for(int i = 0; i < langevin_steps; i++){

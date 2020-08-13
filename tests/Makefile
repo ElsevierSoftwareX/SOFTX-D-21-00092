@@ -8,16 +8,26 @@ LDFLAGS=$(LIBS) -lm
 
 .PHONY: clean test_position_evolution test_momentum_evolution test_position_evolution_coupling test_momentum_evolution_coupling_lambda test_initial_condition test_momentum_evolution_coupling_lambda_noise test_position_evolution_coupling_noise
 
+##default: test_jimwlk_kernel
 ##default: test_momentum_evolution_coupling_lambda_noise 
 ##default: test_momentum_evolution_coupling
 ##default: test_momentum_evolution_coupling2
-##default: test_noise_vectors test_noise_vectors_fft test_momentum_coupling_fft test_fftw_execute_random test_fftw_execute_random_std test_noise_vectors_fft_A_local
-default: test_position_evolution_coupling_noise
+default: test_noise_vectors test_noise_vectors_fft test_momentum_coupling_fft test_fftw_execute_random test_fftw_execute_random_std test_noise_vectors_fft_A_local
+##default: test_position_evolution_coupling_noise
+##default: test_noise_vectors_and_cholesky_decomposition
 
 all: test_position_evolution test_momentum_evolution test_position_evolution_coupling test_initial_condition test_momentum_evolution_coupling_lambda test_momentum_evolution_coupling_lambda_noise
 
+test_jimwlk_kernel: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_jimwlk_kernel.cpp
+	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
+
 test_momentum_coupling: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_momentum_coupling.cpp
 	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
+
+
+test_noise_vectors_and_cholesky_decomposition: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_noise_vectors_and_cholesky_decomposition.cpp
+	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
+
 
 test_fftw_execute: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_fftw_execute.cpp
 	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@

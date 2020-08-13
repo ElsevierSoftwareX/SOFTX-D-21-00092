@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 80000;
+    cnfg->stat = 32000;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -107,8 +107,14 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
 	//generate_gaussian_with_noise_coupling_constant(&xi_local_x, &xi_local_y, momtable, mpi, cnfg);
-        //fourier2->execute2D(&xi_local_x, 1);
+        fourier2->execute2D(&xi_local_x, 1);
      	//fourier2->execute2D(&xi_local_y, 1);
+
+	for(int i = 0; i < Nx*Ny; i++){
+		for(int t = 0; t < 9; t++){
+			xi_local_x.u[i*9+t] *= (1.0/sqrt(Nx*Ny));
+		}
+	}
 
 	for(int i = 0; i < Nx*Ny; i++){
 

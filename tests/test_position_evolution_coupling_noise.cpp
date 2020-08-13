@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 32;
+    cnfg->stat = 100;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -105,8 +105,8 @@ int main(int argc, char *argv[]) {
     lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
 //    zero.setToZero();
 
-    int langevin_steps = 50;
-    int measurements = 50;
+    int langevin_steps = 12;
+    int measurements = 12;
 
     std::vector<lfield<double,1>> sum(measurements, zero);
     std::vector<lfield<double,1>> err(measurements, zero);
@@ -120,8 +120,8 @@ int main(int argc, char *argv[]) {
 //create sigma correlation matrix for the noise vectors in position space
 //perform cholesky decomposition to get the square root of the correlation matrix
 
-        int position_space = 1;
-        int momentum_space = 0;
+        int position_space = 0;
+        int momentum_space = 1;
 
         if( position_space == 1 ){
 
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
                 corr->setCorrelationsForCouplingConstant(momtable);
 	
 		//constructed in P space, transformed to X space
-                //fourier2->execute2D(corr, 0);
+                fourier2->execute2D(corr, 0);
 
                 corr_global->allgather(corr, mpi);
 
@@ -200,7 +200,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
-        double step = 0.0008;
+        double step = 0.0002;
 
         //evolution
         for(int langevin = 0; langevin < langevin_steps; langevin++){
