@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 100;
+    cnfg->stat = 1;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -105,8 +105,8 @@ int main(int argc, char *argv[]) {
     lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
 //    zero.setToZero();
 
-    int langevin_steps = 12;
-    int measurements = 12;
+    int langevin_steps = 100;
+    int measurements = 100;
 
     std::vector<lfield<double,1>> sum(measurements, zero);
     std::vector<lfield<double,1>> err(measurements, zero);
@@ -154,6 +154,7 @@ int main(int argc, char *argv[]) {
 
 //	cholesky->print();
 
+	lfield<double,9> uf_copy(uf);
 
 for(int stat = 0; stat < cnfg->stat; stat++){
 
@@ -200,7 +201,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
-        double step = 0.0002;
+        double step = 0.0004;
 
         //evolution
         for(int langevin = 0; langevin < langevin_steps; langevin++){
@@ -274,7 +275,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 			int time = (int)(langevin * measurements / langevin_steps);
 
-			lfield<double,9> uf_copy(uf);
+			uf_copy = uf;
 
 			fourier2->execute2D(&uf_copy,1);
     
@@ -299,9 +300,16 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
-    for(int i = 0; i < measurements; i++){
-            print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
+
+    const std::string file_name = "position_evolution_coupling_noise";
+
+    for(int i = measurements-1; i < measurements; i++){
+            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
     }
+
+//    for(int i = measurements-1; i < measurements; i++){
+//            print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
+//    }
 
 //-------------------------------------------------------
 //------DEALLOCATE AND CLEAN UP--------------------------

@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 4;
+    cnfg->stat = 16;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -211,7 +211,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 //              A_local = xi_local_x_tmp + xi_local_y_tmp;
 
-		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, &kernel_pbarx, &kernel_pbary);
+		//prepare_A_local(&A_local, &xi_local_x, &xi_local_y, &kernel_pbarx, &kernel_pbary);
+		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable);
 
                 fourier2->execute2D(&A_local, 0);
                 fourier2->execute2D(&xi_local_x, 0);
@@ -234,7 +235,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
                 //B_local = uxiulocal_x + uxiulocal_y;
 
-		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
+		//prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
+		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable);
+
 
                 fourier2->execute2D(&B_local, 0);
 	        

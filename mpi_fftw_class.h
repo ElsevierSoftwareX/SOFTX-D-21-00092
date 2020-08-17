@@ -168,7 +168,7 @@ template<class T, int t> int execute2D(lfield<T,t>* f, int dir){
 //       fftw_execute(planX2K);
 
 int i,j,k;
-double scale_after_fft;
+double scale_after_fft = 1.0/sqrt(N0*N1);
 
 //        if(fft_dir == X2K) then
 //            fbwd = FFTW_FORWARD
@@ -180,14 +180,14 @@ double scale_after_fft;
 //            scale_after_fft = real(1.0,kind=REALKND)
 //            plan = plan_bw
 
-if( dir ){
-//	scale_after_fft = 1.0/(1.0*N0*N1);
-	scale_after_fft = 1.0;
-} else {
-	scale_after_fft = 1.0;
-}
+//if( dir ){
+////	scale_after_fft = 1.0/(1.0*N0*N1);
+//	scale_after_fft = 1.0;
+//} else {
+//	scale_after_fft = 1.0;
+//}
 
-int COPY = 0;
+int COPY = 1;
 
 if(t == 1 ){
 
@@ -291,7 +291,7 @@ return 1;
 int execute2D(std::complex<double>* f, int dir){
 
 int i,j,k;
-const double scale_after_fft = 1.0;
+const double scale_after_fft = 1.0/sqrt(N0*N1);
 
 //if( dir ){
 //	scale_after_fft = 1.0/(1.0*N0*N1);

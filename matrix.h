@@ -127,7 +127,7 @@ template<class T> int gmatrix<T>::decompose(gfield<T,1>* corr){
     for (int i = 0; i < Nxg; i++) { //x
         for (int j = 0; j <= i; j++) {  //y
 
-            if (j == i) // summation for diagnols 
+            if (j == i) // summation for diagonal
             { 
 
                 std::complex<double> sum = 0; 

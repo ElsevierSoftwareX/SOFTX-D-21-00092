@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 16;
+    cnfg->stat = 4;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.32, 50);
+    MV_class* MVmodel = new MV_class(1.0, 30.72/Nx, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
 
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
 //    zero.setToZero();
 
     int langevin_steps = 100;
-    int measurements = 20;
+    int measurements = 100;
 
     std::vector<lfield<double,1>> sum(measurements, zero);
     std::vector<lfield<double,1>> err(measurements, zero);
@@ -236,7 +236,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
-    for(int i = 0; i < measurements; i++){
+    for(int i = measurements-1; i < measurements; i++){
             print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
     }
 
