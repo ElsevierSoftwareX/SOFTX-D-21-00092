@@ -101,10 +101,13 @@ int main(int argc, char *argv[]) {
 
     //std::vector<lfield<double,1>*> accumulator;
 
+    lfield<double,9> uftmp(cnfg->Nxl, cnfg->Nyl);
+
+
     lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
 //    zero.setToZero();
 
-    int langevin_steps = 25;
+    int langevin_steps = 50;
     int measurements = 1;
 
     std::vector<lfield<double,1>> sum(measurements, zero);
@@ -158,11 +161,13 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
-        double step = 0.0016;
+        double step = 0.0008;
+
 
 //loop over possible distances squared
 for(int ix = 0; ix < Nx; ix++){
-for(int iy = ix-2; iy < ix+3; iy++){
+//for(int iy = ix-2; iy < ix+3; iy++){
+for(int iy = ix; iy < ix+1; iy++){
 if(iy >= 0 && iy < Ny){
 
 
@@ -182,7 +187,8 @@ if(iy >= 0 && iy < Ny){
 
 	int rr = dix*dix + diy*diy;
 
-	lfield<double,9> uftmp(uf);
+	uftmp = uf;
+
 
         //evolution
         for(int langevin = 0; langevin < langevin_steps; langevin++){
@@ -269,7 +275,13 @@ if(iy >= 0 && iy < Ny){
     //for(int i = measurements-1; i < measurements; i++){
     //        print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
     //}
-    print(&sum[0], &err[0], momtable, 1.0/3.0/cnfg->stat, mpi);
+    //print(&sum[0], &err[0], momtable, 1.0/3.0/cnfg->stat, mpi);
+
+    const std::string file_name = "position_evolution_coupling_noise";
+
+    //for(int i = measurements-1; i < measurements; i++){
+            print(0, &sum[0], &err[0], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
+    //}
 
 
 //-------------------------------------------------------

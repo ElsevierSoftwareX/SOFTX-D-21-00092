@@ -1665,6 +1665,9 @@ template<class T, int t> int gfield<T,t>::reduce_hatta(lfield<T,t>* sum, lfield<
 	int NNx = sum->Nxl;
 	int NNy = sum->Nyl;
 
+	int xr_local = xr%(sum->Nxl);
+	int yr_local = yr%(sum->Nyl);
+
 //check MPI parallelization!!!
 
 //	#pragma omp parallel for simd collapse(2) default(shared)
@@ -1673,8 +1676,8 @@ template<class T, int t> int gfield<T,t>::reduce_hatta(lfield<T,t>* sum, lfield<
 
 	//!!! we should only select the momenta which correspond to the distance rr !!!
 
-	sum->u[(xr*NNy+yr)*t+0] += this->u[((xr+mpi->getPosX()*NNx)*Ny+yr+mpi->getPosY()*NNy)*t+0];
-	err->u[(xr*NNy+yr)*t+0] += pow(this->u[((xr+mpi->getPosX()*NNx)*Ny+yr+mpi->getPosY()*NNy)*t+0],2.0);
+	sum->u[(xr_local*NNy+yr_local)*t+0] += this->u[(xr*Ny+yr)*t+0];
+	err->u[(xr_local*NNy+yr_local)*t+0] += pow(this->u[(xr*Ny+yr)*t+0],2.0);
 	
 
 //		}
@@ -2015,7 +2018,7 @@ template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* ux
 //
 //                delete uf_hermitian;
 
-//        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
+        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
         for(int i = 0; i < uf->Nxl*uf->Nyl; i++){
 
 	        su3_matrix<double> A,B,C,D,E,F;
@@ -2088,7 +2091,7 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 
 //              uf = B_local * uf * A_local;
 
-//        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
+        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
         for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
 
 	        su3_matrix<double> A,B,C,D,E,F;
@@ -2112,9 +2115,63 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 return 1;
 }
 
+template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, mpi_class* mpi){
+
+        #pragma omp parallel for simd default(shared) //private(C,D,E)
+        for(int ix = 0; ix < A_local->Nxl; ix++){
+        for(int iy = 0; iy < A_local->Nyl; iy++){
+
+		int i = ix*A_local->Nyl + iy;
+
+	        su3_matrix<double> C,D,E;
+
+		int xx = ix + mpi->getPosX()*(A_local->Nxl);
+		int yy = iy + mpi->getPosY()*(A_local->Nyl);
+
+                if( xx >= Nx/2 )
+                	xx = xx - Nx;
+
+                if( yy >= Ny/2 )
+                        yy = yy - Ny;
+
+		double px = 2.0 * M_PI * xx / (1.0 * Nx);
+		double py = 2.0 * M_PI * yy / (1.0 * Ny);
+
+//		if( fabs(mom->phat2(i)) > 10e-9 ){
+		if( fabs(px*px+py*py) > 10e-9 ){
+
+			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow(((px*px+py*py)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+
+			//double coupling_constant = 1.0;
+
+//                        std::complex<double> AA(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
+//                        std::complex<double> BB(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
+                        std::complex<double> AA(0.0, -2.0*M_PI*sqrt(coupling_constant)*px/(px*px+py*py));
+                        std::complex<double> BB(0.0, -2.0*M_PI*sqrt(coupling_constant)*py/(px*px+py*py));
+
+
+     		        for(int k = 0; k < t; k++){
+
+		                C.m[k] = AA*xi_local_x->u[i*t+k]; ///(1.0*Nx*Ny);
+        		        D.m[k] = BB*xi_local_y->u[i*t+k]; ///(1.0*Nx*Ny);
+			}
+
+			E = C + D;
+		}
+
+                for(int k = 0; k < t; k++){
+ 	              	A_local->u[i*t+k] = E.m[k];
+                }
+	}
+	}
+
+
+return 1;
+}
+
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom){
 
-//        #pragma omp parallel for simd default(shared) //private(C,D,E)
+        #pragma omp parallel for simd default(shared) //private(C,D,E)
         for(int i = 0; i < A_local->Nxl*A_local->Nyl; i++){
 
 	        su3_matrix<double> C,D,E;
@@ -2122,6 +2179,8 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 		if( fabs(mom->phat2(i)) > 10e-9 ){
 
 			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+
+			//double coupling_constant = 1.0;
 
                         std::complex<double> AA(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
                         std::complex<double> BB(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
@@ -2161,6 +2220,7 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 
 return 1;
 }
+
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, lfield<T,t>* kernel_pbarx, lfield<T,t>* kernel_pbary){
 
 //              xi_local_x_tmp = kernel_pbarx * xi_local_x;
