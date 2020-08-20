@@ -2015,7 +2015,7 @@ template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* ux
 //
 //                delete uf_hermitian;
 
-//        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
+        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
         for(int i = 0; i < uf->Nxl*uf->Nyl; i++){
 
 	        su3_matrix<double> A,B,C,D,E,F;
@@ -2088,7 +2088,7 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 
 //              uf = B_local * uf * A_local;
 
-//        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
+        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
         for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
 
 	        su3_matrix<double> A,B,C,D,E,F;
@@ -2114,15 +2114,17 @@ return 1;
 
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom){
 
-//        #pragma omp parallel for simd default(shared) //private(C,D,E)
+        #pragma omp parallel for simd default(shared) //private(C,D,E)
         for(int i = 0; i < A_local->Nxl*A_local->Nyl; i++){
 
 	        su3_matrix<double> C,D,E;
 
 		if( fabs(mom->phat2(i)) > 10e-9 ){
 
-			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+			//double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
 
+			double coupling_constant = 1.0;
+			
                         std::complex<double> AA(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
                         std::complex<double> BB(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
 
