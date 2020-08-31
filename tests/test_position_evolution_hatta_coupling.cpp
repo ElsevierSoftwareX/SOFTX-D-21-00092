@@ -167,7 +167,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 //loop over possible distances squared
 for(int ix = 0; ix < Nx; ix++){
 //for(int iy = ix-2; iy < ix+3; iy++){
-for(int iy = ix; iy < ix+1; iy++){
+for(int iy = ix-1; iy < ix+2; iy++){
 if(iy >= 0 && iy < Ny){
 
 
@@ -277,7 +277,7 @@ if(iy >= 0 && iy < Ny){
     //}
     //print(&sum[0], &err[0], momtable, 1.0/3.0/cnfg->stat, mpi);
 
-    const std::string file_name = "position_evolution_coupling_noise";
+    const std::string file_name = "position_evolution_coupling_hatta";
 
     //for(int i = measurements-1; i < measurements; i++){
             print(0, &sum[0], &err[0], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
