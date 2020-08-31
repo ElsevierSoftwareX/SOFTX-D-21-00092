@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 16;
+    cnfg->stat = 32;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -132,9 +132,19 @@ int main(int argc, char *argv[]) {
 //-------------------------------------------------------
 //-------------------------------------------------------
 
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
+//    zero.setToZero();
 
-    sum.setToZero();
+    int langevin_steps = 100;
+
+    std::vector<lfield<double,1>> sum(langevin_steps, zero);
+    std::vector<lfield<double,1>> err(langevin_steps, zero);
+
+
+    //lfield<double,9> uf_copy(cnfg->Nxl, cnfg->Nyl);
+
+    lfield<double,9> uf_copy(cnfg->Nxl, cnfg->Nyl);
+
 
 for(int stat = 0; stat < cnfg->stat; stat++){
 
@@ -184,7 +194,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         double step = 0.0004;
 
         //evolution
-        for(int langevin = 0; langevin < 100; langevin++){
+        for(int langevin = 0; langevin < langevin_steps; langevin++){
 
 //		const clock_t begin_time = std::clock();
 		struct timespec starte, finishe;
@@ -256,32 +266,31 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		elapsede += (finishe.tv_nsec - starte.tv_nsec) / 1000000000.0;		
 
 		std::cout<<"Evolution time: " << elapsede << std::endl;
-	}
 
     	//-------------------------------------------------------
 	//------CORRELATION FUNCTION-----------------------------
 	//-------------------------------------------------------
 
-	//compute correlation function
-	fourier2->execute2D(&uf,1);
-    
-	uf.trace(corr);
+//              static lfield<double,9> uf_copy(uf);
+                uf_copy = uf;
 
-    	corr_global->allgather(corr, mpi);	
+                //compute correlation function
+                fourier2->execute2D(&uf_copy,1);
 
-   	corr_global->average_and_symmetrize();
+                uf_copy.trace(corr);
 
-	//store stat in the accumulator
-	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
+                corr_global->allgather(corr, mpi);
 
-	sum += *corr_ptr;
+                corr_global->average_and_symmetrize();
 
-	delete corr_ptr;
+                std::cout<<"Storing partial result at step = "<<langevin<<std::endl;
 
-	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
-//	accumulator.push_back(corr_ptr);
+                corr_global->reduce(&sum[langevin], &err[langevin], mpi);
 
-//	std::cout << "ONE STAT TIME: " << float( std::clock () - begin_time_stat ) /  CLOCKS_PER_SEC << std::endl;
+                std::cout<<"One full evolution, iterating further"<<std::endl;
+
+
+	}
 
 	clock_gettime(CLOCK_MONOTONIC, &finish);
 		
@@ -292,13 +301,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
-//    printf("accumulator size = %i\n", accumulator.size());
+    const std::string file_name = "test_momentum_evolution_coupling_sqrt";
 
-//    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
-//	sum += **it;
-
-//    sum.print(momtable, 1.0/3.0/accumulator.size(), mpi);
-    sum.print(momtable, 1.0/3.0/cnfg->stat, mpi);
+    for(int i = langevin_steps - 1; i < langevin_steps; i++){
+            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
+    }
 
 
 //-------------------------------------------------------

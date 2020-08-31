@@ -145,6 +145,8 @@ int main(int argc, char *argv[]) {
 
     //lfield<double,9> uf_copy(cnfg->Nxl, cnfg->Nyl);
 
+    lfield<double,9> uf_copy(cnfg->Nxl, cnfg->Nyl);
+
 
 for(int stat = 0; stat < cnfg->stat; stat++){
 
@@ -224,7 +226,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 //              A_local = xi_local_x_tmp + xi_local_y_tmp;
 
 		//prepare_A_local(&A_local, &xi_local_x, &xi_local_y, &kernel_pbarx, &kernel_pbary);
-		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable);
+		//prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable);
+		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, mpi);
+
 
                 fourier2->execute2D(&A_local, 0);
                 fourier2->execute2D(&xi_local_x, 0);
@@ -248,7 +252,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 //B_local = uxiulocal_x + uxiulocal_y;
 
 		//prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
-		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable);
+		//prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable);
+		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, mpi);
 
                 fourier2->execute2D(&B_local, 0);
 	        
@@ -273,8 +278,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		//-------------------------------------------------------
 
 //		static lfield<double,9> uf_copy(uf);
-		lfield<double,9> uf_copy(uf);
-		//uf_copy = uf;
+		uf_copy = uf;
 
 		//compute correlation function
 		fourier2->execute2D(&uf_copy,1);
@@ -302,7 +306,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
-    const std::string file_name = "test_momentum_evolution_coupling_noise";
+    const std::string file_name = "test_momentum_evolution_coupling_noise_test_nothread";
 
     for(int i = langevin_steps - 1; i < langevin_steps; i++){
 	    print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
