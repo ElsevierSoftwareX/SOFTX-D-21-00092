@@ -306,7 +306,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
-    const std::string file_name = "test_momentum_evolution_coupling_noise_test_nothread";
+    const std::string file_name = "test_momentum_evolution_coupling_noise";
 
     for(int i = langevin_steps - 1; i < langevin_steps; i++){
 	    print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);

@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 32;
+    cnfg->stat = 4;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
