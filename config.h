@@ -62,7 +62,33 @@ public:
 		fscanf(f, "measurements = %i\n", &measurements);
 		fscanf(f, "step = %f\n", &tmp);
 		step = tmp;	
-	
+
+		std::string evolution;
+		std::string coupling;
+		std::string kernel;
+
+		fscanf(f, "EvolutionChoice = %s\n", &evolution[0]);
+		fscanf(f, "CouplingChoice = %s\n", &coupling[0]);
+		fscanf(f, "KernelChoice = %s\n", &kernel[0]);
+
+		if(evolution.compare("MOMENTUM_EVOLUTION") == 0)
+			EvolutionChoice = MOMENTUM_EVOLUTION;
+		if(evolution.compare("POSITION_EVOLUTION") == 0)
+			EvolutionChoice = POSITION_EVOLUTION;
+
+		if(coupling.compare("SQRT_COUPLING_CONSTANT") == 0)
+			CouplingChoice = SQRT_COUPLING_CONSTANT;
+		if(coupling.compare("NOISE_COUPLING_CONSTANT") == 0)
+			CouplingChoice = NOISE_COUPLING_CONSTANT;
+		if(coupling.compare("HATTA_COUPLING_CONSTANT") == 0)
+			CouplingChoice = HATTA_COUPLING_CONSTANT;
+
+		if(kernel.compare("LINEAR_KERNEL") == 0)
+			KernelChoice = LINEAR_KERNEL;
+		if(kernel.compare("SIN_KERNEL") == 0)
+			KernelChoice = SIN_KERNEL;
+
+
 		fclose(f);
 	}
 };
