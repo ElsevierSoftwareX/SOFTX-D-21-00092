@@ -39,6 +39,10 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
+    if(argc > 2){
+	cnfg->read_config_from_file(argv[3]);
+    }
+
     mpi_class* mpi = new mpi_class(argc, argv);
 
     mpi->mpi_init(cnfg);

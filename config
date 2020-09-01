@@ -1,0 +1,8 @@
+stat = 6
+mu = 30.72
+mass = 0.0001
+elementaryWilsonLines = 50
+file_name = output
+langevin_steps = 100
+measurements = 100
+step = 0.0004
