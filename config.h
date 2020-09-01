@@ -1,10 +1,12 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 32
-#define Ny 32
+#define Nx 64
+#define Ny 64
 
 #include <iostream>
+
+enum Evolution { POSITION_EVOLUTION, MOMENTUM_EVOLUTION };
 
 enum Coupling { SQRT_COUPLING_CONSTANT, NOISE_COUPLING_CONSTANT, HATTA_COUPLING_CONSTANT };
 
@@ -35,13 +37,9 @@ const int langevin_steps = 100;
 const int measurements = 100;
 double step = 0.0004;
 
+Evolution EvolutionChoice = MOMENTUM_EVOLUTION;
 
-const int position_evolution = 0;
-const int momentum_evolution = 1;
-	
-const int sqrt_coupling_constant = 0;
-const int noise_coupling_constant = 1;
-const int hatta_coupling_constant = 0;
+Coupling CouplingChoice = NOISE_COUPLING_CONSTANT;
 
 Kernel KernelChoice = SIN_KERNEL;
 

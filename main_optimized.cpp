@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 
 gmatrix<double>* cholesky;
 
-if(cnfg->position_evolution == 1 && cnfg->noise_coupling_constant == 1){
+if(cnfg->EvolutionChoice == POSITION_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT){
 
         corr->setCorrelationsForCouplingConstant(momtable);
 	
@@ -168,7 +168,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
 int upper_bound_x = 1;
-if( cnfg->hatta_coupling_constant == 1 ){
+if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
 	upper_bound_x = Nx;
 }
 //hatta iteration over positions
@@ -177,7 +177,7 @@ for(int ix = 0; ix < upper_bound_x; ix++){
 
 int upper_bound_y = 1;
 int lower_bound_y = 0;
-if( cnfg->hatta_coupling_constant == 1 ){ 
+if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){ 
 	lower_bound_y = ix-1;
 	upper_bound_y = ix+2;
 }
@@ -210,25 +210,18 @@ if(iy >= 0 && iy < Ny){
 
                 printf("Performing evolution step no. %i\n", langevin);
 
-		if( cnfg->momentum_evolution == 1 && cnfg->noise_coupling_constant == 1 ){
+		if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 			generate_gaussian_with_noise_coupling_constant(&xi_local_x, &xi_local_y, momtable, mpi, cnfg);
 		}else{
 			generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
 		}
 
-		if( cnfg->momentum_evolution == 1){
+		if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION ){
 
 	                fourier2->execute2D(&xi_local_x, 1);
         	        fourier2->execute2D(&xi_local_y, 1);
 
-			if( cnfg->sqrt_coupling_constant == 1 ){
-				//set coupling on
-				prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, SQRT_COUPLING_CONSTANT, cnfg->KernelChoice);
-			}
-			if( cnfg->noise_coupling_constant == 1 ){
-				//set coupling off
-				prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, NOISE_COUPLING_CONSTANT, cnfg->KernelChoice);
-			}
+			prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
 
                 	fourier2->execute2D(&A_local, 0);
 	                fourier2->execute2D(&xi_local_x, 0);
@@ -239,26 +232,19 @@ if(iy >= 0 && iy < Ny){
 	                fourier2->execute2D(&uxiulocal_x, 1);
         	        fourier2->execute2D(&uxiulocal_y, 1);
 
-			if( cnfg->sqrt_coupling_constant == 1 ){
-				//set coupling on
-	       			prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, SQRT_COUPLING_CONSTANT, cnfg->KernelChoice);
-			}
-			if( cnfg->noise_coupling_constant == 1 ){
-				//set coupling off
-	       			prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, NOISE_COUPLING_CONSTANT, cnfg->KernelChoice);
-			}
+       			prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
 
                 	fourier2->execute2D(&B_local, 0);
 	        
 		}	
 		
-		if( cnfg->position_evolution == 1){
+		if( cnfg->EvolutionChoice == POSITION_EVOLUTION ){
 
                 	printf("gathering local xi to global\n");
 	                xi_global_x.allgather(&xi_local_x, mpi);
         	        xi_global_y.allgather(&xi_local_y, mpi);
 
-			if( cnfg->noise_coupling_constant == 1){
+			if( cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 
 		                xi_global_x.multiplyByCholesky(cholesky);
                 		xi_global_y.multiplyByCholesky(cholesky);
@@ -278,19 +264,7 @@ if(iy >= 0 && iy < Ny){
         		                int x_global = x + mpi->getPosX()*cnfg->Nxl;
                 	                int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-					if( cnfg->noise_coupling_constant == 1 ){
-						//coupling has to be turned off
-						prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable, 0, NOISE_COUPLING_CONSTANT, cnfg->KernelChoice);
-					}
-					if( cnfg->sqrt_coupling_constant == 1 ){
-						//coupling has to be turned on
-						prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable, 0, SQRT_COUPLING_CONSTANT, cnfg->KernelChoice);
-					}
-					if( cnfg->hatta_coupling_constant == 1 ){
-						//coupling has to be turned on
-						prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable, rr_hatta, HATTA_COUPLING_CONSTANT, cnfg->KernelChoice);
-					}
-
+					prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable, rr_hatta, cnfg->CouplingChoice, cnfg->KernelChoice);
 
                         	}
                 	}
@@ -324,7 +298,7 @@ if(iy >= 0 && iy < Ny){
 
    			corr_global->average_and_symmetrize();
 
-			if( cnfg->hatta_coupling_constant == 1 ){
+			if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
 				corr_global->reduce_hatta(&sum[time], &err[time], mpi, ix, iy);
 			}else{
 				corr_global->reduce(&sum[time], &err[time], mpi);

@@ -132,8 +132,6 @@ int main(int argc, char *argv[]) {
 //------ACCUMULATE STATISTICS----------------------------
 //-------------------------------------------------------
 
-
-
     lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
 
     lfield<double,9> uf_copy(cnfg->Nxl, cnfg->Nyl);
@@ -146,7 +144,7 @@ int main(int argc, char *argv[]) {
 
 gmatrix<double>* cholesky;
 
-if(cnfg->position_evolution == 1 && cnfg->noise_coupling_constant == 1 ){
+if(cnfg->EvolutionChoice == POSITION_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 
 	corr->setCorrelationsForCouplingConstant(momtable);
 
@@ -190,7 +188,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 
 int upper_bound_x = 1;
-if( cnfg->hatta_coupling_constant == 1 ){
+if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
         upper_bound_x = Nx;
 }
 //hatta iteration over positions
@@ -199,7 +197,7 @@ for(int ix = 0; ix < upper_bound_x; ix++){
 
 int upper_bound_y = 1;
 int lower_bound_y = 0;
-if( cnfg->hatta_coupling_constant == 1 ){
+if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
         lower_bound_y = ix-1;
         upper_bound_y = ix+2;
 }
@@ -234,14 +232,14 @@ if(iy >= 0 && iy < Ny){
 		xi_local_x.setGaussian(mpi, cnfg);
 		xi_local_y.setGaussian(mpi, cnfg);
 
-		if( cnfg->momentum_evolution == 1 ){
+		if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION ){
 
-			if( cnfg->noise_coupling_constant == 0){
+			if( cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 				fourier2->execute2D(&xi_local_x, 1);
 				fourier2->execute2D(&xi_local_y, 1);
 			}
 
-			if( cnfg->sqrt_coupling_constant == 1 || cnfg->noise_coupling_constant == 1 ){
+			if( cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT || cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 				//construcing A
 				xi_local_x_tmp = kernel_pbarx_with_sqrt_coupling_constant * xi_local_x;
 				xi_local_y_tmp = kernel_pbary_with_sqrt_coupling_constant * xi_local_y;
@@ -267,7 +265,7 @@ if(iy >= 0 && iy < Ny){
 			fourier2->execute2D(&uxiulocal_x, 1);
 			fourier2->execute2D(&uxiulocal_y, 1);
 
-			if( cnfg->sqrt_coupling_constant == 1 || cnfg->noise_coupling_constant == 1){
+			if( cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT || cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 				uxiulocal_x = kernel_pbarx_with_sqrt_coupling_constant * uxiulocal_x;
 				uxiulocal_y = kernel_pbary_with_sqrt_coupling_constant * uxiulocal_y;
 			}else{
@@ -280,13 +278,13 @@ if(iy >= 0 && iy < Ny){
 			fourier2->execute2D(&B_local, 0);
 		}
 
-		if( cnfg->position_evolution == 1 ){
+		if( cnfg->EvolutionChoice == POSITION_EVOLUTION ){
 
 			printf("gathering local xi to global\n");
 			xi_global_x.allgather(&xi_local_x, mpi);	
     			xi_global_y.allgather(&xi_local_y, mpi);	
 
-			if( cnfg->noise_coupling_constant == 1 ){
+			if( cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 				xi_global_x.multiplyByCholesky(cholesky);
 				xi_global_y.multiplyByCholesky(cholesky);
 			}
@@ -301,7 +299,7 @@ if(iy >= 0 && iy < Ny){
 					int x_global = x + mpi->getPosX()*cnfg->Nxl;
 					int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-					if( cnfg->sqrt_coupling_constant == 1 ){
+					if( cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT ){
 						kernel_xbary.setKernelXbarYWithCouplingConstant(x_global, y_global, postable);
 						kernel_xbarx.setKernelXbarXWithCouplingConstant(x_global, y_global, postable);
 					
@@ -356,7 +354,7 @@ if(iy >= 0 && iy < Ny){
 
                         corr_global->average_and_symmetrize();
 
-                        if( cnfg->hatta_coupling_constant == 1 ){
+                        if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
                                 corr_global->reduce_hatta(&sum[time], &err[time], mpi, ix, iy);
                         }else{
                                 corr_global->reduce(&sum[time], &err[time], mpi);
@@ -383,7 +381,7 @@ if(iy >= 0 && iy < Ny){
 
 
 
-    if( cnfg->position_evolution == 1 && cnfg->noise_coupling_constant == 1 )
+    if( cnfg->EvolutionChoice == POSITION_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT )
 	delete cholesky;
 
     delete cnfg;
