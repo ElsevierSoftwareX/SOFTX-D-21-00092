@@ -41,8 +41,6 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 4;
-
     mpi_class* mpi = new mpi_class(argc, argv);
 
     mpi->mpi_init(cnfg);
@@ -59,7 +57,7 @@ int main(int argc, char *argv[]) {
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 30.72/Nx, 50);
+    MV_class* MVmodel = new MV_class(1.0, cnfg->mu/Nx, cnfg->elementaryWilsonLines);
 
     fftw2D* fourier2 = new fftw2D(cnfg);
 
@@ -72,14 +70,6 @@ int main(int argc, char *argv[]) {
     //construct initial state
     lfield<double,9> f(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> uf(cnfg->Nxl, cnfg->Nyl);
-
-//    lfield<double,9> tmp(cnfg->Nxl, cnfg->Nyl);
-
-//-------------------------------------------------------
-
-    //exchange and store uf in the global array gf
-    //gfield<double,9> gf(Nx, Ny);
-    //is this realy needed? for momentum evolution is not
 
     gfield<double,9> uf_global(Nx, Ny);
 
@@ -149,22 +139,9 @@ int main(int argc, char *argv[]) {
 //-------------------------------------------------------
 //-------------------------------------------------------
 
-//global control variables, should be exported to the config structure and set up from the input file
-	int sqrt_coupling_constant = 0;
-	int noise_coupling_constant = 1;
+gmatrix<double>* cholesky;
 
-	int momentum_evolution = 0;
-	int position_evolution = 1;
-
-//-------------------------------------------------------
-//-------------------------------------------------------
-
-	gmatrix<double>* cholesky;
-
-
-//create sigma correlation matrix for the noise vectors in position space
-//perform cholesky decomposition to get the square root of the correlation matrix
-if(position_evolution == 1 && noise_coupling_constant == 1 ){
+if(cnfg->position_evolution == 1 && cnfg->noise_coupling_constant == 1 ){
 
 	corr->setCorrelationsForCouplingConstant(momtable);
 
@@ -197,11 +174,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		fourier2->execute2D(&f, 1);
 
-		f.solvePoisson(0.0001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
+		f.solvePoisson(cnfg->mass * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
 
 	    	fourier2->execute2D(&f, 0);
-
-		//f.exponentiate();
 
 		uf *= f;
     	}
@@ -212,27 +187,22 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//------EVOLUTION----------------------------------------
 	//-------------------------------------------------------
 
-
-	//perform evolution
-    	double step = 0.0004;
-
 	//evolution
-    	for(int langevin = 0; langevin < 100; langevin++){
+    	for(int langevin = 0; langevin < cnfg->langevin_steps; langevin++){
 
 		printf("Performing evolution step no. %i\n", langevin);
 
 		xi_local_x.setGaussian(mpi, cnfg);
 		xi_local_y.setGaussian(mpi, cnfg);
 
-		if( momentum_evolution == 1 ){
+		if( cnfg->momentum_evolution == 1 ){
 
-			if(noise_coupling_constant == 0){
-				//should be X2K
+			if( cnfg->noise_coupling_constant == 0){
 				fourier2->execute2D(&xi_local_x, 1);
 				fourier2->execute2D(&xi_local_y, 1);
 			}
 
-			if(sqrt_coupling_constant == 1 || noise_coupling_constant == 1 ){
+			if( cnfg->sqrt_coupling_constant == 1 || cnfg->noise_coupling_constant == 1 ){
 				//construcing A
 				xi_local_x_tmp = kernel_pbarx_with_sqrt_coupling_constant * xi_local_x;
 				xi_local_y_tmp = kernel_pbary_with_sqrt_coupling_constant * xi_local_y;
@@ -243,12 +213,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 			A_local = xi_local_x_tmp + xi_local_y_tmp;
 
-			//should be K2X
 	 		fourier2->execute2D(&A_local, 0);
 			fourier2->execute2D(&xi_local_x, 0);
  			fourier2->execute2D(&xi_local_y, 0);
 
-			//constructng B
 		    	uf_hermitian = uf.hermitian();
 
 			uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
@@ -257,12 +225,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 			delete uf_hermitian;
 
-			//should be X2K
 			fourier2->execute2D(&uxiulocal_x, 1);
 			fourier2->execute2D(&uxiulocal_y, 1);
 
-			if(sqrt_coupling_constant == 1 || noise_coupling_constant == 1){
-				//construcing B
+			if( cnfg->sqrt_coupling_constant == 1 || cnfg->noise_coupling_constant == 1){
 				uxiulocal_x = kernel_pbarx_with_sqrt_coupling_constant * uxiulocal_x;
 				uxiulocal_y = kernel_pbary_with_sqrt_coupling_constant * uxiulocal_y;
 			}else{
@@ -272,41 +238,31 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 			B_local = uxiulocal_x + uxiulocal_y;
 
-			//should be K2X
 			fourier2->execute2D(&B_local, 0);
 		}
 
-		if( position_evolution == 1 ){
-
-			//if(noise_coupling_constant == 1 ){
-			//	//should be X2K
-			//	fourier2->execute2D(&xi_local_x, 0);
-			//	fourier2->execute2D(&xi_local_y, 0);
-			//}
+		if( cnfg->position_evolution == 1 ){
 
 			printf("gathering local xi to global\n");
 			xi_global_x.allgather(&xi_local_x, mpi);	
     			xi_global_y.allgather(&xi_local_y, mpi);	
 
-			if(noise_coupling_constant == 1 ){
-				//should be X2K
+			if( cnfg->noise_coupling_constant == 1 ){
 				xi_global_x.multiplyByCholesky(cholesky);
 				xi_global_y.multiplyByCholesky(cholesky);
-	
 			}
 
 			printf("gathering local uf to global\n");
     			uf_global.allgather(&uf, mpi);
 
 			printf("starting iteration over global lattice\n");
-			//for(int i = 0; i < cnfg->Nxl*cnfg->Nyl; i++){
 			for(int x = 0; x < cnfg->Nxl; x++){
 				for(int y = 0; y < cnfg->Nyl; y++){
 
 					int x_global = x + mpi->getPosX()*cnfg->Nxl;
 					int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-					if( sqrt_coupling_constant == 1 ){
+					if( cnfg->sqrt_coupling_constant == 1 ){
 						kernel_xbary.setKernelXbarYWithCouplingConstant(x_global, y_global, postable);
 						kernel_xbarx.setKernelXbarXWithCouplingConstant(x_global, y_global, postable);
 					
@@ -337,9 +293,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		}
 		
-		A_local.exponentiate(sqrt(step));
+		A_local.exponentiate(sqrt(cnfg->step));
 
-		B_local.exponentiate(-sqrt(step));
+		B_local.exponentiate(-sqrt(cnfg->step));
 
 		uf = B_local * uf * A_local;
 			
@@ -348,10 +304,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//-------------------------------------------------------
 	//------CORRELATION FUNCTION-----------------------------
 	//-------------------------------------------------------
-
-
-	//compute correlation function
-	//should be X2K
 
    	fourier2->execute2D(&uf, 1);
     
@@ -385,7 +337,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 
 
-    if(position_evolution == 1 && noise_coupling_constant == 1 )
+    if( cnfg->position_evolution == 1 && cnfg->noise_coupling_constant == 1 )
 	delete cholesky;
 
     delete cnfg;

@@ -22,7 +22,23 @@ int proc_x, proc_y;
 
 int seed;
 
-int stat;
+int stat = 4;
+double mu = 30.72;
+double mass = 0.0001;
+int elementaryWilsonLines = 50;
+const std::string file_name = "output";
+const int langevin_steps = 100;
+const int measurements = 100;
+double step = 0.0004;
+
+
+const int position_evolution = 0;
+const int momentum_evolution = 1;
+	
+const int sqrt_coupling_constant = 1;
+const int noise_coupling_constant = 0;
+const int hatta_coupling_constant = 1;
+
 
 };
 
