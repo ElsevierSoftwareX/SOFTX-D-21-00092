@@ -1345,18 +1345,34 @@ template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int
                                          //& log(((15.0**2/6.0**2)**(1.0/0.2) +&
                                          //& ((1.26)/(((1.0*dt**2+1.0*dz**2)/(1.0*zmax**2))*6.0**2)**(1.0/0.2)))**(0.2)))
 
-                        double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
-                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+//                        double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
+//                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
 
-                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+//                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+//                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+
+                                         double dx = x_global - xx;
+                                         if( dx >= Nxg/2 )
+                                                dx = dx - Nxg;
+                                         if( dx < -Nxg/2 )
+                                                dx = dx + Nxg;
+
+                                         double dy = y_global - yy;
+                                         if( dy >= Nyg/2 )
+                                                dy = dy - Nyg;
+                                         if( dy < -Nyg/2 )
+                                                dy = dy + Nyg;
+
 
 			double coupling_constant = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + 1.26/pow(6.0*6.0*(dx*dx+dy*dy)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
-           	        double rrr = 1.0*(dx2*dx2+dy2*dy2);
+
+					double rrr = dx*dx+dy*dy;
+
+//           	        double rrr = 1.0*(dx2*dx2+dy2*dy2);
 
 			if( rrr > 10e-9 ){
 
-				this->u[i*t+0] = std::complex<double>(0.0, sqrt(coupling_constant)*dx/rrr);
+				this->u[i*t+0] = std::complex<double>(sqrt(coupling_constant)*dx/rrr, 0.0);
 				this->u[i*t+4] = this->u[i*t+0];
 				this->u[i*t+8] = this->u[i*t+0];
 
@@ -1389,19 +1405,34 @@ template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int
 
 			int i = xx*Nyg+yy;
 
-	                double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
-                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+//	                double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
+//                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
 
-                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+//                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
+//                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+
+                                         double dx = x_global - xx;
+                                         if( dx >= Nxg/2 )
+                                                dx = dx - Nxg;
+                                         if( dx < -Nxg/2 )
+                                                dx = dx + Nxg;
+
+                                         double dy = y_global - yy;
+                                         if( dy >= Nyg/2 )
+                                                dy = dy - Nyg;
+                                         if( dy < -Nyg/2 )
+                                                dy = dy + Nyg;
+
 
 			double coupling_constant = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + 1.26/pow(6.0*6.0*(dx*dx+dy*dy)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
         
-                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
+//                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
+
+					double rrr = dx*dx+dy*dy;
 
 			if( rrr > 10e-9 ){
 
-				this->u[i*t+0] = std::complex<double>(0.0, sqrt(coupling_constant)*dy/rrr);
+				this->u[i*t+0] = std::complex<double>(sqrt(coupling_constant)*dy/rrr, 0.0);
 				this->u[i*t+4] = this->u[i*t+0];
 				this->u[i*t+8] = this->u[i*t+0];
 
@@ -2567,8 +2598,6 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 
                         int i = xx*Ny+yy;
 
-			std::complex<double> A,B;
-		        su3_matrix<double> C,D,E,F,G,H,K;
 
 /*
                         double dx2 = Nx*sin(M_PI*(x_global-xx)/Nx)/M_PI;
@@ -2613,11 +2642,11 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 						
                         double rrr = 1.0*(dx*dx+dy*dy);
 					
-			//const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+			const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 
-			//double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+			double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
 
-			const double sqrt_coupling_constant = 1.0;
+			//const double sqrt_coupling_constant = 1.0;
 
 			//kernel_x i kernel_y
                         if( rrr > 10e-9 ){

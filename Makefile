@@ -1,5 +1,5 @@
-all: main_omp.cpp mpi_init.cpp mpi_exchange_grid.cpp mpi_exchange_groups.cpp su3_complex.h su3_matrix.h
-	mpicxx -g -std=gnu++11 zheevh3-C-1.1/zheevh3.cpp zheevh3-C-1.1/zheevc3.cpp zheevh3-C-1.1/zheevq3.cpp zheevh3-C-1.1/zhetrd3.cpp mpi_init.cpp mpi_exchange_grid.cpp mpi_exchange_groups.cpp main_omp.cpp -o main_omp /home/pk/Desktop/nspt/fftw/install/lib/libfftw3_mpi.a /home/pk/Desktop/nspt/fftw/install/lib/libfftw3.a /home/pk/Desktop/nspt/fftw/install/lib/libfftw3_omp.a -I/home/pk/Desktop/nspt/fftw/install/include -Izheevh3-C-1.1/  -fopenmp
+all: main_explicit.cpp mpi_init.cpp mpi_exchange_grid.cpp mpi_exchange_groups.cpp su3_complex.h su3_matrix.h
+	mpicxx -g -std=gnu++11 zheevh3-C-1.1/zheevh3.cpp zheevh3-C-1.1/zheevc3.cpp zheevh3-C-1.1/zheevq3.cpp zheevh3-C-1.1/zhetrd3.cpp mpi_init.cpp mpi_exchange_grid.cpp mpi_exchange_groups.cpp main_explicit.cpp -o main_explicit /home/pk/Desktop/nspt/fftw/install/lib/libfftw3_mpi.a /home/pk/Desktop/nspt/fftw/install/lib/libfftw3.a /home/pk/Desktop/nspt/fftw/install/lib/libfftw3_omp.a -I/home/pk/Desktop/nspt/fftw/install/include -Izheevh3-C-1.1/  -fopenmp
 #	mpicxx config.cpp mpi_init.cpp mpi_pos.cpp mpi_allocate.cpp mpi_exchange_grid.cpp mpi_exchange_boundaries.cpp utils.cpp mpi_split.cpp mpi_gather.cpp main.cpp -o main -lm -I/home/pk/Desktop/nspt/fftw/install/include -L/home/pk/Desktop/nspt/fftw/install/lib/ -lfftw3 -lfftw3_mpi
 
 
