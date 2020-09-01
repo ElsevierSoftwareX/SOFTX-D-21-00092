@@ -14,8 +14,8 @@ LDFLAGS=$(LIBS) -lm
 #default: test_momentum_evolution_coupling
 ##default: test_momentum_evolution_coupling2
 ##default: test_noise_vectors test_noise_vectors_fft test_momentum_coupling_fft test_fftw_execute_random test_fftw_execute_random_std test_noise_vectors_fft_A_local
-##default: test_position_evolution_coupling_noise
-default: test_position_evolution_coupling
+default: test_position_evolution_coupling_noise
+##default: test_position_evolution_coupling
 #default: test_position_evolution_hatta_coupling
 #default: test_position_evolution
 ##default: test_noise_vectors_and_cholesky_decomposition

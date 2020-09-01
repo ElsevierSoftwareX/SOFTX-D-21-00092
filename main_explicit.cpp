@@ -150,8 +150,8 @@ int main(int argc, char *argv[]) {
 //-------------------------------------------------------
 
 //global control variables, should be exported to the config structure and set up from the input file
-	int sqrt_coupling_constant = 1;
-	int noise_coupling_constant = 0;
+	int sqrt_coupling_constant = 0;
+	int noise_coupling_constant = 1;
 
 	int momentum_evolution = 0;
 	int position_evolution = 1;
@@ -278,11 +278,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		if( position_evolution == 1 ){
 
-			if(noise_coupling_constant == 1 ){
-				//should be X2K
-				fourier2->execute2D(&xi_local_x, 0);
-				fourier2->execute2D(&xi_local_y, 0);
-			}
+			//if(noise_coupling_constant == 1 ){
+			//	//should be X2K
+			//	fourier2->execute2D(&xi_local_x, 0);
+			//	fourier2->execute2D(&xi_local_y, 0);
+			//}
 
 			printf("gathering local xi to global\n");
 			xi_global_x.allgather(&xi_local_x, mpi);	

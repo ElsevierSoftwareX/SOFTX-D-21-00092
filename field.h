@@ -2642,11 +2642,11 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 						
                         double rrr = 1.0*(dx*dx+dy*dy);
 					
-			const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+			//const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 
-			double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+			//double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
 
-			//const double sqrt_coupling_constant = 1.0;
+			const double sqrt_coupling_constant = 1.0;
 
 			//kernel_x i kernel_y
                         if( rrr > 10e-9 ){
