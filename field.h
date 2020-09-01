@@ -6,7 +6,6 @@
 #include <complex>
 #include <ccomplex>
 
-//#include <complex.h>
 #include "config.h"
 
 #include <omp.h>
@@ -67,20 +66,7 @@ template<class T, int t> field<T,t>::field(const field<T,t> &in) {
 
 }
 
-/*
-template<class T, int t> field<T,t>::~field() {
 
-	int i;
-
-	for(i = 0; i < t; i++){
-
-		free(u[i]);
-
-	}
-
-	free(u);
-}
-*/
 template<class T, int t> class lfield;
 
 template<class T> class gmatrix;
@@ -91,8 +77,6 @@ template<class T, int t> class gfield: public field<T,t> {
 	public:
 
 		int Nxg, Nyg;
-
-		//T getZero(void){ return this.u[0][0]; }
 
 		int allgather(lfield<T,t>* ulocal, mpi_class* mpi);
 
@@ -123,9 +107,7 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		int setToZero(void){
 			for(int i = 0; i < t*Nxg*Nyg; i ++){
-//				for(int k = 0; k < t; k++){
-					this->u[i] = 0.0;
-//				}
+				this->u[i] = 0.0;
 			}
 		return 1;
 		}
@@ -178,9 +160,7 @@ template<class T, int t> class lfield: public field<T,t> {
 
 			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < t*Nxl*Nyl; i ++){
-//				for(int k = 0; k < t; k++){
-					this->u[i] = 0.0;
-//				}
+				this->u[i] = 0.0;
 			}
 		return 1;
 		}
@@ -205,9 +185,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setToOne(void){
 			#pragma omp parallel for simd default(shared)
 			for(int i = 0; i < t*Nxl*Nyl; i ++){
-//				for(int k = 0; k < t; k++){
-					this->u[i] = 1.0;
-//				}
+				this->u[i] = 1.0;
 			}
 		return 1;
 		}
@@ -229,8 +207,6 @@ template<class T, int t> class lfield: public field<T,t> {
 						if( ix > Nxl/2 && iy > Nyl/2 ){
 							this->u[(ix*Nyl + iy)*t+k] = ((ix-Nxl)%Nxl)*((ix-Nxl)%Nxl) + ((iy-Nyl)%Nyl)*((iy-Nyl)%Nyl);
 						}
-
-						//this->u[k][ix*Nyl + iy] = (ix-Nxl)*(ix-Nxl) + (iy-Nyl)*(iy-Nyl) + I*0.0;
 					}
 				}
 			}
@@ -283,15 +259,6 @@ template<class T, int t> lfield<T,t>::lfield(const lfield<T,t> &in) : field<T,t>
 
 	std::cout<<"Executing derived class copy constructor"<<std::endl;
 
-//not needed because it is in the base copy conrtuctor
-/*
-	int i;
-
-	this->u = (std::complex<T>*)malloc(t*in.Nxl*in.Nyl*sizeof(std::complex<T>));
-
-	for(int j = 0; j < t*in.Nxl*in.Nyl; j++)
-			this->u[j] = in.u[j];
-*/
 	this->Nxl = in.Nxl;
 	this->Nyl = in.Nyl;
 
@@ -393,12 +360,6 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 
 			result.setToZero();
 
-//			printf("checking actual size of result: %i, %i\n", result.Nxl, result.Nyl);
-//			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
-//			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
-
-//			printf("starting multiplicatin in * operator, size of result t = %i\n", t);
-
 			if( f.Nxl == g.Nxl && f.Nyl == g.Nyl ){
 
 			#pragma omp parallel for simd default(shared)
@@ -406,13 +367,9 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 
 				su3_matrix<double> A,B,C;
 		
-//				printf("element %i\n", i);
-	
 				for(int k = 0; k < t; k++){
 
-//					printf("direction %i\n", k);
-
-					A.m[k] = f.u[i*t+k]; //this->u[k][i];
+					A.m[k] = f.u[i*t+k]; 
 					B.m[k] = g.u[i*t+k];
 				}
 		
@@ -440,12 +397,6 @@ template<class T, int t> gfield<T,t> operator * ( const gfield<T,t> &f , const g
 
 			result.setToZero();
 
-//			printf("checking actual size of result: %i, %i\n", result.Nxl, result.Nyl);
-//			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
-//			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
-
-//			printf("starting multiplicatin in * operator, size of result t = %i\n", t);
-
 			if( f.Nxg == g.Nxg && f.Nyg == g.Nyg ){
 
 			#pragma omp parallel for simd default(shared)
@@ -453,13 +404,9 @@ template<class T, int t> gfield<T,t> operator * ( const gfield<T,t> &f , const g
 			
 				su3_matrix<double> A,B,C;
 
-//				printf("element %i\n", i);
-	
 				for(int k = 0; k < t; k++){
 
-//					printf("direction %i\n", k);
-
-					A.m[k] = f.u[i*t+k]; //this->u[k][i];
+					A.m[k] = f.u[i*t+k];
 					B.m[k] = g.u[i*t+k];
 				}
 		
@@ -489,12 +436,6 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 
 			result.setToZero();
 
-//			printf("checking actual size: %i, %i\n", result.Nxl, result.Nyl);
-//			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
-//			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
-
-//			printf("starting addition in + operator, size of result t = %i\n", t);
-
 			if( f.Nxl == g.Nxl && f.Nyl == g.Nyl ){
 
 			#pragma omp parallel for simd default(shared)
@@ -522,9 +463,6 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 
 			}
 
-
-//			printf("Size of new object craeted in +operator: Nxl = %i, Nyl = %i\n", result.Nxl, result.Nyl);
-
 		return result;
 		}
 
@@ -534,12 +472,6 @@ template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gf
 			gfield<T,t> result(f.Nxg, f.Nyg);
 
 			result.setToZero();
-
-//			printf("checking actual size: %i, %i\n", result.Nxl, result.Nyl);
-//			printf("checking actual size of input: %i, %i\n", f.Nxl, f.Nyl);
-//			printf("checking actual size of input: %i, %i\n", g.Nxl, g.Nyl);
-
-//			printf("starting addition in + operator, size of result t = %i\n", t);
 
 			if( f.Nxg == g.Nxg && f.Nyg == g.Nyg ){
 
@@ -567,9 +499,6 @@ template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gf
 				printf("Size of input objects in + operator is different!\n");
 
 			}
-
-
-//			printf("Size of new object craeted in +operator: Nxl = %i, Nyl = %i\n", result.Nxl, result.Nyl);
 
 		return result;
 		}
@@ -619,7 +548,6 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_cla
 					int ii = (xx + kk*ulocal->Nxl)*Nyg + yy;
 
 					this->u[ii*t+k] = std::complex<double>(data_global_re[i+kk*local_volume], data_global_im[i+kk*local_volume]);
-					//this->u[k][i] = ulocal->u[k][i]; //data_global_re[i] + I*data_global_im[i];
 
 				}
 			}
@@ -749,7 +677,7 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 	        double n[8];
 
 		for(int k = 0; k < 8; k++){
-	         	n[k] = distribution(*generator); //sqrt( pow(MVconfig->g_parameter,2.0) * pow(MVconfig->mu_parameter,2.0) / MVconfig->Ny_parameter ) * sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
+	         	n[k] = distribution(*generator); 
 		}
 
 	//these are the LAMBDAs and not the generators t^a = lambda/2.
@@ -758,58 +686,38 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_cl
 	// 3 4 5
 	// 6 7 8
 
-            //lambda_nr(1)%su3(1,2) =  runit
-            //lambda_nr(1)%su3(2,1) =  runit
 		this->u[i*t+1] += std::complex<double>(n[0],0.0);
 		this->u[i*t+3] += std::complex<double>(n[0],0.0);
 
 
-            //lambda_nr(2)%su3(1,2) = -iunit
-            //lambda_nr(2)%su3(2,1) =  iunit
-		this->u[i*t+1] += std::complex<double>(0.0,n[1]);
+       		this->u[i*t+1] += std::complex<double>(0.0,n[1]);
 		this->u[i*t+3] -= std::complex<double>(0.0,n[1]);
 
 
-            //lambda_nr(3)%su3(1,1) =  runit
-            //lambda_nr(3)%su3(2,2) = -runit
-		this->u[i*t+0] += std::complex<double>(n[2],0.0);
+       		this->u[i*t+0] += std::complex<double>(n[2],0.0);
 		this->u[i*t+4] -= std::complex<double>(n[2],0.0);
 
 
-            //lambda_nr(4)%su3(1,3) =  runit
-            //lambda_nr(4)%su3(3,1) =  runit
-		this->u[i*t+2] += std::complex<double>(n[3],0.0);
+       		this->u[i*t+2] += std::complex<double>(n[3],0.0);
 		this->u[i*t+6] += std::complex<double>(n[3],0.0);
 
 
-            //lambda_nr(5)%su3(1,3) = -iunit
-            //lambda_nr(5)%su3(3,1) =  iunit
-		this->u[i*t+2] += std::complex<double>(0.0,n[4]);
+       		this->u[i*t+2] += std::complex<double>(0.0,n[4]);
 		this->u[i*t+6] -= std::complex<double>(0.0,n[4]);
 
 
-            //lambda_nr(6)%su3(2,3) =  runit
-            //lambda_nr(6)%su3(3,2) =  runit
-		this->u[i*t+5] += std::complex<double>(n[5],0.0);
+       		this->u[i*t+5] += std::complex<double>(n[5],0.0);
 		this->u[i*t+7] += std::complex<double>(n[5],0.0);
 
 
-            //lambda_nr(7)%su3(2,3) = -iunit
-            //lambda_nr(7)%su3(3,2) =  iunit
-		this->u[i*t+5] += std::complex<double>(0.0,n[6]);
+       		this->u[i*t+5] += std::complex<double>(0.0,n[6]);
 		this->u[i*t+7] -= std::complex<double>(0.0,n[6]);
 
 
-            //lambda_nr(8)%su3(1,1) =  cst8
-            //lambda_nr(8)%su3(2,2) =  cst8
-            //lambda_nr(8)%su3(3,3) =  -(two*cst8)
-
-		this->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+      		this->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
 		this->u[i*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
 		this->u[i*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 	}
-
-//	fclose(f);
 
 	}else{
 
@@ -836,10 +744,6 @@ template<class T, int t> int lfield<T,t>::setUnitModel(rand_class* rr){
 
 
 		double n[8];
-
-//				hh=sqrt(real(1.0*g_parameter**2*mu_parameter**2/Ny_parameter, kind=REALKND)) * &
-//                              & sqrt((real(-2.0, kind=REALKND))*log(EPSI+real(ranvec(2*m-1),kind=REALKND))) * &
-//                              & cos(real(ranvec(2*m),kind=REALKND) * real(TWOPI, kind=REALKND))
 
 		for(int k = 0; k < 8; k++)
                 	this->u[i*t+k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
@@ -878,77 +782,46 @@ template<class T, int t> int lfield<T,t>::setGaussian(mpi_class* mpi, config* cn
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 		}
     		std::normal_distribution<double> distribution{0.0,1.0};
-    		//return distribution(*generator);
 
-//        std::ranlux24_base rgenerator;
-//        std::uniform_real_distribution<double> distribution{0.0,1.0};
-//
-//        rand_class(mpi_class *mpi, config *cnfg){
-//
-//        rgenerator.seed(cnfg->seed + 64*mpi->getRank() + omp_get_thread_num());
-//
-//        }
-
-	    //set to zero
-	    for(int j = 0; j < t; j++)
-		this->u[i*t+j] = 0.0;
+	    	//set to zero
+	    	for(int j = 0; j < t; j++)
+			this->u[i*t+j] = 0.0;
 
 
-	    double n[8];
+	    	double n[8];
 
-	    for(int k = 0; k < 8; k++)
-                	n[k] = distribution(*generator); //sqrt( -2.0 * log( EPS + distribution(*generator) ) ) * cos( distribution(*generator) * 2.0 * M_PI);
-//                	n[k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
-	
-   	    //these are the LAMBDAs and not the generators t^a = lambda/2.
+		for(int k = 0; k < 8; k++)
+                	n[k] = distribution(*generator); 
 
-            //lambda_nr(1)%su3(1,2) =  runit
-            //lambda_nr(1)%su3(2,1) =  runit
 		this->u[i*t+1] += std::complex<double>(n[0],0.0);
 		this->u[i*t+3] += std::complex<double>(n[0],0.0);
 
 
-            //lambda_nr(2)%su3(1,2) = -iunit
-            //lambda_nr(2)%su3(2,1) =  iunit
 		this->u[i*t+1] += std::complex<double>(0.0,n[1]);
 		this->u[i*t+3] -= std::complex<double>(0.0,n[1]);
 
 
-            //lambda_nr(3)%su3(1,1) =  runit
-            //lambda_nr(3)%su3(2,2) = -runit
 		this->u[i*t+0] += std::complex<double>(n[2],0.0);
 		this->u[i*t+4] -= std::complex<double>(n[2],0.0);
 
 
-            //lambda_nr(4)%su3(1,3) =  runit
-            //lambda_nr(4)%su3(3,1) =  runit
-		this->u[i*t+2] += std::complex<double>(n[3],0.0);
+       		this->u[i*t+2] += std::complex<double>(n[3],0.0);
 		this->u[i*t+6] += std::complex<double>(n[3],0.0);
 
 
-            //lambda_nr(5)%su3(1,3) = -iunit
-            //lambda_nr(5)%su3(3,1) =  iunit
-		this->u[i*t+2] += std::complex<double>(0.0,n[4]);
+       		this->u[i*t+2] += std::complex<double>(0.0,n[4]);
 		this->u[i*t+6] -= std::complex<double>(0.0,n[4]);
 
 
-            //lambda_nr(6)%su3(2,3) =  runit
-            //lambda_nr(6)%su3(3,2) =  runit
-		this->u[i*t+5] += std::complex<double>(n[5],0.0);
+       		this->u[i*t+5] += std::complex<double>(n[5],0.0);
 		this->u[i*t+7] += std::complex<double>(n[5],0.0);
 
 
-            //lambda_nr(7)%su3(2,3) = -iunit
-            //lambda_nr(7)%su3(3,2) =  iunit
-		this->u[i*t+5] += std::complex<double>(0.0,n[6]);
+       		this->u[i*t+5] += std::complex<double>(0.0,n[6]);
 		this->u[i*t+7] -= std::complex<double>(0.0,n[6]);
 
 
-            //lambda_nr(8)%su3(1,1) =  cst8
-            //lambda_nr(8)%su3(2,2) =  cst8
-            //lambda_nr(8)%su3(3,3) =  -(two*cst8)
-
-		this->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+       		this->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
 		this->u[i*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
 		this->u[i*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 	}
@@ -969,8 +842,7 @@ template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, m
 	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 		for(int k = 0; k < t; k++){
-		//this->u[i*t+k] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass)/(1.0*Nx*Ny), 0.0);
-		this->u[i*t+k] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass), 0.0);
+			this->u[i*t+k] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass), 0.0);
 		}
 	}
 
@@ -1028,15 +900,6 @@ return 1;
 
 template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
 
-			//!pbar(dir,z,t)
-                       	//tmpunit%su3(1,1) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-                       	//tmpunit%su3(2,2) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-                       	//tmpunit%su3(3,3) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-
-                       	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
 	if(t == 9){
 
 	#pragma omp parallel for simd default(shared)
@@ -1070,15 +933,6 @@ return 1;
 
 template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
 
-			//!pbar(dir,z,t)
-                       	//tmpunit%su3(1,1) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-                       	//tmpunit%su3(2,2) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-                       	//tmpunit%su3(3,3) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-
-                       	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
 
 	if(t == 9){
 
@@ -1114,22 +968,7 @@ return 1;
 
 template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(momenta* mom){
 
-			//!pbar(dir,z,t)
-                       	//tmpunit%su3(1,1) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-                       	//tmpunit%su3(2,2) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-                       	//tmpunit%su3(3,3) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-
-                       	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
 	if(t == 9){
-
-
-                        //coupling_constant = 4.0*real(PI,kind=REALKND)/((11.0-2.0*3.0/3.0)*&
-                        //& log(((15.0**2/6.0**2)**(1.0/0.2) +&
-                        //&(phat2(z+1,t+1)*zmax*zmax/(6.0**2))**(1.0/0.2))**(0.2)))
-
 
 	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
@@ -1164,15 +1003,6 @@ return 1;
 
 template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(momenta* mom){
 
-			//!pbar(dir,z,t)
-                       	//tmpunit%su3(1,1) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-                       	//tmpunit%su3(2,2) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-                       	//tmpunit%su3(3,3) =  cmplx(0.0,&
-                        //    &real(-1.0*(2.0*PI), kind=REALKND)*pbar(1,z+1,t+1)/phat2(z+1,t+1),kind=CMPLXKND)
-
-                       	//tmpunita%su3 = matmul(tmpunit%su3, xi_local(ind,eo,2)%su3)
 
 	if(t == 9){
 
@@ -1211,7 +1041,6 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 
 	if(t == 9){
 
-	//for(int i = 0; i < Nxl*Nyl; i++){
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxg; xx++){
 		for(int yy = 0; yy < Nyg; yy++){
@@ -1248,13 +1077,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 				this->u[i*t+4] = this->u[i*t+0];
 				this->u[i*t+8] = this->u[i*t+0];
 
-			}//else{
-			//
-			//	this->u[0][i] = std::complex<double>(0.0, 0.0);
-			//	this->u[4][i] = this->u[0][i];
-			//	this->u[8][i] = this->u[0][i];
-			//
-			//}
+			}
 		}
 	}
 
@@ -1307,13 +1130,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
 				this->u[i*t+4] = this->u[i*t+0];
 				this->u[i*t+8] = this->u[i*t+0];
 
-			}//else{
-			//
-			//	this->u[0][i] = std::complex<double>(0.0, 0.0);
-			//	this->u[4][i] = this->u[0][i];
-			//	this->u[8][i] = this->u[0][i];
-			//
-			//}
+			}
 		}
 	}
 

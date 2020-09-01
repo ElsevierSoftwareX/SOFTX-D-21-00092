@@ -5,6 +5,8 @@
 #define Ny 64
 
 #include <iostream>
+#include <stdlib.h>
+#include <string.h>
 
 enum Evolution { POSITION_EVOLUTION, MOMENTUM_EVOLUTION };
 
@@ -63,30 +65,44 @@ public:
 		fscanf(f, "step = %f\n", &tmp);
 		step = tmp;	
 
-		std::string evolution;
-		std::string coupling;
-		std::string kernel;
+		char evolution[100];
+		char coupling[100];
+		char kernel[100];
 
 		fscanf(f, "EvolutionChoice = %s\n", &evolution[0]);
 		fscanf(f, "CouplingChoice = %s\n", &coupling[0]);
 		fscanf(f, "KernelChoice = %s\n", &kernel[0]);
 
-		if(evolution.compare("MOMENTUM_EVOLUTION") == 0)
+		if(strcmp(evolution, "MOMENTUM_EVOLUTION") == 0){
 			EvolutionChoice = MOMENTUM_EVOLUTION;
-		if(evolution.compare("POSITION_EVOLUTION") == 0)
+			printf("SETUP: MOMENTUM_EOLUTION\n");
+		}
+		if(strcmp(evolution, "POSITION_EVOLUTION") == 0){
 			EvolutionChoice = POSITION_EVOLUTION;
+			printf("SETUP: POSITION_EVOLUTION\n");
+		}
 
-		if(coupling.compare("SQRT_COUPLING_CONSTANT") == 0)
+		if(strcmp(coupling, "SQRT_COUPLING_CONSTANT") == 0){
 			CouplingChoice = SQRT_COUPLING_CONSTANT;
-		if(coupling.compare("NOISE_COUPLING_CONSTANT") == 0)
+			printf("SETUP: SQRT_COUPLING_CONSTANT\n");
+		}
+		if(strcmp(coupling, "NOISE_COUPLING_CONSTANT") == 0){
 			CouplingChoice = NOISE_COUPLING_CONSTANT;
-		if(coupling.compare("HATTA_COUPLING_CONSTANT") == 0)
+			printf("SETUP: NOISE_COUPLING_CONSTANT\n");
+		}
+		if(strcmp(coupling, "HATTA_COUPLING_CONSTANT") == 0){
 			CouplingChoice = HATTA_COUPLING_CONSTANT;
+			printf("SETUP: HATT_COUPLING_CONSTANT\n");
+		}
 
-		if(kernel.compare("LINEAR_KERNEL") == 0)
+		if(strcmp(kernel, "LINEAR_KERNEL") == 0){
 			KernelChoice = LINEAR_KERNEL;
-		if(kernel.compare("SIN_KERNEL") == 0)
+			printf("SETUP: LINEAR_KENREL\n");
+		}
+		if(strcmp(kernel, "SIN_KERNEL") == 0){
 			KernelChoice = SIN_KERNEL;
+			printf("SETUP: SIN_KERNEL\n");
+		}
 
 
 		fclose(f);
