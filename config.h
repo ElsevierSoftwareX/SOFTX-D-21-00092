@@ -6,6 +6,10 @@
 
 #include <iostream>
 
+enum Coupling { SQRT_COUPLING_CONSTANT, NOISE_COUPLING_CONSTANT, HATTA_COUPLING_CONSTANT };
+
+enum Kernel { LINEAR_KERNEL, SIN_KERNEL };
+
 class config{
 
 public:
@@ -35,10 +39,11 @@ double step = 0.0004;
 const int position_evolution = 0;
 const int momentum_evolution = 1;
 	
-const int sqrt_coupling_constant = 1;
-const int noise_coupling_constant = 0;
-const int hatta_coupling_constant = 1;
+const int sqrt_coupling_constant = 0;
+const int noise_coupling_constant = 1;
+const int hatta_coupling_constant = 0;
 
+Kernel KernelChoice = SIN_KERNEL;
 
 };
 

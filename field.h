@@ -2151,9 +2151,9 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 return 1;
 }
 
-template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, mpi_class* mpi){
+template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom, mpi_class* mpi, Coupling p, Kernel kk){
 
-//        #pragma omp parallel for simd default(shared) //private(C,D,E)
+        #pragma omp parallel for simd collapse(2) default(shared)
         for(int ix = 0; ix < A_local->Nxl; ix++){
         for(int iy = 0; iy < A_local->Nyl; iy++){
 
@@ -2173,23 +2173,49 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 		double px = 2.0 * M_PI * xx / (1.0 * Nx);
 		double py = 2.0 * M_PI * yy / (1.0 * Ny);
 
-//		if( fabs(mom->phat2(i)) > 10e-9 ){
 		if( fabs(px*px+py*py) > 10e-9 ){
+	
+			double coupling_constant;
 
-			//double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow(((px*px+py*py)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
 
-			double coupling_constant = 1.0;
+			std::complex<double> AA(0.0, 0.0);
+                        std::complex<double> BB(0.0, 0.0);
 
-//                        std::complex<double> AA(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
-//                        std::complex<double> BB(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
-                        std::complex<double> AA(0.0, -2.0*M_PI*sqrt(coupling_constant)*px/(px*px+py*py));
-                        std::complex<double> BB(0.0, -2.0*M_PI*sqrt(coupling_constant)*py/(px*px+py*py));
+			if( kk == LINEAR_KERNEL ){
 
+				if( p == SQRT_COUPLING_CONSTANT ){
+					coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow(((px*px+py*py)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+				}
+				if( p == NOISE_COUPLING_CONSTANT ){
+					coupling_constant = 1.0;
+				}
+
+	                        std::complex<double> A(0.0, -2.0*M_PI*sqrt(coupling_constant)*px/(px*px+py*py));
+        	                std::complex<double> B(0.0, -2.0*M_PI*sqrt(coupling_constant)*py/(px*px+py*py));
+		
+				AA = A;
+				BB = B;
+			}
+			if( kk == SIN_KERNEL ){
+
+				if( p == SQRT_COUPLING_CONSTANT ){
+					coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+				}
+				if( p == NOISE_COUPLING_CONSTANT ){
+					coupling_constant = 1.0;
+				}
+
+	                        std::complex<double> A(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
+        	                std::complex<double> B(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
+
+				AA = A;
+				BB = B;
+			}
 
      		        for(int k = 0; k < t; k++){
 
-		                C.m[k] = AA*xi_local_x->u[i*t+k]; ///(1.0*Nx*Ny);
-        		        D.m[k] = BB*xi_local_y->u[i*t+k]; ///(1.0*Nx*Ny);
+		                C.m[k] = AA*xi_local_x->u[i*t+k];
+        		        D.m[k] = BB*xi_local_y->u[i*t+k];
 			}
 
 			E = C + D;
@@ -2200,61 +2226,6 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
                 }
 	}
 	}
-
-
-return 1;
-}
-
-template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom){
-
-//        #pragma omp parallel for simd default(shared) //private(C,D,E)
-        for(int i = 0; i < A_local->Nxl*A_local->Nyl; i++){
-
-	        su3_matrix<double> C,D,E;
-
-		if( fabs(mom->phat2(i)) > 10e-9 ){
-
-			//double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
-
-			double coupling_constant = 1.0;
-			
-			//double coupling_constant = 1.0;
-
-                        std::complex<double> AA(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
-                        std::complex<double> BB(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
-
-
-     		        for(int k = 0; k < t; k++){
-
-		                C.m[k] = AA*xi_local_x->u[i*t+k]; ///(1.0*Nx*Ny);
-        		        D.m[k] = BB*xi_local_y->u[i*t+k]; ///(1.0*Nx*Ny);
-			}
-
-			E = C + D;
-		}
-		/*
-		else{
-
-			std::complex<double> AA(0.0,0.0);
-			std::complex<double> BB(0.0,0.0);
-
-     		        for(int k = 0; k < t; k++){
-
-		                C.m[k] = AA;
-        		        D.m[k] = BB;
-	
-			}
-		}
-	
-		E = C + D;
-		*/
-
-                for(int k = 0; k < t; k++){
- 	              	A_local->u[i*t+k] = E.m[k];
-                }
-	}
-
-
 
 return 1;
 }
@@ -2551,27 +2522,7 @@ return 1;
 
 
 template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, int y_global, gfield<T,t>* xi_global_x, gfield<T,t>* xi_global_y, 
-				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable){
-
-                                //kernel_xbarx.setToZero();
-                                //kernel_xbary.setToZero();
-
-                                //kernel_xbarx.setKernelXbarX(x_global, y_global, postable);
-                                //kernel_xbary.setKernelXbarY(x_global, y_global, postable);
-
-                                //xi_global_x_tmp = kernel_xbarx * xi_global_x;
-                                //xi_global_y_tmp = kernel_xbary * xi_global_y;
-
-
-                                //xi_global_tmp = xi_global_x_tmp + xi_global_y_tmp;
-
-
-                                //A_local.reduceAndSet(x, y, &xi_global_tmp);
-
-
-                                //uxiu_global_tmp = uf_global * xi_global_tmp * (*uf_global_hermitian);
-
-                                //B_local.reduceAndSet(x, y, &uxiu_global_tmp);
+				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable, int rr, Coupling p, Kernel kk){
 
 	double sumAlocalRe[9];
 	double sumAlocalIm[9];
@@ -2586,7 +2537,6 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 		sumBlocalIm[k] = 0.0;
 
 	}
-
 
         #pragma omp parallel for simd collapse(2) default(shared) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
         for(int xx = 0; xx < Nx; xx++){
@@ -2608,48 +2558,70 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 
                         double rrr = 1.0*(dx2*dx2+dy2*dy2);
 */
-/*
-			int ii = 0;
-			if( x_global >= xx)
-				ii += (x_global - xx)*Ny;
-			else
-				ii += (x_global - xx + Nx)*Ny;
 
-			if( y_global >= yy)
-				ii += (y_global - yy);
-			else
-				ii += (y_global - yy + Ny);
+			double dx;
+			double dy;
+			double rrr;
 
-                        double dx = postable->xhatX(ii); 
-                        double dy = postable->xhatY(ii); 
+			if( kk == SIN_KERNEL ){
+
+				int ii = 0;
+				if( x_global >= xx)
+					ii += (x_global - xx)*Ny;
+				else
+					ii += (x_global - xx + Nx)*Ny;
+
+				if( y_global >= yy)
+					ii += (y_global - yy);
+				else
+					ii += (y_global - yy + Ny);
+
+                        	dx = postable->xhatX(ii); 
+                        	dy = postable->xhatY(ii); 
                         
-                        double rrr = postable->xbar2(ii);
-*/
-//			printf("xx = %i, yy = %i, x_global = %i, y_global = %i, dx = %f, dy = %f, rr = %f, \t dxp = %f, dyp = %f, rr = %f\n", xx, yy, x_global, y_global, dx, dy, rrr, dxp, dyp, rrrp);
+                        	rrr = postable->xbar2(ii);
+			}
+	
+			if( kk == LINEAR_KERNEL ){
+			
+                        	dx = x_global - xx;
+	                        if( dx >= Nx/2 )
+        	                      dx = dx - Nx;
+                	        if( dx < -Nx/2 )
+                  		      dx = dx + Nx;
 
-
-                        double dx = x_global - xx;
-                        if( dx >= Nx/2 )
-                              dx = dx - Nx;
-                        if( dx < -Nx/2 )
-                  	      dx = dx + Nx;
-
-                        double dy = y_global - yy;
-                        if( dy >= Ny/2 )
-                                dy = dy - Ny;
-                        if( dy < -Ny/2 )
-                        	dy = dy + Ny;
+                        	dy = y_global - yy;
+	                        if( dy >= Ny/2 )
+        	                        dy = dy - Ny;
+                	        if( dy < -Ny/2 )
+                        		dy = dy + Ny;
 						
-                        double rrr = 1.0*(dx*dx+dy*dy);
-					
-			//const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+                        	rrr = 1.0*(dx*dx+dy*dy);
+			}
+				
+                        double rrrmin = rrr;
 
-			//double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrr/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+			if( p == HATTA_COUPLING_CONSTANT ){
+	                        //hatta condition!!!            
+	                        if( rrr <= rr ){
+	                                rrrmin = rrr;
+	                        }else{
+                                	rrrmin = rr;
+                        	}
+			}
+	
+			const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 
-			const double sqrt_coupling_constant = 1.0;
+			double sqrt_coupling_constant;
 
-			//kernel_x i kernel_y
-                        if( rrr > 10e-9 ){
+			if( p == SQRT_COUPLING_CONSTANT ){
+				sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+			}
+			if( p == NOISE_COUPLING_CONSTANT ){
+				sqrt_coupling_constant = 1.0;
+			}
+
+                        if( rrr	 > 10e-9 ){
 
                                 A.real(sqrt_coupling_constant*dx/rrr);
 				A.imag(0.0);
@@ -2664,8 +2636,6 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
         		        D.m[k] = B*xi_global_y->u[i*t+k];
 
 				G.m[k] = uf_global->u[i*t+k];
-
-				//H.m[k] = uf_global_hermitian->u[i*t+k];
 			}
 
 	                H.m[0] = std::conj(G.m[0]);
@@ -2695,17 +2665,11 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 	}
 
         for(int k = 0; k < t; k++){
-//              	A_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumAlocalRe[k], sumAlocalIm[k]);
-//              	B_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumBlocalRe[k], sumBlocalIm[k]);
-
               	A_local->u[(x*A_local->Nyl+y)*t+k].real(sumAlocalRe[k]);
               	B_local->u[(x*A_local->Nyl+y)*t+k].real(sumBlocalRe[k]);
               	A_local->u[(x*A_local->Nyl+y)*t+k].imag(sumAlocalIm[k]);
               	B_local->u[(x*A_local->Nyl+y)*t+k].imag(sumBlocalIm[k]);
-
 	}
-
-
 
 return 1;
 }
@@ -2737,154 +2701,4 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
 return 1;
 }
-
-template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, int y_global, gfield<T,t>* xi_global_x, gfield<T,t>* xi_global_y, 
-				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable, int rr){
-
-
-	double sumAlocalRe[9];
-	double sumAlocalIm[9];
-	double sumBlocalRe[9];
-	double sumBlocalIm[9];
-
-        for(int k = 0; k < t; k++){
-
-		sumAlocalRe[k] = 0.0;
-		sumAlocalIm[k] = 0.0;
-		sumBlocalRe[k] = 0.0;
-		sumBlocalIm[k] = 0.0;
-
-	}
-
-
-        #pragma omp parallel for simd collapse(2) default(shared) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
-        for(int xx = 0; xx < Nx; xx++){
-                for(int yy = 0; yy < Ny; yy++){
-
-			std::complex<double> A,B;
-		        su3_matrix<double> C,D,E,F,G,H,K;
-
-                        int i = xx*Ny+yy;
-/*
-                        double dx2 = Nx*sin(M_PI*(x_global-xx)/Nx)/M_PI;
-                        double dy2 = Ny*sin(M_PI*(y_global-yy)/Ny)/M_PI;
-
-                        double dx = 0.5*Nx*sin(2.0*M_PI*(x_global-xx)/Nx)/M_PI;
-                        double dy = 0.5*Ny*sin(2.0*M_PI*(y_global-yy)/Ny)/M_PI;
-
-                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
-*/
-/*
-			int ii = 0;
-			if( x_global >= xx)
-				ii += (x_global - xx)*Ny;
-			else
-				ii += (x_global - xx + Nx)*Ny;
-
-			if( y_global >= yy)
-				ii += (y_global - yy);
-			else
-				ii += (y_global - yy + Ny);
-
-                        double dx = postable->xhatX(ii); 
-                        double dy = postable->xhatY(ii); 
-                        
-                        double rrr = postable->xbar2(ii);
-*/
-
-                        double dx = x_global - xx;
-                        if( dx >= Nx/2 )
-                              dx = dx - Nx;
-                        if( dx < -Nx/2 )
-                  	      dx = dx + Nx;
-
-                        double dy = y_global - yy;
-                        if( dy >= Ny/2 )
-                                dy = dy - Ny;
-                        if( dy < -Ny/2 )
-                        	dy = dy + Ny;
-						
-                        double rrr = 1.0*(dx*dx+dy*dy);
-			
-			double rrrmin = rrr;
-
-			//hatta condition!!!		
-
-			if( rrr <= rr ){
-
-				rrrmin = rrr;
-	
-			}else{
-
-				rrrmin = rr;
-
-			}
-			
-			const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
-
-			double sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
-			//const double sqrt_coupling_constant = 1.0;
-
-			//kernel_x i kernel_y
-                        if( rrr > 10e-9 ){
-
-                                A.real(sqrt_coupling_constant*dx/rrr);
-				A.imag(0.0);
-
-                                B.real(sqrt_coupling_constant*dy/rrr);
-				B.imag(0.0);
-                        }
-
-	                for(int k = 0; k < t; k++){
-
-		                C.m[k] = A*xi_global_x->u[i*t+k];
-        		        D.m[k] = B*xi_global_y->u[i*t+k];
-
-				G.m[k] = uf_global->u[i*t+k];
-
-				//H.m[k] = uf_global_hermitian->u[i*t+k];
-			}
-
-	                H.m[0] = std::conj(G.m[0]);
-               		H.m[1] = std::conj(G.m[3]);
-	                H.m[2] = std::conj(G.m[6]);
-	                H.m[3] = std::conj(G.m[1]);
-	                H.m[4] = std::conj(G.m[4]);
-	                H.m[5] = std::conj(G.m[7]);
-	                H.m[6] = std::conj(G.m[2]);
-	                H.m[7] = std::conj(G.m[5]);
-	                H.m[8] = std::conj(G.m[8]);
-
-
-			E = C + D;
-
-			K = G * E * H;
-
-	                for(int k = 0; k < t; k++){
-
-		                sumAlocalRe[k] += E.m[k].real();
-        		        sumAlocalIm[k] += E.m[k].imag();
-
-		                sumBlocalRe[k] += K.m[k].real();
-        		        sumBlocalIm[k] += K.m[k].imag();
-			}
-		}
-	}
-
-        for(int k = 0; k < t; k++){
-//              	A_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumAlocalRe[k], sumAlocalIm[k]);
-//              	B_local->u[(x*A_local->Nyl+y)*t+k] = std::complex<double>(sumBlocalRe[k], sumBlocalIm[k]);
-
-              	A_local->u[(x*A_local->Nyl+y)*t+k].real(sumAlocalRe[k]);
-              	B_local->u[(x*A_local->Nyl+y)*t+k].real(sumBlocalRe[k]);
-              	A_local->u[(x*A_local->Nyl+y)*t+k].imag(sumAlocalIm[k]);
-              	B_local->u[(x*A_local->Nyl+y)*t+k].imag(sumBlocalIm[k]);
-
-	}
-
-
-
-return 1;
-}
-
 #endif

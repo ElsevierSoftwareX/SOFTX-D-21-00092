@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
     //construct initial state
     lfield<double,9> f(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> uf(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,9> uftmp(cnfg->Nxl, cnfg->Nyl);
 
     gfield<double,9> uf_global(Nx, Ny);
 
@@ -132,9 +133,13 @@ int main(int argc, char *argv[]) {
 //-------------------------------------------------------
 
 
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
 
-    sum.setToZero();
+    lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
+
+    lfield<double,9> uf_copy(cnfg->Nxl, cnfg->Nyl);
+
+    std::vector<lfield<double,1>> sum(cnfg->langevin_steps, zero);
+    std::vector<lfield<double,1>> err(cnfg->langevin_steps, zero);
 
 //-------------------------------------------------------
 //-------------------------------------------------------
@@ -183,6 +188,40 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	printf("Initial state constructed\n");
 
+
+int upper_bound_x = 1;
+if( cnfg->hatta_coupling_constant == 1 ){
+        upper_bound_x = Nx;
+}
+//hatta iteration over positions
+//loop over possible distances squared
+for(int ix = 0; ix < upper_bound_x; ix++){
+
+int upper_bound_y = 1;
+int lower_bound_y = 0;
+if( cnfg->hatta_coupling_constant == 1 ){
+        lower_bound_y = ix-1;
+        upper_bound_y = ix+2;
+}
+for(int iy = lower_bound_y; iy < upper_bound_y; iy++){
+if(iy >= 0 && iy < Ny){
+
+        double dix = ix;
+        if( dix >= Nx/2 )
+                dix = dix - Nx;
+        if( dix < -Nx/2 )
+                dix = dix + Nx;
+
+        double diy = iy;
+        if( diy >= Ny/2 )
+                diy = diy - Ny;
+        if( diy < -Ny/2 )
+                diy = diy + Ny;
+
+        int rr_hatta = dix*dix + diy*diy;
+
+        uftmp = uf;
+
 	//-------------------------------------------------------
 	//------EVOLUTION----------------------------------------
 	//-------------------------------------------------------
@@ -217,11 +256,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 			fourier2->execute2D(&xi_local_x, 0);
  			fourier2->execute2D(&xi_local_y, 0);
 
-		    	uf_hermitian = uf.hermitian();
+		    	uf_hermitian = uftmp.hermitian();
 
-			uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
+			uxiulocal_x = uftmp * xi_local_x * (*uf_hermitian);
 
-			uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
+			uxiulocal_y = uftmp * xi_local_y * (*uf_hermitian);
 
 			delete uf_hermitian;
 
@@ -253,7 +292,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 			}
 
 			printf("gathering local uf to global\n");
-    			uf_global.allgather(&uf, mpi);
+    			uf_global.allgather(&uftmp, mpi);
 
 			printf("starting iteration over global lattice\n");
 			for(int x = 0; x < cnfg->Nxl; x++){
@@ -297,38 +336,45 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		B_local.exponentiate(-sqrt(cnfg->step));
 
-		uf = B_local * uf * A_local;
+		uftmp = B_local * uftmp * A_local;
 			
-    	}
+	    	//-------------------------------------------------------
+		//------CORRELATION FUNCTION-----------------------------
+		//-------------------------------------------------------
 
-	//-------------------------------------------------------
-	//------CORRELATION FUNCTION-----------------------------
-	//-------------------------------------------------------
+                if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
 
-   	fourier2->execute2D(&uf, 1);
-    
-	uf.trace(corr);
+                        int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
 
-    	corr_global->allgather(corr, mpi);	
+                        uf_copy = uftmp;
 
-   	corr_global->average_and_symmetrize();
+                        fourier2->execute2D(&uf_copy,1);
 
-        //store stat in the accumulator
-        lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
+                        uf_copy.trace(corr);
 
-        sum += *corr_ptr;
+                        corr_global->allgather(corr, mpi);
 
-        delete corr_ptr;
+                        corr_global->average_and_symmetrize();
 
+                        if( cnfg->hatta_coupling_constant == 1 ){
+                                corr_global->reduce_hatta(&sum[time], &err[time], mpi, ix, iy);
+                        }else{
+                                corr_global->reduce(&sum[time], &err[time], mpi);
+                        }
+                }
+	//evolution loop
+        }
+//hatta coupling constant iteration
+}}}
+
+//stat loop
+}
+
+    const std::string file_name = "output_explicit";
+
+    for(int i = cnfg->measurements-1; i < cnfg->measurements; i++){
+            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
     }
-
-//    printf("accumulator size = %i\n", accumulator.size());
-
-//    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
-//      sum += **it;
-
-//    sum.print(momtable, 1.0/3.0/accumulator.size(), mpi);
-    sum.print(momtable, 1.0/3.0/cnfg->stat, mpi);
 
 
 //-------------------------------------------------------
