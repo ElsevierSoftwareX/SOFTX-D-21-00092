@@ -201,7 +201,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     	for(int i = 0; i < MVmodel->Ny_parameter; i++){
 	
-		f.setMVModel(MVmodel, random_generator);
+		f.setMVModel(MVmodel);
 
 		fourier2->execute2D(&f, 1);
 
@@ -415,8 +415,6 @@ if(iy >= 0 && iy < Ny){
     delete cnfg;
 
     delete momtable;
-
-    delete random_generator;
 
     delete MVmodel;
 

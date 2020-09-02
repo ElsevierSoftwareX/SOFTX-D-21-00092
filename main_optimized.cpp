@@ -362,8 +362,6 @@ if(iy >= 0 && iy < Ny){
 
     delete momtable;
 
-    delete random_generator;
-
     delete MVmodel;
 
     delete fourier2;
