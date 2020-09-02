@@ -34,7 +34,6 @@
 
 #include <complex>
 
-#include "su3_complex.h"
 #include "su3_matrix.h"
 
 #include "config.h"

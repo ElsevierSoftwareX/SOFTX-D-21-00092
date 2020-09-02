@@ -8,4 +8,4 @@ measurements = 100
 step = 0.0004
 EvolutionChoice = MOMENTUM_EVOLUTION
 CouplingChoice = NOISE_COUPLING_CONSTANT
-KernelChoice = LINEAR_KERNEL
+KernelChoice = SIN_KERNEL
