@@ -1,3 +1,30 @@
+/* 
+ * This file is part of the JIMWLK numerical solution package (https://github.com/piotrkorcyl/jimwlk).
+ * Copyright (c) 2020 P. Korcyl
+ * 
+ * This program is free software: you can redistribute it and/or modify  
+ * it under the terms of the GNU General Public License as published by  
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * File: field.h
+ * Authors: P. Korcyl
+ * Contact: piotr.korcyl@uj.edu.pl
+ * 
+ * Version: 1.0
+ * 
+ * Description:
+ * Classes representing lfield and gfield objects, basic ingredients of the implementation
+ * 
+ */
+
 #ifndef H_FIELD
 #define H_FIELD
 
@@ -214,7 +241,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		}
 
 
-		int setMVModel(MV_class* MVconfig, rand_class* rr);
+		int setMVModel(MV_class* MVconfig);
 		int setUnitModel(rand_class* rr);
 
 		int setGaussian(mpi_class* rr, config* cnfg);
@@ -653,7 +680,7 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
 return 1;
 }
 
-template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, rand_class* rr){
+template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig){
 
 	if(t == 9){
 

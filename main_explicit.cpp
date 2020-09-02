@@ -1,3 +1,31 @@
+/* 
+ * This file is part of the JIMWLK numerical solution package (https://github.com/piotrkorcyl/jimwlk).
+ * Copyright (c) 2020 P. Korcyl
+ * 
+ * This program is free software: you can redistribute it and/or modify  
+ * it under the terms of the GNU General Public License as published by  
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * File: main_explicit.cpp
+ * Authors: P. Korcyl
+ * Contact: piotr.korcyl@uj.edu.pl
+ * 
+ * Version: 1.0
+ * 
+ * Description:
+ * Main function with all functionality, explicit implementation follows formulae from the paper, not optimized
+ * 
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
@@ -24,8 +52,6 @@
 
 #include "momenta.h"
 #include "positions.h"
-
-#include "rand_class.h"
 
 #include "MV_class.h"
 
@@ -58,8 +84,6 @@ int main(int argc, char *argv[]) {
     momtable->set();
 
     postable->set();
-
-    rand_class* random_generator = new rand_class(mpi,cnfg);
 
     MV_class* MVmodel = new MV_class(1.0, cnfg->mu/Nx, cnfg->elementaryWilsonLines);
 
