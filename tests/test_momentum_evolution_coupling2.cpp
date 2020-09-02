@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 4;
+    cnfg->stat = 32;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -201,10 +201,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 //              xi_local_x.setGaussian(mpi, cnfg);
 //              xi_local_y.setGaussian(mpi, cnfg);
 
-		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
+//		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
+		generate_gaussian_with_noise_coupling_constant(&xi_local_x, &xi_local_y, momtable, mpi, cnfg);
 
-                fourier2->execute2D(&xi_local_x, 1);
-                fourier2->execute2D(&xi_local_y, 1);
+//                fourier2->execute2D(&xi_local_x, 1);
+//                fourier2->execute2D(&xi_local_y, 1);
 
 //              xi_local_x_tmp = kernel_pbarx * xi_local_x;
 //              xi_local_y_tmp = kernel_pbary * xi_local_y;

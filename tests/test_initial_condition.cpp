@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <mpi.h>
 
+#include <time.h>
+
 #include <complex.h>
 
 #include "../su3_matrix.h"
@@ -47,15 +49,13 @@ int main(int argc, char *argv[]) {
 
     mpi->mpi_exchange_grid();
 
-    mpi->mpi_exchange_groups();
-
     momenta* momtable = new momenta(cnfg, mpi);
 
     momtable->set();
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.24, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.03, 50);
 
 //    fftw1D* fourier = new fftw1D(cnfg);
 
@@ -83,12 +83,21 @@ int main(int argc, char *argv[]) {
 //------ACCUMULATE STATISTICS----------------------------
 //-------------------------------------------------------
 
-    std::vector<lfield<double,1>*> accumulator;
+//    std::vector<lfield<double,1>*> accumulator;
+    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+
+    sum.setToZero();
 
 //-------------------------------------------------------
 //-------------------------------------------------------
 
 for(int stat = 0; stat < cnfg->stat; stat++){
+
+//      const clock_t begin_time_stat = std::clock();
+        struct timespec start, finish;
+        double elapsed;
+
+        clock_gettime(CLOCK_MONOTONIC, &start);
 
 
 	printf("Gatherting stat sample no. %i\n", stat);
@@ -97,37 +106,24 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//------INITIAL STATE------------------------------------
 	//-------------------------------------------------------
 
-	uf.setToUnit();
+        uf.setToUnit();
 
-    	for(int i = 0; i < MVmodel->Ny_parameter; i++){
-	
-		f.setToZero();
-	
-		f.setMVModel(MVmodel, random_generator);
+        for(int i = 0; i < MVmodel->Ny_parameter; i++){
 
-		//printf("Fourier transform\n");
-//		fourier->execute1D(&f, 0);
-		fourier2->execute2D(&f,1);
-		//f.print(momtable);
+                //f.setToZero();
 
-		//printf("solvePoisson\n");
-		f.solvePoisson(0.00001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
-		//f.print(momtable);
+                f.setMVModel(MVmodel, random_generator);
 
-		//printf("Fourier transform\n");
-//	    	fourier->execute1D(&f, 1);
-		fourier2->execute2D(&f,0);
-		//f.print(momtable);
+                fourier2->execute2D(&f,1);
 
-		//printf("exponential\n");
-		f.exponentiate();
-		//f.print(momtable);
+                f.solvePoisson(0.0001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
 
-		//f.print(momtable);
+                fourier2->execute2D(&f,0);
 
-		uf *= f;
-		//uf = f;
-    	}
+                //f.exponentiate();
+
+                uf *= f;
+        }
 
     	//-------------------------------------------------------
 	//------CORRELATION FUNCTION-----------------------------
@@ -146,25 +142,23 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
    	corr_global->average_and_symmetrize();
 
-	//store stat in the accumulator
-	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
+       //store stat in the accumulator
+        lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
 
-	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
-	accumulator.push_back(corr_ptr);
+        sum += *corr_ptr;
+
+        delete corr_ptr;
+
+        clock_gettime(CLOCK_MONOTONIC, &finish);
+
+        elapsed = (finish.tv_sec - start.tv_sec);
+        elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+
+        std::cout<<"Statistics time: " << elapsed << std::endl;
 
     }
 
-    printf("accumulator size = %i\n", accumulator.size());
-
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
-
-    sum.setToZero();
-
-    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
-	sum += **it;
-
-    sum.print(momtable, 1.0/3.0/accumulator.size(),mpi);
-
+    sum.print(momtable, 1.0/3.0/cnfg->stat, mpi);
 
 //-------------------------------------------------------
 //------DEALLOCATE AND CLEAN UP--------------------------

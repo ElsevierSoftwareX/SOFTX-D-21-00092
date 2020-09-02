@@ -6,6 +6,7 @@
 #include <complex.h>
 
 #include "../su3_matrix.h"
+#include "../matrix.h"
 
 #include "../config.h"
 
@@ -85,32 +86,9 @@ int main(int argc, char *argv[]) {
 
     gfield<double,9> xi_global_x(Nx, Ny);
     gfield<double,9> xi_global_y(Nx, Ny);
-//    gfield<double,9> xi_global_x_tmp(Nx, Ny);
-//    gfield<double,9> xi_global_y_tmp(Nx, Ny);
-
-//    gfield<double,9> uxiu_global_tmp(Nx,Ny);
-//    gfield<double,9> xi_global_tmp(Nx,Ny);
-
-    //initiaization of kernel fields
-//    gfield<double,9> kernel_xbarx(Nx, Ny);
-//    gfield<double,9> kernel_xbary(Nx, Ny);
 
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
-
-//    lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
-//    lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
-
-//    gfield<double,9>* uf_global_hermitian;
-
-
-//    lfield<double,9> uf_tmp(cnfg->Nxl, cnfg->Nyl);
-//    lfield<double,9> xi_local_x_tmp(cnfg->Nxl, cnfg->Nyl);
-//    lfield<double,9> xi_local_y_tmp(cnfg->Nxl, cnfg->Nyl);
-//    lfield<double,9> uxiulocal_x_tmp(cnfg->Nxl, cnfg->Nyl);
-//    lfield<double,9> uxiulocal_y_tmp(cnfg->Nxl, cnfg->Nyl);
-
-
 
 //-------------------------------------------------------
 
@@ -124,14 +102,59 @@ int main(int argc, char *argv[]) {
 
     //std::vector<lfield<double,1>*> accumulator;
 
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
+//    zero.setToZero();
 
-    sum.setToZero();
+    int langevin_steps = 100;
+    int measurements = 100;
 
-
+    std::vector<lfield<double,1>> sum(measurements, zero);
+    std::vector<lfield<double,1>> err(measurements, zero);
 
 //-------------------------------------------------------
 //-------------------------------------------------------
+
+        gmatrix<double>* cholesky;
+
+
+//create sigma correlation matrix for the noise vectors in position space
+//perform cholesky decomposition to get the square root of the correlation matrix
+
+        int position_space = 0;
+        int momentum_space = 1;
+
+        if( position_space == 1 ){
+
+                corr_global->setCorrelationsForCouplingConstant();
+
+        }
+        if( momentum_space == 1 ){
+
+                corr->setCorrelationsForCouplingConstant(momtable);
+	
+		//constructed in P space, transformed to X space
+                fourier2->execute2D(corr, 0);
+
+                corr_global->allgather(corr, mpi);
+
+        }
+        //each rank is constructing his own global cholesky matrix
+
+//      gmatrix<double,1> sigma(Nx*Ny,Nx*Ny);
+        cholesky = new gmatrix<double>(Nx*Ny,Nx*Ny);
+
+//	corr_global->printDebug();
+
+//	exit(0);
+
+        //cholesky decomposition of the implicit matrix sigma(x,y) = corr_global(x-y) 
+
+        cholesky->decompose(corr_global);
+        printf("cholesky decomposition finished\n");
+
+//	cholesky->print();
+
+	lfield<double,9> uf_copy(uf);
 
 for(int stat = 0; stat < cnfg->stat; stat++){
 
@@ -181,9 +204,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         double step = 0.0004;
 
         //evolution
-        for(int langevin = 0; langevin < 100; langevin++){
+        for(int langevin = 0; langevin < langevin_steps; langevin++){
 
-		//const clock_t begin_time = std::clock();
                 struct timespec starte, finishe;
                 double elapsede;
 
@@ -191,17 +213,32 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
                 printf("Performing evolution step no. %i\n", langevin);
 
-		//xi_local_x.setToZero();
-		//xi_local_y.setToZero();
-
-                //xi_local_x.setGaussian(random_generator,1);
-                //xi_local_y.setGaussian(random_generator,2);
-
 		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
+
+                //fourier2->execute2D(&xi_local_x, 0);
+                //fourier2->execute2D(&xi_local_y, 0);
 
                 printf("gathering local xi to global\n");
                 xi_global_x.allgather(&xi_local_x, mpi);
                 xi_global_y.allgather(&xi_local_y, mpi);
+
+
+//                        if(noise_coupling_constant == 1 ){
+//                                //should be X2K
+//                                fourier->execute1D(&xi_local_x, 0);
+//                                fourier->execute1D(&xi_local_y, 0);
+//                        }
+//
+//                        printf("gathering local xi to global\n");
+//                        xi_global_x.allgather(&xi_local_x);
+//                        xi_global_y.allgather(&xi_local_y);
+//
+//                        if(noise_coupling_constant == 1 ){
+                                //should be X2K
+                xi_global_x.multiplyByCholesky(cholesky);
+                xi_global_y.multiplyByCholesky(cholesky);
+
+//                        }
 
                 printf("gathering local uf to global\n");
                 uf_global.allgather(&uf, mpi);
@@ -210,43 +247,16 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		B_local.setToZero();
 
                 printf("starting iteration over global lattice\n");
-                //for(int i = 0; i < cnfg->Nxl*cnfg->Nyl; i++){
                 for(int x = 0; x < cnfg->Nxl; x++){
 	                for(int y = 0; y < cnfg->Nyl; y++){
 
         	                int x_global = x + mpi->getPosX()*cnfg->Nxl;
                                 int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-				//kernel_xbarx.setToZero();
-				//kernel_xbary.setToZero();
-
-                                //kernel_xbarx.setKernelXbarX(x_global, y_global, postable);
-                                //kernel_xbary.setKernelXbarY(x_global, y_global, postable);
-
-                                //xi_global_x_tmp = kernel_xbarx * xi_global_x;
-                                //xi_global_y_tmp = kernel_xbary * xi_global_y;
-
-
-                                //xi_global_tmp = xi_global_x_tmp + xi_global_y_tmp;
-
-
-                                //A_local.reduceAndSet(x, y, &xi_global_tmp);
-
-
-                                //uxiu_global_tmp = uf_global * xi_global_tmp * (*uf_global_hermitian);
-
-                                //B_local.reduceAndSet(x, y, &uxiu_global_tmp);
-
-				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, postable);
+				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable);
 
                         }
                 }
-
-		//A_local.exponentiate(sqrt(step));
-		//
-        	//B_local.exponentiate(-sqrt(step));
-		//
-        	//uf = B_local * uf * A_local;
 
 		update_uf(&uf, &B_local, &A_local, step);
 		
@@ -257,51 +267,49 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         	std::cout<<"Evolution time: " << elapsede << std::endl;
 
-		//std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
-	}
+	    	//-------------------------------------------------------
+		//------CORRELATION FUNCTION-----------------------------
+		//-------------------------------------------------------
 
-    	//-------------------------------------------------------
-	//------CORRELATION FUNCTION-----------------------------
-	//-------------------------------------------------------
+		if( langevin % (int)(langevin_steps / measurements) == 0 ){
 
-	//compute correlation function
-	//should be X2K
-//   	fourier->execute1D(&uf, 0);
-	fourier2->execute2D(&uf,1);
+			int time = (int)(langevin * measurements / langevin_steps);
+
+			uf_copy = uf;
+
+			fourier2->execute2D(&uf_copy,1);
     
-	uf.trace(corr);
+			uf_copy.trace(corr);
 
-    	corr_global->allgather(corr, mpi);	
+		    	corr_global->allgather(corr, mpi);	
 
-   	corr_global->average_and_symmetrize();
+   			corr_global->average_and_symmetrize();
 
-	//store stat in the accumulator
-	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
+			corr_global->reduce(&sum[time], &err[time], mpi);
+		}
 
-        sum += *corr_ptr;
 
-        delete corr_ptr;
-
-	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
-	//accumulator.push_back(corr_ptr);
-
-	//std::cout << "ONE STAT TIME: " << float( std::clock () - begin_time_stat ) /  CLOCKS_PER_SEC << std::endl;
+	}
 
         clock_gettime(CLOCK_MONOTONIC, &finish);
 
-        elapsed = (finish.tv_sec - start.tv_sec);
+       	elapsed = (finish.tv_sec - start.tv_sec);
         elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
 
-        std::cout<<"Statistics time: " << elapsed << std::endl;
+       	std::cout<<"Statistics time: " << elapsed << std::endl;
+
     }
 
-    //printf("accumulator size = %i\n", accumulator.size());
 
-    //for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
-	//sum += **it;
+    const std::string file_name = "position_evolution_coupling_noise";
 
-    sum.print(momtable, 1.0/3.0/cnfg->stat, mpi);
+    for(int i = measurements-1; i < measurements; i++){
+            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
+    }
 
+//    for(int i = measurements-1; i < measurements; i++){
+//            print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
+//    }
 
 //-------------------------------------------------------
 //------DEALLOCATE AND CLEAN UP--------------------------

@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    cnfg->stat = 4;
+    cnfg->stat = 64;
 
     mpi_class* mpi = new mpi_class(argc, argv);
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
     printf("MVModel\n");
 
-    MV_class* MVmodel = new MV_class(1.0, 30.72/Nx, 50);
+    MV_class* MVmodel = new MV_class(1.0, 0.32, 50);
 
 //    fftw1D* fourier = new fftw1D(cnfg);
 
@@ -94,11 +94,11 @@ int main(int argc, char *argv[]) {
     //initiaization of kernel fields
     lfield<double,9> kernel_pbarx(cnfg->Nxl, cnfg->Nyl);
     kernel_pbarx.setToZero();
-    kernel_pbarx.setKernelPbarX(momtable);
+    kernel_pbarx.setKernelPbarXWithCouplingConstant(momtable); //setKernelPbarX(momtable);
 
     lfield<double,9> kernel_pbary(cnfg->Nxl, cnfg->Nyl);
     kernel_pbary.setToZero();
-    kernel_pbary.setKernelPbarY(momtable);
+    kernel_pbary.setKernelPbarYWithCouplingConstant(momtable); //setKernelPbarY(momtable);
 
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
@@ -132,9 +132,14 @@ int main(int argc, char *argv[]) {
 //-------------------------------------------------------
 //-------------------------------------------------------
 
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
+//    zero.setToZero();
 
-    sum.setToZero();
+    int langevin_steps = 100;
+
+    std::vector<lfield<double,1>> sum(langevin_steps, zero);
+    std::vector<lfield<double,1>> err(langevin_steps, zero);
+
 
 for(int stat = 0; stat < cnfg->stat; stat++){
 
@@ -184,7 +189,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         double step = 0.0004;
 
         //evolution
-        for(int langevin = 0; langevin < 100; langevin++){
+        for(int langevin = 0; langevin < langevin_steps; langevin++){
 
 //		const clock_t begin_time = std::clock();
 		struct timespec starte, finishe;
@@ -193,7 +198,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		clock_gettime(CLOCK_MONOTONIC, &starte);		
 
 
-                printf("Performing evolution step no. %i\n", langevin);
+                printf("Performing evolution step no. %i out of %i\n", langevin, langevin_steps);
 
 		//xi_local_x.setToZero();
 		//xi_local_y.setToZero();
@@ -211,7 +216,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 //              A_local = xi_local_x_tmp + xi_local_y_tmp;
 
-		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable);
+		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, &kernel_pbarx, &kernel_pbary);
 
                 fourier2->execute2D(&A_local, 0);
                 fourier2->execute2D(&xi_local_x, 0);
@@ -234,8 +239,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
                 //B_local = uxiulocal_x + uxiulocal_y;
 
-//		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
-		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable);
+		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
 
                 fourier2->execute2D(&B_local, 0);
 	        
@@ -254,32 +258,36 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		elapsede += (finishe.tv_nsec - starte.tv_nsec) / 1000000000.0;		
 
 		std::cout<<"Evolution time: " << elapsede << std::endl;
-	}
 
-    	//-------------------------------------------------------
-	//------CORRELATION FUNCTION-----------------------------
-	//-------------------------------------------------------
+	    	//-------------------------------------------------------
+		//------CORRELATION FUNCTION-----------------------------
+		//-------------------------------------------------------
 
-	//compute correlation function
-	fourier2->execute2D(&uf,1);
+		lfield<double,9> uf_copy(uf);
+
+		//compute correlation function
+		fourier2->execute2D(&uf_copy,1);
     
-	uf.trace(corr);
+		uf_copy.trace(corr);
 
-    	corr_global->allgather(corr, mpi);	
+	    	corr_global->allgather(corr, mpi);	
 
-   	corr_global->average_and_symmetrize();
+   		corr_global->average_and_symmetrize();
 
-	//store stat in the accumulator
-	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
+		//store stat in the accumulator
+		//lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
+		//
+		//sum += *corr_ptr;
+		//
+		//delete corr_ptr;
 
-	sum += *corr_ptr;
+		std::cout<<"Storing partial result at step = "<<langevin<<std::endl;
 
-	delete corr_ptr;
+		corr_global->reduce(&sum[langevin], &err[langevin], mpi);
 
-	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
-//	accumulator.push_back(corr_ptr);
+		std::cout<<"One full evolution, iterating further"<<std::endl;
 
-//	std::cout << "ONE STAT TIME: " << float( std::clock () - begin_time_stat ) /  CLOCKS_PER_SEC << std::endl;
+	}
 
 	clock_gettime(CLOCK_MONOTONIC, &finish);
 		
@@ -290,13 +298,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
-//    printf("accumulator size = %i\n", accumulator.size());
-
-//    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
-//	sum += **it;
-
-//    sum.print(momtable, 1.0/3.0/accumulator.size(), mpi);
-    sum.print(momtable, 1.0/3.0/cnfg->stat, mpi);
+    for(int i = 0; i < langevin_steps; i++){
+	    print(&sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi);
+    }
 
 
 //-------------------------------------------------------

@@ -1,3 +1,30 @@
+/* 
+ * This file is part of the JIMWLK numerical solution package (https://github.com/piotrkorcyl/jimwlk).
+ * Copyright (c) 2020 P. Korcyl
+ * 
+ * This program is free software: you can redistribute it and/or modify  
+ * it under the terms of the GNU General Public License as published by  
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * File: su3_matrix.h
+ * Authors: P. Korcyl
+ * Contact: piotr.korcyl@uj.edu.pl
+ * 
+ * Version: 1.0
+ * 
+ * Description:
+ * Functions for SU(3) multiplication and diagonalizations. Adaptation of open-source package https://www-numi.fnal.gov/offline_software/srt_public_context/WebDocs/doxygen/loon/html/zheevc3_8cxx.html#a9ac76ac4ddaf7e2a513107356d1ed85e ad related files to C++ and C++ implementation of complex numbers.
+ * 
+ */
+
 #ifndef H_SU3_MATRIX
 #define H_SU3_MATRIX
 
@@ -12,8 +39,8 @@
 #include <math.h>
 #include <complex.h>
 #include <float.h>
-#include "zheevc3.h"
-#include "zheevq3.h"
+#include "zheevh3-C-1.1/zheevc3.h"
+#include "zheevh3-C-1.1/zheevq3.h"
 //#include "zheevh3.h"
 
 // Macros
