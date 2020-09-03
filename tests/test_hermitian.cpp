@@ -47,8 +47,6 @@ int main(int argc, char *argv[]) {
 
     mpi->mpi_exchange_grid();
 
-    mpi->mpi_exchange_groups();
-
     momenta* momtable = new momenta(cnfg, mpi);
 
     momtable->set();
@@ -57,9 +55,9 @@ int main(int argc, char *argv[]) {
 
     MV_class* MVmodel = new MV_class(1.0, 1.0, 1);
 
-    fftw1D* fourier = new fftw1D(cnfg);
+    fftw2D* fourier2 = new fftw2D(cnfg);
 
-    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+    fourier2->init2D();    
 
     printf("ALLOCATION\n");
 
@@ -106,7 +104,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		f.setToZero();
 
-		f.setMVModel(MVmodel, random_generator);
+		f.setMVModel(MVmodel);
 
 		f.exponentiate();
 
@@ -137,7 +135,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
-    printf("accumulator size = %i\n", accumulator.size());
+    printf("accumulator size = %li\n", accumulator.size());
 
     lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
 
@@ -147,7 +145,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	sum += **it;
     }
 
-    sum.printDebug(1.0/3.0/accumulator.size(), mpi);
+    sum.printDebug(Nx*Nx*Ny*Ny/3.0/accumulator.size(), mpi);
 
     printf("Expected result: should be 1 on each site\n");
 
@@ -163,7 +161,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     delete MVmodel;
 
-    delete fourier;
+    delete fourier2;
 
     delete mpi;
 

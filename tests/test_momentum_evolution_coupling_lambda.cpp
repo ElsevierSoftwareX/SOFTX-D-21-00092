@@ -166,7 +166,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	
 		//f.setToZero();
 
-		f.setMVModel(MVmodel, random_generator);
+		f.setMVModel(MVmodel);
 
 		fourier2->execute2D(&f,1);
 

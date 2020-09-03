@@ -275,6 +275,7 @@ template<class T, int t> class lfield: public field<T,t> {
 
 
 		int printDebug();
+		int printDebug(double x);
 		int printDebug(int i);
 		int printDebug(double x, mpi_class* mpi);
 		int printDebugRadial(double x);
@@ -1819,6 +1820,29 @@ template<class T, int t> int gfield<T,t>::printDebug(){
 return 1;
 }
 
+template<class T, int t> int lfield<T,t>::printDebug(double x){
+
+
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nxl; yy++){
+
+			int i = xx*Nyl+yy;
+
+			for(int k = 0; k < t; k++){
+
+				double a = this->u[i*t+k].real();
+				double b = this->u[i*t+k].imag();
+
+//				if( a*a + b*b > 0.01 )      
+				printf("%i %i %f %f\n",xx, yy, x*a, x*b);
+			}
+		}
+	}
+
+return 1;
+}
+
+
 template<class T, int t> int lfield<T,t>::printDebug(int ii){
 
 	int xxx = ii/Nyl;
@@ -1845,6 +1869,7 @@ template<class T, int t> int lfield<T,t>::printDebug(int ii){
 
 return 1;
 }
+
 
 template<class T, int t> int lfield<T,t>::printDebug(double x, mpi_class* mpi){
 

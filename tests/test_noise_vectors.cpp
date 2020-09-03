@@ -110,11 +110,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         fourier2->execute2D(&xi_local_x, 1);
      	//fourier2->execute2D(&xi_local_y, 1);
 
-	for(int i = 0; i < Nx*Ny; i++){
-		for(int t = 0; t < 9; t++){
-			xi_local_x.u[i*9+t] *= (1.0/sqrt(Nx*Ny));
-		}
-	}
+//	for(int i = 0; i < Nx*Ny; i++){
+//		for(int t = 0; t < 9; t++){
+//			xi_local_x.u[i*9+t] *= (1.0/sqrt(Nx*Ny));
+//		}
+//	}
 
 	for(int i = 0; i < Nx*Ny; i++){
 

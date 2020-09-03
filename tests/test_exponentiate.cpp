@@ -47,8 +47,6 @@ int main(int argc, char *argv[]) {
 
     mpi->mpi_exchange_grid();
 
-    mpi->mpi_exchange_groups();
-
     momenta* momtable = new momenta(cnfg, mpi);
 
     momtable->set();
@@ -57,9 +55,9 @@ int main(int argc, char *argv[]) {
 
     MV_class* MVmodel = new MV_class(1.0, 1.0, 1);
 
-    fftw1D* fourier = new fftw1D(cnfg);
+    fftw2D* fourier2 = new fftw2D(cnfg);
 
-    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+    fourier2->init2D(); //mpi->getRowComm(), mpi->getColComm());    
 
     printf("ALLOCATION\n");
 
@@ -102,11 +100,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	
 		printf("Iteration %i\n", i);
 
-		f.setToZero();
+		//f.setToZero();
 
-		f.setMVModel(MVmodel, random_generator);
+		f.setMVModel(MVmodel);
 
-		f.exponentiate();
+		//f.exponentiate();
 
 		uf *= f;
     	}
@@ -114,6 +112,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     	//-------------------------------------------------------
 	//------CORRELATION FUNCTION-----------------------------
 	//-------------------------------------------------------
+
+	//fourier2->execute2D(&uf,1);
 
 	uf.trace(corr);
 
@@ -139,7 +139,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	sum += **it;
     }
 
-    sum.printDebug(1.0/3.0/accumulator.size());
+    sum.printDebug(Nx*Nx*Ny*Ny/3.0/accumulator.size());
 
     printf("Expected result: should be 1 on each site\n");
 
@@ -155,7 +155,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     delete MVmodel;
 
-    delete fourier;
+    delete fourier2;
 
     delete mpi;
 

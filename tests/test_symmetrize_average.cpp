@@ -47,7 +47,6 @@ int main(int argc, char *argv[]) {
 
     mpi->mpi_exchange_grid();
 
-    mpi->mpi_exchange_groups();
 
     momenta* momtable = new momenta(cnfg, mpi);
 
@@ -57,9 +56,9 @@ int main(int argc, char *argv[]) {
 
     MV_class* MVmodel = new MV_class(1.0, 0.48, 4);
 
-    fftw1D* fourier = new fftw1D(cnfg);
+    fftw2D* fourier2 = new fftw2D(cnfg);
 
-    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+    fourier2->init2D();    
 
     printf("ALLOCATION\n");
 
@@ -103,7 +102,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		f.setToOne();
 
-		uf *= f;
+		uf = uf * f;
     	}
 
     	//-------------------------------------------------------
@@ -133,7 +132,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
 	sum += **it;
 
-    sum.printDebug(1.0/(pow(3.0,4.0)*pow(3.0,4.0)*3.0)/3.0/accumulator.size(), mpi);
+    sum.printDebug(Nx*Nx*Ny*Ny/(pow(3.0,4.0)*pow(3.0,4.0)*3.0)/3.0/accumulator.size(), mpi);
 
 
     printf("Expected result: 1 on each site\n");
@@ -150,7 +149,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     delete MVmodel;
 
-    delete fourier;
+    delete fourier2;
 
     delete mpi;
 

@@ -173,7 +173,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	
 		//f.setToZero();
 
-		f.setMVModel(MVmodel, random_generator);
+		f.setMVModel(MVmodel);
 
 		fourier2->execute2D(&f,1);
 
@@ -227,7 +227,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		//prepare_A_local(&A_local, &xi_local_x, &xi_local_y, &kernel_pbarx, &kernel_pbary);
 		//prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable);
-		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, mpi);
+		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
 
 
                 fourier2->execute2D(&A_local, 0);
@@ -253,7 +253,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		//prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
 		//prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable);
-		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, mpi);
+		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
 
                 fourier2->execute2D(&B_local, 0);
 	        

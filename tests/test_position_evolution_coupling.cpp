@@ -53,9 +53,9 @@ int main(int argc, char *argv[]) {
 
     momtable->set();
 
-    positions postable(cnfg, mpi);
+    positions* postable = new positions(cnfg, mpi);
 
-    postable.set();
+    postable->set();
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
@@ -138,7 +138,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	
 		//f.setToZero();
 
-		f.setMVModel(MVmodel, random_generator);
+		f.setMVModel(MVmodel);
 
 		fourier2->execute2D(&f,1);
 
@@ -189,7 +189,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         	                int x_global = x + mpi->getPosX()*cnfg->Nxl;
                                 int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable);
+				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, postable, 0, cnfg->CouplingChoice, cnfg->KernelChoice);
 
                         }
                 }

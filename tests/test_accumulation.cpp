@@ -47,19 +47,17 @@ int main(int argc, char *argv[]) {
 
     mpi->mpi_exchange_grid();
 
-    mpi->mpi_exchange_groups();
-
     momenta* momtable = new momenta(cnfg, mpi);
 
     momtable->set();
 
     rand_class* random_generator = new rand_class(mpi,cnfg);
 
-    MV_class* MVmodel = new MV_class(1.0, 0.48, 12);
+    MV_class* MVmodel = new MV_class(1.0, 0.48, 1);
 
-    fftw1D* fourier = new fftw1D(cnfg);
+    fftw2D* fourier2 = new fftw2D(cnfg);
 
-    fourier->init1D(mpi->getRowComm(), mpi->getColComm());    
+    fourier2->init2D();    
 
     printf("ALLOCATION\n");
 
@@ -120,10 +118,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
 	accumulator.push_back(corr_ptr);
+	//accumulator.push_back(corr);
 
     }
 
-    printf("accumulator size = %i\n", accumulator.size());
+    printf("accumulator size = %li\n", accumulator.size());
 
     lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
 
@@ -132,7 +131,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
 	sum += **it;
 
-    sum.printDebug(1.0/1296.0/accumulator.size(), mpi);
+    sum.printDebug(Nx*Ny*Nx*Ny/9.0/accumulator.size(), mpi);
 
 
     printf("Expected result: 1 on each site\n");
@@ -149,7 +148,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     delete MVmodel;
 
-    delete fourier;
+    delete fourier2;
 
     delete mpi;
 
