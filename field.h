@@ -2251,10 +2251,8 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 			A.m[k] = kernel_pbarx->u[i*t+k];
 			B.m[k] = kernel_pbary->u[i*t+k];
 
-	                C.m[k] = xi_local_x->u[i*t+k]/(1.0*Nx*Ny);
-        	        D.m[k] = xi_local_y->u[i*t+k]/(1.0*Nx*Ny);
-//	                C.m[k] = xi_local_x->u[i*t+k];
-//        	        D.m[k] = xi_local_y->u[i*t+k];
+	                C.m[k] = xi_local_x->u[i*t+k];
+        	        D.m[k] = xi_local_y->u[i*t+k];
 
 
 		}

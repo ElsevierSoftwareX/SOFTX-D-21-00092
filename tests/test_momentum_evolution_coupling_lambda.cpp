@@ -145,14 +145,14 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	uf.setToUnit();
 
-    	for(int i = 0; i < MVmodel->Ny_parameter; i++){
+    	for(int i = 0; i < MVmodel->NyGet(); i++){
 	
 
 		f.setMVModel(MVmodel);
 
 		fourier2->execute2D(&f,1);
 
-		f.solvePoisson(0.0001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
+		f.solvePoisson(0.0001 * pow(MVmodel->gGet(),2.0) * MVmodel->muGet(), MVmodel->gGet(), momtable);
 
 		fourier2->execute2D(&f,0);
 
@@ -195,7 +195,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 fourier2->execute2D(&uxiulocal_x, 1);
                 fourier2->execute2D(&uxiulocal_y, 1);
 
-       		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
+       		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
 
                 fourier2->execute2D(&B_local, 0);
 	        

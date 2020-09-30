@@ -94,11 +94,11 @@ int main(int argc, char *argv[]) {
     //initiaization of kernel fields
     lfield<double,9> kernel_pbarx(cnfg->Nxl, cnfg->Nyl);
     kernel_pbarx.setToZero();
-    kernel_pbarx.setKernelPbarX(momtable);
+    kernel_pbarx.setKernelPbarX(momtable, mpi, LINEAR_KERNEL);
 
     lfield<double,9> kernel_pbary(cnfg->Nxl, cnfg->Nyl);
     kernel_pbary.setToZero();
-    kernel_pbary.setKernelPbarY(momtable);
+    kernel_pbary.setKernelPbarY(momtable, mpi, LINEAR_KERNEL);
 
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
@@ -157,19 +157,15 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	uf.setToUnit();
 
-    	for(int i = 0; i < MVmodel->Ny_parameter; i++){
+    	for(int i = 0; i < MVmodel->NyGet(); i++){
 	
-		//f.setToZero();
-
-		f.setMVModel(MVmodel, random_generator);
+		f.setMVModel(MVmodel);
 
 		fourier2->execute2D(&f,1);
 
-		f.solvePoisson(0.0001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
+		f.solvePoisson(0.0001 * pow(MVmodel->gGet(),2.0) * MVmodel->muGet(), MVmodel->gGet(), momtable);
 
 		fourier2->execute2D(&f,0);
-
-		//f.exponentiate();
 
 		uf *= f;
     	}
@@ -212,7 +208,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 //              A_local = xi_local_x_tmp + xi_local_y_tmp;
 
-		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable);
+		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, NO_COUPLING_CONSTANT, LINEAR_KERNEL);
 
                 fourier2->execute2D(&A_local, 0);
                 fourier2->execute2D(&xi_local_x, 0);
@@ -236,7 +232,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 //B_local = uxiulocal_x + uxiulocal_y;
 
 //		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
-		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable);
+		prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, NO_COUPLING_CONSTANT, LINEAR_KERNEL );
 
                 fourier2->execute2D(&B_local, 0);
 	        

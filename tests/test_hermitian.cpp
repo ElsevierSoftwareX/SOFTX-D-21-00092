@@ -98,7 +98,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	uf.setToZero();
 
-    	for(int i = 0; i < MVmodel->Ny_parameter; i++){
+    	for(int i = 0; i < MVmodel->NyGet(); i++){
 	
 		printf("Iteration %i\n", i);
 

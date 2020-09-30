@@ -58,8 +58,6 @@ int main(int argc, char *argv[]) {
 
     postable.set();
 
-    rand_class* random_generator = new rand_class(mpi,cnfg);
-
     MV_class* MVmodel = new MV_class(1.0, 30.72/Nx, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
@@ -140,19 +138,11 @@ int main(int argc, char *argv[]) {
         }
         //each rank is constructing his own global cholesky matrix
 
-//      gmatrix<double,1> sigma(Nx*Ny,Nx*Ny);
         cholesky = new gmatrix<double>(Nx*Ny,Nx*Ny);
-
-//	corr_global->printDebug();
-
-//	exit(0);
-
-        //cholesky decomposition of the implicit matrix sigma(x,y) = corr_global(x-y) 
 
         cholesky->decompose(corr_global);
         printf("cholesky decomposition finished\n");
 
-//	cholesky->print();
 
 	lfield<double,9> uf_copy(uf);
 
@@ -177,19 +167,15 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	uf.setToUnit();
 
-    	for(int i = 0; i < MVmodel->Ny_parameter; i++){
-	
-		//f.setToZero();
+    	for(int i = 0; i < MVmodel->NyGet(); i++){
 
-		f.setMVModel(MVmodel, random_generator);
+		f.setMVModel(MVmodel);
 
 		fourier2->execute2D(&f,1);
 
-		f.solvePoisson(0.0001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
+		f.solvePoisson(0.0001 * pow(MVmodel->gGet(),2.0) * MVmodel->muGet(), MVmodel->gGet(), momtable);
 
 		fourier2->execute2D(&f,0);
-
-		//f.exponentiate();
 
 		uf *= f;
     	}
@@ -253,7 +239,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         	                int x_global = x + mpi->getPosX()*cnfg->Nxl;
                                 int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable);
+				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable, 0, NOISE_COUPLING_CONSTANT, LINEAR_KERNEL);
 
                         }
                 }
@@ -318,8 +304,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     delete cnfg;
 
     delete momtable;
-
-    delete random_generator;
 
     delete MVmodel;
 
