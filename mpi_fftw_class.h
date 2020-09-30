@@ -82,16 +82,16 @@ class fftw {
     fftw(config *cnfg){
 
 
-	int nthreads = 12;
+	int nthreads = omp_get_max_threads();
 
         fftw_init_threads();
         fftw_mpi_init();
 
-	printf("FFTW can be run with %i threads; running with %i threads instead\n", omp_get_max_threads(), nthreads);
+	printf("FFTW can be run with %i threads; running with %i threads\n", omp_get_max_threads(), nthreads);
 
         fftw_plan_with_nthreads(nthreads);
 
-	printf("FFTW plan setup with %i threads created\n", nthreads);
+//	printf("FFTW plan setup with %i threads created\n", nthreads);
 
         Nxl = cnfg->Nxl;
         Nyl = cnfg->Nyl;

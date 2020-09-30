@@ -28,8 +28,8 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 8
-#define Ny 8
+#define Nx 96
+#define Ny 96
 
 #include <iostream>
 #include <stdlib.h>
@@ -133,6 +133,8 @@ public:
 
 
 		fclose(f);
+
+		return 1;
 	}
 };
 
