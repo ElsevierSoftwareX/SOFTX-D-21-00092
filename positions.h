@@ -39,9 +39,9 @@ class positions {
 
 private:
 
-	double* tbl_xhatx;
-	double* tbl_xhaty;
-	double* tbl_xbar2;
+	double* tbl_xhatx = NULL;
+	double* tbl_xhaty = NULL;
+	double* tbl_xbar2 = NULL;
 
 	int Nxg, Nyg;
 	int pos_x, pos_y;
@@ -53,6 +53,20 @@ public:
 		tbl_xhatx = (double*)malloc(Nx*Ny*sizeof(double));
 		tbl_xhaty = (double*)malloc(Nx*Ny*sizeof(double));
 		tbl_xbar2 = (double*)malloc(Nx*Ny*sizeof(double));
+
+  	        if(tbl_xhatx == NULL){
+		    printf("positions constructor: malloc unsuccessful. Aborting.\n");
+		    exit(0);
+	        }
+  	        if(tbl_xhaty == NULL){
+		    printf("positions constructor: malloc unsuccessful. Aborting.\n");
+		    exit(0);
+	        }
+  	        if(tbl_xbar2 == NULL){
+		    printf("positions constructor: malloc unsuccessful. Aborting.\n");
+		    exit(0);
+	        }
+
 
 		Nxg = Nx;
 		Nyg = Ny;

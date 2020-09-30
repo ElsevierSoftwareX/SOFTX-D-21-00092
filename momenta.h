@@ -40,12 +40,12 @@ class momenta {
 
 private:
 
-	double* tbl_phat2;
-	double* tbl_phatx;
-	double* tbl_phaty;
-	double* tbl_pbar2;
-	double* tbl_pbarx;
-	double* tbl_pbary;
+	double* tbl_phat2 = NULL;
+	double* tbl_phatx = NULL;
+	double* tbl_phaty = NULL;
+	double* tbl_pbar2 = NULL;
+	double* tbl_pbarx = NULL;
+	double* tbl_pbary = NULL;
 
 	int Nxl, Nyl;
 	int pos_x, pos_y;
@@ -60,6 +60,32 @@ public:
 		tbl_pbar2 = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
 		tbl_pbarx = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
 		tbl_pbary = (double*)malloc(cnfg->Nxl*cnfg->Nyl*sizeof(double));
+
+  	        if(tbl_phat2 == NULL){
+		    printf("momenta constructor: malloc unsuccessful. Aborting.\n");
+		    exit(0);
+	        }
+  	        if(tbl_phatx == NULL){
+		    printf("momenta constructor: malloc unsuccessful. Aborting.\n");
+		    exit(0);
+	        }
+  	        if(tbl_phaty == NULL){
+		    printf("momenta constructor: malloc unsuccessful. Aborting.\n");
+		    exit(0);
+	        }
+  	        if(tbl_pbar2 == NULL){
+		    printf("momenta constructor: malloc unsuccessful. Aborting.\n");
+		    exit(0);
+	        }
+  	        if(tbl_pbarx == NULL){
+		    printf("momenta constructor: malloc unsuccessful. Aborting.\n");
+		    exit(0);
+	        }
+  	        if(tbl_pbary == NULL){
+		    printf("momenta constructor: malloc unsuccessful. Aborting.\n");
+		    exit(0);
+	        }
+
 
 		Nxl = cnfg->Nxl;
 		Nyl = cnfg->Nyl;

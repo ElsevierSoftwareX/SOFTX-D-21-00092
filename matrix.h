@@ -58,7 +58,14 @@ template<class T> class matrix {
 
 template<class T> matrix<T>::matrix(int NNx, int NNy) {
 
+	u = NULL;
+
 	u = (std::complex<T>*)malloc(NNx*NNy*sizeof(std::complex<T>));
+
+        if(u == NULL){
+		printf("matrix constructor: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	}
 
 	Nxl = NNx;
 	Nyl = NNy;

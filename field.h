@@ -76,8 +76,14 @@ template<class T, int t> class field {
  ***********************************************/
 template<class T, int t> field<T,t>::field(int NNx, int NNy) {
 
+	u = NULL;
 
 	u = (std::complex<T>*)malloc(t*NNx*NNy*sizeof(std::complex<T>));
+
+	if(u == NULL){
+		printf("field contructor: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	}
 
 	for(int j = 0; j < t*NNx*NNy; j++)
 			u[j] = 0.0;
@@ -93,7 +99,14 @@ template<class T, int t> field<T,t>::field(const field<T,t> &in) {
 
 	//std::cout<<"Executing base class copy constructor"<<std::endl;
 
+	this->u = NULL;
+
 	this->u = (std::complex<T>*)malloc(t*in.Nxl*in.Nyl*sizeof(std::complex<T>));
+
+	if(u == NULL){
+		printf("field copy contructor: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	}
 
 	for(int j = 0; j < t*in.Nxl*in.Nyl; j++)
 			this->u[j] = in.u[j];
@@ -578,8 +591,18 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_cla
 	T* data_local_re = (T*)malloc(ulocal->getNxl()*ulocal->getNyl()*sizeof(T));
 	T* data_local_im = (T*)malloc(ulocal->getNxl()*ulocal->getNyl()*sizeof(T));
 
+	if(data_local_re == NULL || data_local_im == NULL){
+		printf("allgather: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	}
+
 	T* data_global_re = (T*)malloc(Nxg*Nyg*sizeof(T));
 	T* data_global_im = (T*)malloc(Nxg*Nyg*sizeof(T));
+
+	if(data_global_re == NULL || data_global_im == NULL){
+		printf("allgather: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	}
 
 	int i,k;
 
@@ -646,6 +669,11 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
 	    bufor_send_n = (double*) malloc(Nyl_buf*sizeof(double));
 	    bufor_receive_n = (double*) malloc(Nyl_buf*sizeof(double));
 
+  	    if(bufor_receive_n == NULL || bufor_send_n == NULL){
+		printf("mpi_exchange_boundaries: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	    }
+
   	    for(yy = 0; yy < Nyl; yy++){
 		bufor_send_n[yy] = this->u[buf_pos(Nxl-1,yy)].real();
 	    }
@@ -662,6 +690,11 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
 
    	    bufor_send_p = (double*) malloc(Nyl_buf*sizeof(double));
 	    bufor_receive_p = (double*) malloc(Nyl_buf*sizeof(double));
+
+  	    if(bufor_receive_p == NULL || bufor_send_p == NULL){
+		printf("mpi_exchange_boundaries: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	    }
 
 	    for(yy = 0; yy < Nyl; yy++){
 		bufor_send_p[yy] = this->u[buf_pos(0,yy)].real();
@@ -685,6 +718,11 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
 	    bufor_send_n = (double*) malloc(Nxl_buf*sizeof(double));
 	    bufor_receive_n = (double*) malloc(Nxl_buf*sizeof(double));
 
+  	    if(bufor_receive_n == NULL || bufor_send_n == NULL){
+		printf("mpi_exchange_boundaries: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	    }
+
   	    for(xx = 0; xx < Nxl; xx++){
 		bufor_send_n[xx] = this->u[buf_pos(xx,Nyl-1)].real();
 	    }
@@ -701,6 +739,11 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
 
 	    bufor_send_p = (double*) malloc(Nxl_buf*sizeof(double));
 	    bufor_receive_p = (double*) malloc(Nxl_buf*sizeof(double));
+
+  	    if(bufor_receive_p == NULL || bufor_send_p == NULL){
+		printf("mpi_exchange_boundaries: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	    }
 
 	    for(xx = 0; xx < Nxl; xx++){
 		bufor_send_p[xx] = this->u[buf_pos(xx,0)].real();
