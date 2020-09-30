@@ -52,21 +52,28 @@
 #include <time.h>
 #include <thread>
 
+
+/********************************************//**
+ * Definition of the main class of type field. Contains pointer to the data array and Nx and Ny sizes.
+ ***********************************************/
 template<class T, int t> class field {
 
-	public:
-
-		std::complex<T>* u;		
+	private:
 
 		int Nxl, Nyl;
 
 	public:
+
+		std::complex<T>* u;		
 
 		field(int NNx, int NNy);
 		field(const field<T,t> &in);
 		virtual ~field(void){};
 };
 
+/********************************************//**
+ * Constructor. Allocates memory and sets it to zero. 
+ ***********************************************/
 template<class T, int t> field<T,t>::field(int NNx, int NNy) {
 
 
@@ -79,9 +86,12 @@ template<class T, int t> field<T,t>::field(int NNx, int NNy) {
 	Nyl = NNy;
 }
 
+/********************************************//**
+ * Copy constructor.
+************************************************/
 template<class T, int t> field<T,t>::field(const field<T,t> &in) {
 
-	std::cout<<"Executing base class copy constructor"<<std::endl;
+	//std::cout<<"Executing base class copy constructor"<<std::endl;
 
 	this->u = (std::complex<T>*)malloc(t*in.Nxl*in.Nyl*sizeof(std::complex<T>));
 
@@ -98,12 +108,20 @@ template<class T, int t> class lfield;
 
 template<class T> class gmatrix;
 
+/********************************************//**
+ * Derived class gfield. Contains the entire object on each node. Nxg and Nyg refer to the total size of the lattice.
+ ***********************************************/
 template<class T, int t> class gfield: public field<T,t> {
 
+	/// @brief Specialization of the field class to a GLOBAL object.
+  	/// @param sizes of the global lattice
+  	/// @throws exception in case of errors.
 
-	public:
+	private:
 
 		int Nxg, Nyg;
+
+	public:
 
 		int allgather(lfield<T,t>* ulocal, mpi_class* mpi);
 
@@ -113,16 +131,24 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		friend class fftw2D;
 
+		inline int getNxg(void){
+			return Nxg;
+		}
+
+		inline int getNyg(void){
+			return Nyg;
+		}
+
 		int average_and_symmetrize();
 
 		gfield<T,t>& operator= ( const gfield<T,t>& f );
 
 		gfield<T,t>* hermitian();
 
-		int setKernelXbarX(int x, int y, positions* postable);
-		int setKernelXbarY(int x, int y, positions* postable);
-		int setKernelXbarXWithCouplingConstant(int x, int y, positions* postable);
-		int setKernelXbarYWithCouplingConstant(int x, int y, positions* postable);
+		int setKernelXbarX(int x, int y, positions* postable, Kernel KernelChoice);
+		int setKernelXbarY(int x, int y, positions* postable, Kernel KernelChoice);
+		int setKernelXbarXWithCouplingConstant(int x, int y, positions* postable, Kernel KernelChoice);
+		int setKernelXbarYWithCouplingConstant(int x, int y, positions* postable, Kernel KernelChoice);
 
 		int setCorrelationsForCouplingConstant();
 
@@ -143,6 +169,9 @@ template<class T, int t> class gfield: public field<T,t> {
 
 };
 
+/********************************************//**
+ * Derived class destructor.
+ ***********************************************/
 template<class T, int t> gfield<T,t>::~gfield() {
 
 	free(this->u);
@@ -151,21 +180,31 @@ template<class T, int t> gfield<T,t>::~gfield() {
 
 template<class T, int t> class lfield: public field<T,t> {
 
-	public:
+	private:
 
 		int Nxl, Nyl;
 		int Nxl_buf, Nyl_buf;
+
+	public:
 
 		lfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxl = NNx; Nyl = NNy; };
 		lfield(const lfield<T,t> &in);
 
 		~lfield();
 
-		friend class fftw1D;
+		friend class fftw2D;
 
 		int mpi_exchange_boundaries(mpi_class* mpi);
 
 		friend class gfield<T,t>;
+
+		inline int getNxl(void){
+			return Nxl;
+		}
+
+		inline int getNyl(void){
+			return Nyl;
+		}
 
 		int loc_pos(int x, int y){
 
@@ -251,11 +290,11 @@ template<class T, int t> class lfield: public field<T,t> {
 		int exponentiate();
 		int exponentiate(double s);
 
-		int setKernelPbarX(momenta* mom);
-		int setKernelPbarY(momenta* mom);
+		int setKernelPbarX(momenta* mom, mpi_class* mpi, Kernel KernelChoice);
+		int setKernelPbarY(momenta* mom, mpi_class* mpi, Kernel KernelChoice);
 
-		int setKernelPbarXWithCouplingConstant(momenta* mom);
-		int setKernelPbarYWithCouplingConstant(momenta* mom);
+		int setKernelPbarXWithCouplingConstant(momenta* mom, mpi_class* mpi, Kernel KernelChoice);
+		int setKernelPbarYWithCouplingConstant(momenta* mom, mpi_class* mpi, Kernel KernelChoice);
 
 		int setCorrelationsForCouplingConstant(momenta* mom);
 
@@ -285,10 +324,10 @@ template<class T, int t> class lfield: public field<T,t> {
 
 template<class T, int t> lfield<T,t>::lfield(const lfield<T,t> &in) : field<T,t>(in) {
 
-	std::cout<<"Executing derived class copy constructor"<<std::endl;
+	//std::cout<<"Executing derived class copy constructor"<<std::endl;
 
-	this->Nxl = in.Nxl;
-	this->Nyl = in.Nyl;
+	this->Nxl = in.getNxl();
+	this->Nyl = in.getNyl();
 
 }
 
@@ -304,7 +343,7 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator= ( const lfield<T,t>
 			if( this != &f ){
 
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < f.Nxl*f.Nyl; i ++){
+			for(int i = 0; i < f.getNxl()*f.getNyl(); i ++){
 		
 				for(int k = 0; k < t; k++){
 
@@ -323,7 +362,7 @@ template<class T, int t> gfield<T,t>& gfield<T,t>::operator= ( const gfield<T,t>
 			if( this != &f ){
 
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < f.Nxg*f.Nyg; i ++){
+			for(int i = 0; i < f.getNxg()*f.getNyg(); i ++){
 				for(int k = 0; k < t; k++){
 
 					this->u[i*t+k] = f.u[i*t+k];
@@ -340,7 +379,7 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator*= ( const lfield<T,t
 			if( this != &f ){
 
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < f.Nxl*f.Nyl; i++){
+			for(int i = 0; i < f.getNxl()*f.getNyl(); i++){
 			
 				su3_matrix<double> A,B,C;
 
@@ -370,7 +409,7 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator+= ( const lfield<T,t
 			if( this != &f ){
 
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < f.Nxl*f.Nyl; i++){
+			for(int i = 0; i < f.getNxl()*f.getNyl(); i++){
 				for(int k = 0; k < t; k++){
 
 					this->u[i*t+k] += f.u[i*t+k];
@@ -384,14 +423,14 @@ template<class T, int t> lfield<T,t>& lfield<T,t>::operator+= ( const lfield<T,t
 
 template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const lfield<T,t> &g){
 
-			lfield<T,t> result(f.Nxl, f.Nyl);
+			lfield<T,t> result(f.getNxl(), f.getNyl());
 
 			result.setToZero();
 
-			if( f.Nxl == g.Nxl && f.Nyl == g.Nyl ){
+			if( f.getNxl() == g.getNxl() && f.getNyl() == g.getNyl() ){
 
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < f.Nxl*f.Nyl; i++){
+			for(int i = 0; i < f.getNxl()*f.getNyl(); i++){
 
 				su3_matrix<double> A,B,C;
 		
@@ -421,14 +460,14 @@ template<class T, int t> lfield<T,t> operator * ( const lfield<T,t> &f , const l
 
 template<class T, int t> gfield<T,t> operator * ( const gfield<T,t> &f , const gfield<T,t> &g){
 
-			gfield<T,t> result(f.Nxg, f.Nyg);
+			gfield<T,t> result(f.getNxg(), f.getNyg());
 
 			result.setToZero();
 
-			if( f.Nxg == g.Nxg && f.Nyg == g.Nyg ){
+			if( f.getNxg() == g.getNxg() && f.getNyg() == g.getNyg() ){
 
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < f.Nxg*f.Nyg; i++){
+			for(int i = 0; i < f.getNxg()*f.getNyg(); i++){
 			
 				su3_matrix<double> A,B,C;
 
@@ -460,14 +499,14 @@ template<class T, int t> gfield<T,t> operator * ( const gfield<T,t> &f , const g
 
 template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lfield<T,t>& g ){
 
-			lfield<T,t> result(f.Nxl, f.Nyl);
+			lfield<T,t> result(f.getNxl(), f.getNyl());
 
 			result.setToZero();
 
-			if( f.Nxl == g.Nxl && f.Nyl == g.Nyl ){
+			if( f.getNxl() == g.getNxl() && f.getNyl() == g.getNyl() ){
 
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < f.Nxl*f.Nyl; i ++){
+			for(int i = 0; i < f.getNxl()*f.getNyl(); i ++){
 
 				su3_matrix<double> A,B,C;
 		
@@ -497,14 +536,14 @@ template<class T, int t> lfield<T,t> operator + ( const lfield<T,t> &f, const lf
 
 template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gfield<T,t>& g ){
 
-			gfield<T,t> result(f.Nxg, f.Nyg);
+			gfield<T,t> result(f.getNxg(), f.getNyg());
 
 			result.setToZero();
 
-			if( f.Nxg == g.Nxg && f.Nyg == g.Nyg ){
+			if( f.getNxg() == g.getNxg() && f.getNyg() == g.getNyg() ){
 
 			#pragma omp parallel for simd default(shared)
-			for(int i = 0; i < f.Nxg*f.Nyg; i ++){
+			for(int i = 0; i < f.getNxg()*f.getNyg(); i ++){
 			
 				su3_matrix<double> A,B,C;
 
@@ -536,8 +575,8 @@ template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gf
 template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_class* mpi){
 
 
-	T* data_local_re = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
-	T* data_local_im = (T*)malloc(ulocal->Nxl*ulocal->Nyl*sizeof(T));
+	T* data_local_re = (T*)malloc(ulocal->getNxl()*ulocal->getNyl()*sizeof(T));
+	T* data_local_im = (T*)malloc(ulocal->getNxl()*ulocal->getNyl()*sizeof(T));
 
 	T* data_global_re = (T*)malloc(Nxg*Nyg*sizeof(T));
 	T* data_global_im = (T*)malloc(Nxg*Nyg*sizeof(T));
@@ -547,27 +586,27 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_cla
 	for(k = 0; k < t; k++){
 
 		#pragma omp parallel for simd default(shared)
-		for(i = 0; i < ulocal->Nxl*ulocal->Nyl; i++){
+		for(i = 0; i < ulocal->getNxl()*ulocal->getNyl(); i++){
 
 			data_local_re[i] = ulocal->u[i*t+k].real();
 			data_local_im[i] = ulocal->u[i*t+k].imag();
 
 		}
 
-   		MPI_Allgather(data_local_re, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, data_global_re, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
-	   	MPI_Allgather(data_local_im, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, data_global_im, ulocal->Nxl*ulocal->Nyl, MPI_DOUBLE, MPI_COMM_WORLD); 
+   		MPI_Allgather(data_local_re, ulocal->getNxl()*ulocal->getNyl(), MPI_DOUBLE, data_global_re, ulocal->getNxl()*ulocal->getNyl(), MPI_DOUBLE, MPI_COMM_WORLD); 
+	   	MPI_Allgather(data_local_im, ulocal->getNxl()*ulocal->getNyl(), MPI_DOUBLE, data_global_im, ulocal->getNxl()*ulocal->getNyl(), MPI_DOUBLE, MPI_COMM_WORLD); 
 
 		int size = mpi->getSize();
 
 		for(int kk = 0; kk < size; kk++){
 		
-			int local_volume = ulocal->Nxl * ulocal->Nyl;
+			int local_volume = ulocal->getNxl() * ulocal->getNyl();
 
 			#pragma omp parallel for simd collapse(2) default(shared)
-			for(int xx = 0; xx < ulocal->Nxl; xx++){
-				for(int yy = 0; yy < ulocal->Nyl; yy++){
+			for(int xx = 0; xx < ulocal->getNxl(); xx++){
+				for(int yy = 0; yy < ulocal->getNyl(); yy++){
 
-					int i = xx*ulocal->Nyl + yy;
+					int i = xx*ulocal->getNyl() + yy;
 
 					//will only work for parallelization in y direction
 					//int ii = xx*Nyg + (yy + kk*ulocal->Nyl);
@@ -926,27 +965,46 @@ return 1;
 }
 
 
-template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
+template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom, mpi_class* mpi, Kernel KernelChoice){
 
 	if(t == 9){
 
-	#pragma omp parallel for simd default(shared)
-	for(int i = 0; i < Nxl*Nyl; i++){
+	#pragma omp parallel for simd collapse(2) default(shared)
+	for(int ix = 0; ix < Nxl; ix++){
+	for(int iy = 0; iy < Nyl; iy++){
+	//for(int i = 0; i < Nxl*Nyl; i++){
 
-		if( fabs(mom->phat2(i)) > 10e-9 ){
+		int i = ix*Nyl + iy;
 
-			this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarX(i)/mom->phat2(i));
-			this->u[i*t+4] = this->u[i*t+0];
-			this->u[i*t+8] = this->u[i*t+0];
+                int xx = ix + mpi->getPosX()*(Nxl);
+                int yy = iy + mpi->getPosY()*(Nyl);
 
-		}else{
+                if( xx >= Nx/2 )
+                        xx = xx - Nx;
 
-			this->u[i*t+0] = std::complex<double>(0.0, 0.0);
-			this->u[i*t+4] = this->u[i*t+0];
-			this->u[i*t+8] = this->u[i*t+0];
+                if( yy >= Ny/2 )
+                        yy = yy - Ny;
 
+                double px = 2.0 * M_PI * xx / (1.0 * Nx);
+                double py = 2.0 * M_PI * yy / (1.0 * Ny);
+
+                if( fabs(px*px+py*py) > 10e-9 ){
+
+      	        	if( KernelChoice == LINEAR_KERNEL ){
+
+				this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*px/(px*px+py*py));
+				this->u[i*t+4] = this->u[i*t+0];
+				this->u[i*t+8] = this->u[i*t+0];
+
+			}
+                        if( KernelChoice == SIN_KERNEL ){
+
+				this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarX(i)/mom->phat2(i));
+				this->u[i*t+4] = this->u[i*t+0];
+				this->u[i*t+8] = this->u[i*t+0];
+                        }
 		}
-	}
+	}}
 
 	}else{
 
@@ -959,28 +1017,48 @@ template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom){
 return 1;
 }
 
-template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom){
+template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom, mpi_class* mpi, Kernel KernelChoice){
 
 
 	if(t == 9){
 
-	#pragma omp parallel for simd default(shared)
-	for(int i = 0; i < Nxl*Nyl; i++){
+	#pragma omp parallel for simd collapse(2) default(shared)
+        for(int ix = 0; ix < Nxl; ix++){
+        for(int iy = 0; iy < Nyl; iy++){
+	//for(int i = 0; i < Nxl*Nyl; i++){
 
-		if( fabs(mom->phat2(i)) > 10e-9 ){
+                int i = ix*Nyl + iy;
 
-			this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarY(i)/mom->phat2(i));
-			this->u[i*t+4] = this->u[i*t+0];
-			this->u[i*t+8] = this->u[i*t+0];
+                int xx = ix + mpi->getPosX()*(Nxl);
+                int yy = iy + mpi->getPosY()*(Nyl);
 
-		}else{
+                if( xx >= Nx/2 )
+                        xx = xx - Nx;
 
-			this->u[i*t+0] = std::complex<double>(0.0, 0.0);
-			this->u[i*t+4] = this->u[i*t+0];
-			this->u[i*t+8] = this->u[i*t+0];
+                if( yy >= Ny/2 )
+                        yy = yy - Ny;
 
+                double px = 2.0 * M_PI * xx / (1.0 * Nx);
+                double py = 2.0 * M_PI * yy / (1.0 * Ny);
+
+                if( fabs(px*px+py*py) > 10e-9 ){
+
+                        if( KernelChoice == LINEAR_KERNEL ){
+
+                                this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*py/(px*px+py*py));
+                                this->u[i*t+4] = this->u[i*t+0];
+                                this->u[i*t+8] = this->u[i*t+0];
+
+                        }
+                        if( KernelChoice == SIN_KERNEL ){
+
+                                this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*mom->pbarY(i)/mom->phat2(i));
+                                this->u[i*t+4] = this->u[i*t+0];
+                                this->u[i*t+8] = this->u[i*t+0];
+                        }
 		}
-	}
+        }}
+
 
 	}else{
 
@@ -994,29 +1072,48 @@ return 1;
 }
 
 
-template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(momenta* mom){
+template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(momenta* mom, mpi_class* mpi, Kernel KernelChoice){
 
 	if(t == 9){
 
-	#pragma omp parallel for simd default(shared)
-	for(int i = 0; i < Nxl*Nyl; i++){
+	#pragma omp parallel for simd collapse(2) default(shared)
+        for(int ix = 0; ix < Nxl; ix++){
+        for(int iy = 0; iy < Nyl; iy++){
+	//for(int i = 0; i < Nxl*Nyl; i++){
 
-		if( mom->phat2(i) > 10e-9 ){
+                int i = ix*Nyl + iy;
 
-			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+                int xx = ix + mpi->getPosX()*(Nxl);
+                int yy = iy + mpi->getPosY()*(Nyl);
 
-			this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
-			this->u[i*t+4] = this->u[i*t+0];
-			this->u[i*t+8] = this->u[i*t+0];
+                if( xx >= Nx/2 )
+                        xx = xx - Nx;
 
-		}else{
+                if( yy >= Ny/2 )
+                        yy = yy - Ny;
 
-			this->u[i*t+0] = std::complex<double>(0.0, 0.0);
-			this->u[i*t+4] = this->u[i*t+0];
-			this->u[i*t+8] = this->u[i*t+0];
+                double px = 2.0 * M_PI * xx / (1.0 * Nx);
+                double py = 2.0 * M_PI * yy / (1.0 * Ny);
 
+		double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+
+		if( fabs(px*px+py*py) > 10e-9 ){
+
+                        if( KernelChoice == LINEAR_KERNEL ){
+
+                                this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*px/(px*px+py*py));
+                                this->u[i*t+4] = this->u[i*t+0];
+                                this->u[i*t+8] = this->u[i*t+0];
+
+                        }
+                        if( KernelChoice == SIN_KERNEL ){
+
+                                this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarX(i)/mom->phat2(i));
+                                this->u[i*t+4] = this->u[i*t+0];
+                                this->u[i*t+8] = this->u[i*t+0];
+                        }
 		}
-	}
+        }}
 
 	}else{
 
@@ -1029,30 +1126,49 @@ template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(mom
 return 1;
 }
 
-template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(momenta* mom){
+template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(momenta* mom, mpi_class* mpi, Kernel KernelChoice){
 
 
 	if(t == 9){
 
 	#pragma omp parallel for simd default(shared)
-	for(int i = 0; i < Nxl*Nyl; i++){
+        for(int ix = 0; ix < Nxl; ix++){
+        for(int iy = 0; iy < Nyl; iy++){
+	//for(int i = 0; i < Nxl*Nyl; i++){
 
-		if( mom->phat2(i) > 10e-9 ){
-	
-			double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+                int i = ix*Nyl + iy;
 
-			this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
-			this->u[i*t+4] = this->u[i*t+0];
-			this->u[i*t+8] = this->u[i*t+0];
+                int xx = ix + mpi->getPosX()*(Nxl);
+                int yy = iy + mpi->getPosY()*(Nyl);
 
-		}else{
+                if( xx >= Nx/2 )
+                        xx = xx - Nx;
 
-			this->u[i*t+0] = std::complex<double>(0.0, 0.0);
-			this->u[i*t+4] = this->u[i*t+0];
-			this->u[i*t+8] = this->u[i*t+0];
+                if( yy >= Ny/2 )
+                        yy = yy - Ny;
 
+                double px = 2.0 * M_PI * xx / (1.0 * Nx);
+                double py = 2.0 * M_PI * yy / (1.0 * Ny);
+
+		double coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+
+		if( fabs(px*px+py*py) > 10e-9 ){
+
+                        if( KernelChoice == LINEAR_KERNEL ){
+
+                                this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*py/(px*px+py*py));
+                                this->u[i*t+4] = this->u[i*t+0];
+                                this->u[i*t+8] = this->u[i*t+0];
+
+                        }
+                        if( KernelChoice == SIN_KERNEL ){
+
+                                this->u[i*t+0] = std::complex<double>(0.0, -2.0*M_PI*sqrt(coupling_constant)*mom->pbarY(i)/mom->phat2(i));
+                                this->u[i*t+4] = this->u[i*t+0];
+                                this->u[i*t+8] = this->u[i*t+0];
+                        }
 		}
-	}
+        }}
 
 	}else{
 
@@ -1065,7 +1181,7 @@ template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(mom
 return 1;
 }
 
-template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_global, positions* pos){
+template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_global, positions* pos, Kernel KernelChoice){
 
 	if(t == 9){
 
@@ -1075,29 +1191,43 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 
 			int i = xx*Nyg+yy;
 		
-			int ii = fabs(x_global - xx)*Nyg + fabs(y_global - yy);
+			double dx, dy, rrr;
 
-                        //double dx2 = 0.5*Nxg*sin(2.0*M_PI*(x_global-xx)/Nxg)/M_PI;
-                        //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
-/*
-                        double dx = pos->xhatX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-                        //double dy = pos->xbarY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+			if( KernelChoice == LINEAR_KERNEL ){
 
-                        double rrr = pos->xbar2(ii); //1.0*(dx2*dx2+dy2*dy2);
-*/
-	                                 double dx = x_global - xx;
-                                         if( dx >= Nxg/2 )
-                                                dx = dx - Nxg;
-                                         if( dx < -Nxg/2 )
-                                                dx = dx + Nxg;
+				dx = x_global - xx;
+                                if( dx >= Nxg/2 )
+                                	dx = dx - Nxg;
+                                if( dx < -Nxg/2 )
+                                	dx = dx + Nxg;
                                          
-                                         double dy = y_global - yy;
-                                         if( dy >= Nyg/2 )
-                                                dy = dy - Nyg;
-                                         if( dy < -Nyg/2 )
-                                                dy = dy + Nyg;
+                                dy = y_global - yy;
+                                if( dy >= Nyg/2 )
+                                       	dy = dy - Nyg;
+                                if( dy < -Nyg/2 )
+                                        dy = dy + Nyg;
 
-                                         double rrr = 1.0*(dx*dx+dy*dy);
+                                rrr = 1.0*(dx*dx+dy*dy);
+			}
+			if( KernelChoice == SIN_KERNEL ){
+
+                                int ii = 0;
+                                if( x_global >= xx)
+                                        ii += (x_global - xx)*Ny;
+                                else
+                                        ii += (x_global - xx + Nx)*Ny;
+
+                                if( y_global >= yy)
+                                        ii += (y_global - yy);
+                                else
+                                        ii += (y_global - yy + Ny);
+
+                                dx = pos->xhatX(ii);
+                                dy = pos->xhatY(ii);
+
+                                rrr = pos->xbar2(ii);
+
+			}
 
 			if( rrr > 10e-9 ){
 
@@ -1118,7 +1248,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 return 1;
 }
 
-template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_global, positions* pos){
+template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_global, positions* pos, Kernel KernelChoice){
 
 	if(t == 9){
 
@@ -1128,29 +1258,42 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
 
 			int i = xx*Nyg+yy;
 
-			int ii = fabs(x_global - xx)*Nyg + fabs(y_global - yy);
+                        double dx, dy, rrr;
 
-                        //double dx2 = 0.5*Nxg*sin(2.0*M_PI*(x_global-xx)/Nxg)/M_PI;
-                        //double dy2 = 0.5*Nyg*sin(2.0*M_PI*(y_global-yy)/Nyg)/M_PI;
-/*
-                        //double dx = pos->xbarX(ii); //Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-                        double dy = pos->xhatY(ii); //Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+                        if( KernelChoice == LINEAR_KERNEL ){
 
-                        double rrr = pos->xbar2(ii); //1.0*(dx2*dx2+dy2*dy2);
-*/
-                                         double dx = x_global - xx;
-                                         if( dx >= Nxg/2 )
-                                                dx = dx - Nxg;
-                                         if( dx < -Nxg/2 )
-                                                dx = dx + Nxg;
-                                         
-                                         double dy = y_global - yy;
-                                         if( dy >= Nyg/2 )
-                                                dy = dy - Nyg;
-                                         if( dy < -Nyg/2 )
-                                                dy = dy + Nyg;
+                                dx = x_global - xx;
+                                if( dx >= Nxg/2 )
+                                        dx = dx - Nxg;
+                                if( dx < -Nxg/2 )
+                                        dx = dx + Nxg;
 
-                                         double rrr = 1.0*(dx*dx+dy*dy);
+                                dy = y_global - yy;
+                                if( dy >= Nyg/2 ) 
+                                        dy = dy - Nyg;
+                                if( dy < -Nyg/2 )
+                                        dy = dy + Nyg;
+
+                                rrr = 1.0*(dx*dx+dy*dy);
+                        }
+                        if( KernelChoice == SIN_KERNEL ){
+
+                                int ii = 0;
+                                if( x_global >= xx)
+                                        ii += (x_global - xx)*Ny;
+                                else
+                                        ii += (x_global - xx + Nx)*Ny;
+
+                                if( y_global >= yy)
+                                        ii += (y_global - yy);
+                                else
+                                        ii += (y_global - yy + Ny);
+
+                                dx = pos->xhatX(ii);
+                                dy = pos->xhatY(ii);
+
+                                rrr = pos->xbar2(ii);
+                        }
 
 			if( rrr > 10e-9 ){
 
@@ -1174,7 +1317,7 @@ return 1;
 }
 
 
-template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int x_global, int y_global, positions* postable){
+template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int x_global, int y_global, positions* pos, Kernel KernelChoice){
 
 	if(t == 9){
 
@@ -1185,35 +1328,45 @@ template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int
 
 			int i = xx*Nyg+yy;
 
-                                         //coupling_constant = &
-                                         //& 4.0*real(PI,kind=REALKND)/((11.0-2.0*3.0/3.0)*&
-                                         //& log(((15.0**2/6.0**2)**(1.0/0.2) +&
-                                         //& ((1.26)/(((1.0*dt**2+1.0*dz**2)/(1.0*zmax**2))*6.0**2)**(1.0/0.2)))**(0.2)))
+                        double dx, dy, rrr;
 
-//                        double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
-//                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+                        if( KernelChoice == LINEAR_KERNEL ){
 
-//                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-//                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+                                dx = x_global - xx;
+                                if( dx >= Nxg/2 )
+                                        dx = dx - Nxg;
+                                if( dx < -Nxg/2 )
+                                        dx = dx + Nxg;
 
-                                         double dx = x_global - xx;
-                                         if( dx >= Nxg/2 )
-                                                dx = dx - Nxg;
-                                         if( dx < -Nxg/2 )
-                                                dx = dx + Nxg;
+                                dy = y_global - yy;
+                                if( dy >= Nyg/2 ) 
+                                        dy = dy - Nyg;
+                                if( dy < -Nyg/2 )
+                                        dy = dy + Nyg;
 
-                                         double dy = y_global - yy;
-                                         if( dy >= Nyg/2 )
-                                                dy = dy - Nyg;
-                                         if( dy < -Nyg/2 )
-                                                dy = dy + Nyg;
+                                rrr = 1.0*(dx*dx+dy*dy);
+                        }
+                        if( KernelChoice == SIN_KERNEL ){
 
+                                int ii = 0;
+                                if( x_global >= xx)
+                                        ii += (x_global - xx)*Ny;
+                                else
+                                        ii += (x_global - xx + Nx)*Ny;
+
+                                if( y_global >= yy)
+                                        ii += (y_global - yy);
+                                else
+                                        ii += (y_global - yy + Ny);
+
+                                dx = pos->xhatX(ii);
+                                dy = pos->xhatY(ii);
+
+                                rrr = pos->xbar2(ii);
+
+                        }
 
 			double coupling_constant = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + 1.26/pow(6.0*6.0*(dx*dx+dy*dy)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
-
-					double rrr = dx*dx+dy*dy;
-
-//           	        double rrr = 1.0*(dx2*dx2+dy2*dy2);
 
 			if( rrr > 10e-9 ){
 
@@ -1240,7 +1393,7 @@ template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int
 return 1;
 }
 
-template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int x_global, int y_global, positions* postable){
+template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int x_global, int y_global, positions* pos, Kernel KernelChoice){
 
 	if(t == 9){
 
@@ -1250,30 +1403,45 @@ template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int
 
 			int i = xx*Nyg+yy;
 
-//	                double dx2 = 2.0*Nxg*sin(0.5*M_PI*(x_global-xx)/Nxg)/M_PI;
-//                        double dy2 = 2.0*Nyg*sin(0.5*M_PI*(y_global-yy)/Nyg)/M_PI;
+                        double dx, dy, rrr;
 
-//                        double dx = Nxg*sin(M_PI*(x_global-xx)/Nxg)/M_PI;
-//                        double dy = Nyg*sin(M_PI*(y_global-yy)/Nyg)/M_PI;
+                        if( KernelChoice == LINEAR_KERNEL ){
 
-                                         double dx = x_global - xx;
-                                         if( dx >= Nxg/2 )
-                                                dx = dx - Nxg;
-                                         if( dx < -Nxg/2 )
-                                                dx = dx + Nxg;
+                                dx = x_global - xx;
+                                if( dx >= Nxg/2 )
+                                        dx = dx - Nxg;
+                                if( dx < -Nxg/2 )
+                                        dx = dx + Nxg;
 
-                                         double dy = y_global - yy;
-                                         if( dy >= Nyg/2 )
-                                                dy = dy - Nyg;
-                                         if( dy < -Nyg/2 )
-                                                dy = dy + Nyg;
+                                dy = y_global - yy;
+                                if( dy >= Nyg/2 ) 
+                                        dy = dy - Nyg;
+                                if( dy < -Nyg/2 )
+                                        dy = dy + Nyg;
 
+                                rrr = 1.0*(dx*dx+dy*dy);
+                        }
+                        if( KernelChoice == SIN_KERNEL ){
+
+                                int ii = 0;
+                                if( x_global >= xx)
+                                        ii += (x_global - xx)*Ny;
+                                else
+                                        ii += (x_global - xx + Nx)*Ny;
+
+                                if( y_global >= yy)
+                                        ii += (y_global - yy);
+                                else
+                                        ii += (y_global - yy + Ny);
+
+                                dx = pos->xhatX(ii);
+                                dy = pos->xhatY(ii);
+
+                                rrr = pos->xbar2(ii);
+
+                        }
 
 			double coupling_constant = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + 1.26/pow(6.0*6.0*(dx*dx+dy*dy)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
-        
-//                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
-
-					double rrr = dx*dx+dy*dy;
 
 			if( rrr > 10e-9 ){
 
@@ -2058,6 +2226,9 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 				if( p == NOISE_COUPLING_CONSTANT ){
 					coupling_constant = 1.0;
 				}
+				if( p == NO_COUPLING_CONSTANT ){
+					coupling_constant = 1.0;
+				}
 
 	                        std::complex<double> A(0.0, -2.0*M_PI*sqrt(coupling_constant)*px/(px*px+py*py));
         	                std::complex<double> B(0.0, -2.0*M_PI*sqrt(coupling_constant)*py/(px*px+py*py));
@@ -2071,6 +2242,9 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 					coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
 				}
 				if( p == NOISE_COUPLING_CONSTANT ){
+					coupling_constant = 1.0;
+				}
+				if( p == NO_COUPLING_CONSTANT ){
 					coupling_constant = 1.0;
 				}
 
@@ -2487,6 +2661,9 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 				sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
 			}
 			if( p == NOISE_COUPLING_CONSTANT ){
+				sqrt_coupling_constant = 1.0;
+			}
+			if( p == NO_COUPLING_CONSTANT ){
 				sqrt_coupling_constant = 1.0;
 			}
 

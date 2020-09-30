@@ -31,10 +31,11 @@
 
 #include "config.h"
 #include "mpi_pos.h"
+#include "mpi_class.h"
 
 #include "field.h"
 
-template<class T> int field<T>::mpi_exchange_boundaries(void){
+template<class T> int lfield<T>::mpi_exchange_boundaries(mpi_class* mpi){
 
     int size, rank;
 

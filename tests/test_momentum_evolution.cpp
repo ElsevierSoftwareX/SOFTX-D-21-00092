@@ -94,11 +94,11 @@ int main(int argc, char *argv[]) {
     //initiaization of kernel fields
     lfield<double,9> kernel_pbarx(cnfg->Nxl, cnfg->Nyl);
     kernel_pbarx.setToZero();
-    kernel_pbarx.setKernelPbarX(momtable);
+    kernel_pbarx.setKernelPbarX(momtable, mpi, SIN_KERNEL);
 
     lfield<double,9> kernel_pbary(cnfg->Nxl, cnfg->Nyl);
     kernel_pbary.setToZero();
-    kernel_pbary.setKernelPbarY(momtable);
+    kernel_pbary.setKernelPbarY(momtable, mpi, SIN_KERNEL);
 
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);

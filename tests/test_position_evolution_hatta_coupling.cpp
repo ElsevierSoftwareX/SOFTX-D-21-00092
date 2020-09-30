@@ -57,8 +57,6 @@ int main(int argc, char *argv[]) {
 
     postable.set();
 
-    rand_class* random_generator = new rand_class(mpi,cnfg);
-
     MV_class* MVmodel = new MV_class(1.0, 30.72/Nx, 50);
 
     //fftw1D* fourier = new fftw1D(cnfg);
@@ -139,17 +137,14 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     	for(int i = 0; i < MVmodel->Ny_parameter; i++){
 	
-		//f.setToZero();
 
-		f.setMVModel(MVmodel, random_generator);
+		f.setMVModel(MVmodel);
 
 		fourier2->execute2D(&f,1);
 
 		f.solvePoisson(0.0001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
 
 		fourier2->execute2D(&f,0);
-
-		//f.exponentiate();
 
 		uf *= f;
     	}
@@ -220,8 +215,7 @@ if(iy >= 0 && iy < Ny){
                                 int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
 				//rr should be the distance squared
-				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable, rr);
-				//prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable);
+				prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable, rr, HATTA_COUPLING_CONSTANT, LINEAR_KERNEL);
 
                         }
                 }
@@ -291,8 +285,6 @@ if(iy >= 0 && iy < Ny){
     delete cnfg;
 
     delete momtable;
-
-    delete random_generator;
 
     delete MVmodel;
 

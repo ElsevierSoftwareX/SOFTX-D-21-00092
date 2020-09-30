@@ -65,14 +65,12 @@ class fftw {
     fftw_plan planX2K;
     fftw_plan planK2X;
     fftw_complex *data_local;
-//    fftw_complex *data_localb;
 
     ptrdiff_t alloc_local, local_n0, local_n0_start;
 
     fftw_plan planX2K_single;
     fftw_plan planK2X_single;
     fftw_complex *data_local_single;
-//    fftw_complex *data_localb_single;
 
     ptrdiff_t alloc_local_single, local_n0_single, local_n0_start_single;
 
@@ -82,12 +80,12 @@ class fftw {
     fftw(config *cnfg){
 
 
-	int nthreads = 12;
+	int nthreads = omp_get_max_threads();
 
         fftw_init_threads();
         fftw_mpi_init();
 
-	printf("FFTW can be run with %i threads; running with %i threads instead\n", omp_get_max_threads(), nthreads);
+	printf("FFTW can be run with %i threads; running with %i threads\n", omp_get_max_threads(), nthreads);
 
         fftw_plan_with_nthreads(nthreads);
 
@@ -100,14 +98,6 @@ class fftw {
 
     virtual ~fftw(void){};
 
-//	fftw_free(data_local);
-// 	fftw_destroy_plan(planK2X);
-// 	fftw_destroy_plan(planX2K);
-//
-//        fftw_cleanup_threads();
-//    }
-
-
 };
 
 class fftw2D : public fftw {
@@ -119,12 +109,10 @@ class fftw2D : public fftw {
     ~fftw2D(void){
 
  	fftw_free(data_local);
-// 	fftw_free(data_localb);
  	fftw_destroy_plan(planK2X);
  	fftw_destroy_plan(planX2K);
 
 	fftw_free(data_local_single);
-//	fftw_free(data_localb_single);
  	fftw_destroy_plan(planK2X_single);
  	fftw_destroy_plan(planX2K_single);
 

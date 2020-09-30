@@ -28,18 +28,18 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 8
-#define Ny 8
+#define Nx 16
+#define Ny 16
 
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
 
-enum Evolution { POSITION_EVOLUTION, MOMENTUM_EVOLUTION };
+enum Evolution { POSITION_EVOLUTION, MOMENTUM_EVOLUTION, NO_EVOLUTION };
 
-enum Coupling { SQRT_COUPLING_CONSTANT, NOISE_COUPLING_CONSTANT, HATTA_COUPLING_CONSTANT };
+enum Coupling { SQRT_COUPLING_CONSTANT, NOISE_COUPLING_CONSTANT, HATTA_COUPLING_CONSTANT, NO_COUPLING_CONSTANT };
 
-enum Kernel { LINEAR_KERNEL, SIN_KERNEL };
+enum Kernel { LINEAR_KERNEL, SIN_KERNEL};
 
 class config{
 
@@ -81,16 +81,23 @@ public:
 		f = fopen(file_name_cnfg.c_str(), "r+");		
 	
 		fscanf(f, "stat = %i\n", &stat);
+		printf("SETUP: stat = %i\n", stat); 
 		fscanf(f, "mu = %f\n", &tmp);
 		mu = tmp;
+		printf("SETUP: mu = %f\n", mu); 
 		fscanf(f, "mass = %f\n", &tmp);
 		mass = tmp;
+		printf("SETUP: mass = %f\n", mass); 
 		fscanf(f, "elementaryWilsonLines = %i\n", &elementaryWilsonLines);
+		printf("SETUP: elementaryWilsonLines = %i\n", elementaryWilsonLines); 
 		fscanf(f, "file_name = %s\n", &file_name[0]);
 		fscanf(f, "langevin_steps = %i\n", &langevin_steps);
+		printf("SETUP: langevin_steps = %i\n", langevin_steps); 
 		fscanf(f, "measurements = %i\n", &measurements);
+		printf("SETUP: measurements = %i\n", measurements); 
 		fscanf(f, "step = %f\n", &tmp);
 		step = tmp;	
+		printf("SETUP: step = %f\n", step); 
 
 		char evolution[100];
 		char coupling[100];
@@ -108,6 +115,11 @@ public:
 			EvolutionChoice = POSITION_EVOLUTION;
 			printf("SETUP: POSITION_EVOLUTION\n");
 		}
+		if(strcmp(evolution, "NO_EVOLUTION") == 0){
+			EvolutionChoice = NO_EVOLUTION;
+			printf("SETUP: NO_EVOLUTION\n");
+		}
+
 
 		if(strcmp(coupling, "SQRT_COUPLING_CONSTANT") == 0){
 			CouplingChoice = SQRT_COUPLING_CONSTANT;
@@ -121,6 +133,11 @@ public:
 			CouplingChoice = HATTA_COUPLING_CONSTANT;
 			printf("SETUP: HATT_COUPLING_CONSTANT\n");
 		}
+		if(strcmp(coupling, "NO_COUPLING_CONSTANT") == 0){
+			CouplingChoice = NO_COUPLING_CONSTANT;
+			printf("SETUP: NO_COUPLING_CONSTANT\n");
+		}
+
 
 		if(strcmp(kernel, "LINEAR_KERNEL") == 0){
 			KernelChoice = LINEAR_KERNEL;
@@ -133,7 +150,10 @@ public:
 
 
 		fclose(f);
+
+		return 1;
 	}
+
 };
 
 #endif

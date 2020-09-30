@@ -122,7 +122,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     }
 
-    printf("accumulator size = %i\n", accumulator.size());
+    printf("accumulator size = %li\n", accumulator.size());
 
     lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
 

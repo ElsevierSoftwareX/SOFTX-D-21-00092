@@ -94,27 +94,17 @@ int main(int argc, char *argv[]) {
     //initiaization of kernel fields
     lfield<double,9> kernel_pbarx(cnfg->Nxl, cnfg->Nyl);
     kernel_pbarx.setToZero();
-    kernel_pbarx.setKernelPbarXWithCouplingConstant(momtable); //setKernelPbarX(momtable);
+    kernel_pbarx.setKernelPbarXWithCouplingConstant(momtable, mpi, SIN_KERNEL);
 
     lfield<double,9> kernel_pbary(cnfg->Nxl, cnfg->Nyl);
     kernel_pbary.setToZero();
-    kernel_pbary.setKernelPbarYWithCouplingConstant(momtable); //setKernelPbarY(momtable);
+    kernel_pbary.setKernelPbarYWithCouplingConstant(momtable, mpi, SIN_KERNEL);
 
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
 
     lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
-
-//    lfield<double,9>* uf_hermitian;
-
-
-//    lfield<double,9> uf_tmp(cnfg->Nxl, cnfg->Nyl);
-//    lfield<double,9> xi_local_x_tmp(cnfg->Nxl, cnfg->Nyl);
-//    lfield<double,9> xi_local_y_tmp(cnfg->Nxl, cnfg->Nyl);
-//    lfield<double,9> uxiulocal_x_tmp(cnfg->Nxl, cnfg->Nyl);
-//    lfield<double,9> uxiulocal_y_tmp(cnfg->Nxl, cnfg->Nyl);
-
 
 
 //-------------------------------------------------------
@@ -127,13 +117,7 @@ int main(int argc, char *argv[]) {
 //------ACCUMULATE STATISTICS----------------------------
 //-------------------------------------------------------
 
-//    std::vector<lfield<double,1>*> accumulator;
-
-//-------------------------------------------------------
-//-------------------------------------------------------
-
     lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
-//    zero.setToZero();
 
     int langevin_steps = 100;
 
@@ -143,7 +127,6 @@ int main(int argc, char *argv[]) {
 
 for(int stat = 0; stat < cnfg->stat; stat++){
 
-//	const clock_t begin_time_stat = std::clock();
 	struct timespec start, finish;
 	double elapsed;
 
@@ -164,7 +147,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     	for(int i = 0; i < MVmodel->Ny_parameter; i++){
 	
-		//f.setToZero();
 
 		f.setMVModel(MVmodel);
 
@@ -173,8 +155,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		f.solvePoisson(0.0001 * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
 
 		fourier2->execute2D(&f,0);
-
-		//f.exponentiate();
 
 		uf *= f;
     	}
@@ -191,7 +171,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         //evolution
         for(int langevin = 0; langevin < langevin_steps; langevin++){
 
-//		const clock_t begin_time = std::clock();
 		struct timespec starte, finishe;
 		double elapsede;
 
@@ -200,21 +179,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
                 printf("Performing evolution step no. %i out of %i\n", langevin, langevin_steps);
 
-		//xi_local_x.setToZero();
-		//xi_local_y.setToZero();
-
-//              xi_local_x.setGaussian(mpi, cnfg);
-//              xi_local_y.setGaussian(mpi, cnfg);
-
 		generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
 
                 fourier2->execute2D(&xi_local_x, 1);
                 fourier2->execute2D(&xi_local_y, 1);
-
-//              xi_local_x_tmp = kernel_pbarx * xi_local_x;
-//              xi_local_y_tmp = kernel_pbary * xi_local_y;
-
-//              A_local = xi_local_x_tmp + xi_local_y_tmp;
 
 		prepare_A_local(&A_local, &xi_local_x, &xi_local_y, &kernel_pbarx, &kernel_pbary);
 
@@ -222,36 +190,17 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 fourier2->execute2D(&xi_local_x, 0);
                 fourier2->execute2D(&xi_local_y, 0);
 
-//              uf_hermitian = uf.hermitian();
-//
-//              uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
-//		uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
-//
-//              delete uf_hermitian;
-
 		uxiulocal(&uxiulocal_x, &uxiulocal_y, &uf, &xi_local_x, &xi_local_y);
 
                 fourier2->execute2D(&uxiulocal_x, 1);
                 fourier2->execute2D(&uxiulocal_y, 1);
 
-                //uxiulocal_x = kernel_pbarx * uxiulocal_x;
-                //uxiulocal_y = kernel_pbary * uxiulocal_y;
-
-                //B_local = uxiulocal_x + uxiulocal_y;
-
-		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
+       		prepare_B_local(&B_local, &uxiulocal_x, &uxiulocal_y, &kernel_pbarx, &kernel_pbary);
 
                 fourier2->execute2D(&B_local, 0);
 	        
-// 		A_local.exponentiate(sqrt(step));
-
-//        	B_local.exponentiate(-sqrt(step));
-
-//        	uf = B_local * uf * A_local;
-	
 		update_uf(&uf, &B_local, &A_local, step);
 	
-//		std::cout << float( std::clock () - begin_time ) /  CLOCKS_PER_SEC << std::endl;
 		clock_gettime(CLOCK_MONOTONIC, &finishe);
 		
 		elapsede = (finishe.tv_sec - starte.tv_sec);
@@ -265,7 +214,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		lfield<double,9> uf_copy(uf);
 
-		//compute correlation function
 		fourier2->execute2D(&uf_copy,1);
     
 		uf_copy.trace(corr);
@@ -273,13 +221,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	    	corr_global->allgather(corr, mpi);	
 
    		corr_global->average_and_symmetrize();
-
-		//store stat in the accumulator
-		//lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
-		//
-		//sum += *corr_ptr;
-		//
-		//delete corr_ptr;
 
 		std::cout<<"Storing partial result at step = "<<langevin<<std::endl;
 

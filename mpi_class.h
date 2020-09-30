@@ -78,7 +78,7 @@ public:
     	printf("MPI rank: %i \n", rank);
 
     	proc_grid[0] = atoi(argv[1]);
-    	proc_grid[1] = atoi(argv[2]);
+    	proc_grid[1] = 1;
 
     	//MPI_Barrier(MPI_COMM_WORLD);
 

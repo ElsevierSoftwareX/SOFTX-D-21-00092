@@ -39,7 +39,6 @@ int mpi_class::mpi_init(config *cnfg) {
     int proc_y = proc_grid[1];
 
 
-    //proc_grid = y + procy * x
     pos_x = rank/(proc_y);
     pos_y = rank - pos_x * (proc_y);
 

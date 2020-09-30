@@ -67,8 +67,13 @@ int main(int argc, char *argv[]) {
 
     config* cnfg = new config;
 
-    if(argc > 2){
-	cnfg->read_config_from_file(argv[3]);
+    printf("SETUP: reading setup from %s configuration file\n", argv[2]);
+
+    if(argc == 3){
+	cnfg->read_config_from_file(argv[2]);
+    }else{
+	printf("Usage: mpi_optimized MPI_processes configuration_file\n");
+	exit(0);
     }
 
     mpi_class* mpi = new mpi_class(argc, argv);
@@ -156,6 +161,13 @@ if(cnfg->EvolutionChoice == POSITION_EVOLUTION && cnfg->CouplingChoice == NOISE_
         printf("cholesky decomposition finished\n");
 }
 
+
+
+//-------------------------------------------------------
+//------MAIN STAT LOOP-----------------------------------
+//-------------------------------------------------------
+
+
 for(int stat = 0; stat < cnfg->stat; stat++){
 
 	//const clock_t begin_time_stat = std::clock();
@@ -197,147 +209,191 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
-int upper_bound_x = 1;
-if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
-	upper_bound_x = Nx;
-}
-//hatta iteration over positions
-//loop over possible distances squared
-for(int ix = 0; ix < upper_bound_x; ix++){
 
-int upper_bound_y = 1;
-int lower_bound_y = 0;
-if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){ 
-	lower_bound_y = ix-1;
-	upper_bound_y = ix+2;
-}
-for(int iy = lower_bound_y; iy < upper_bound_y; iy++){
-if(iy >= 0 && iy < Ny){
+	//-------------------------------------------------------
+	//---------------IF EVOLUTION----------------------------
+	//------------------------------------------------------- 
+	
+	if( cnfg->EvolutionChoice != NO_EVOLUTION ){
 
-        double dix = ix;
-        if( dix >= Nx/2 )
-                dix = dix - Nx;
-        if( dix < -Nx/2 )
-                dix = dix + Nx;
+		//-------SETUP FOR HATTA COUPLING CONSTANT-----------
 
-        double diy = iy;
-        if( diy >= Ny/2 )
-                diy = diy - Ny;
-        if( diy < -Ny/2 )
-                diy = diy + Ny;
-
-        int rr_hatta = dix*dix + diy*diy;
-
-        uftmp = uf;
-
-        //evolution
-        for(int langevin = 0; langevin < cnfg->langevin_steps; langevin++){
-
-                struct timespec starte, finishe;
-                double elapsede;
-
-                clock_gettime(CLOCK_MONOTONIC, &starte);
-
-                printf("Performing evolution step no. %i\n", langevin);
-
-		if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
-			generate_gaussian_with_noise_coupling_constant(&xi_local_x, &xi_local_y, momtable, mpi, cnfg);
-		}else{
-			generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
+		int upper_bound_x = 1;
+		if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
+			upper_bound_x = Nx;
 		}
+		//hatta iteration over positions
+		//loop over possible distances squared
+		for(int ix = 0; ix < upper_bound_x; ix++){
 
-		if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION ){
+			int upper_bound_y = 1;
+			int lower_bound_y = 0;
+			if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){ 
+				lower_bound_y = ix-1;
+				upper_bound_y = ix+2;
+			}
+			for(int iy = lower_bound_y; iy < upper_bound_y; iy++){
+				if(iy >= 0 && iy < Ny){
 
-	                fourier2->execute2D(&xi_local_x, 1);
-        	        fourier2->execute2D(&xi_local_y, 1);
+				        double dix = ix;
+				        if( dix >= Nx/2 )
+				                dix = dix - Nx;
+				        if( dix < -Nx/2 )
+				                dix = dix + Nx;
 
-			prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
+				        double diy = iy;
+				        if( diy >= Ny/2 )
+				                diy = diy - Ny;
+				        if( diy < -Ny/2 )
+				                diy = diy + Ny;
 
-                	fourier2->execute2D(&A_local, 0);
-	                fourier2->execute2D(&xi_local_x, 0);
-        	        fourier2->execute2D(&xi_local_y, 0);
+				        int rr_hatta = dix*dix + diy*diy;
 
-			uxiulocal(&uxiulocal_x, &uxiulocal_y, &uftmp, &xi_local_x, &xi_local_y);
+					//----------------------------------------------------------------------------
+					//---------KEEP ORIGINAL INITIAL CONDITION AND ITERATE OVER DISTANCES rr_hatta
+					//----------------------------------------------------------------------------
 
-	                fourier2->execute2D(&uxiulocal_x, 1);
-        	        fourier2->execute2D(&uxiulocal_y, 1);
+				        uftmp = uf;
+		
+					//----------------------------------------------------------------
+					//------------MAIN EVOLUTION LOOP---------------------------------
+				        //----------------------------------------------------------------
+				        for(int langevin = 0; langevin < cnfg->langevin_steps; langevin++){
 
-       			prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
+				                struct timespec starte, finishe;
+				                double elapsede;
 
-                	fourier2->execute2D(&B_local, 0);
+				                clock_gettime(CLOCK_MONOTONIC, &starte);
+
+				                printf("Performing evolution step no. %i\n", langevin);
+
+						if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
+							generate_gaussian_with_noise_coupling_constant(&xi_local_x, &xi_local_y, momtable, mpi, cnfg);
+						}else{
+							generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
+						}
+
+						//----------MOMENTUM SPACE EVOLUTION-------------
+
+						if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION ){
+
+							if( cnfg->CouplingChoice != NOISE_COUPLING_CONSTANT ){
+						                fourier2->execute2D(&xi_local_x, 1);
+					        	        fourier2->execute2D(&xi_local_y, 1);
+							}
+
+							prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
+
+				                	fourier2->execute2D(&A_local, 0);
+					                fourier2->execute2D(&xi_local_x, 0);
+				        	        fourier2->execute2D(&xi_local_y, 0);
+
+							uxiulocal(&uxiulocal_x, &uxiulocal_y, &uftmp, &xi_local_x, &xi_local_y);
+
+					                fourier2->execute2D(&uxiulocal_x, 1);
+				        	        fourier2->execute2D(&uxiulocal_y, 1);
+
+				       			prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
+
+				                	fourier2->execute2D(&B_local, 0);
 	        
-		}	
+						}//end if momentum evolution	
 		
-		if( cnfg->EvolutionChoice == POSITION_EVOLUTION ){
+						//----------POSITION SPACE EVOLUTION-------------
+				
+						if( cnfg->EvolutionChoice == POSITION_EVOLUTION ){
 
-                	printf("gathering local xi to global\n");
-	                xi_global_x.allgather(&xi_local_x, mpi);
-        	        xi_global_y.allgather(&xi_local_y, mpi);
+				                	printf("gathering local xi to global\n");
+					                xi_global_x.allgather(&xi_local_x, mpi);
+				        	        xi_global_y.allgather(&xi_local_y, mpi);
 
-			if( cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
+							if( cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 
-		                xi_global_x.multiplyByCholesky(cholesky);
-                		xi_global_y.multiplyByCholesky(cholesky);
+		                				xi_global_x.multiplyByCholesky(cholesky);
+				                		xi_global_y.multiplyByCholesky(cholesky);
 
-			}
+							}
 
-	                printf("gathering local uf to global\n");
-        	        uf_global.allgather(&uftmp, mpi);
+					                printf("gathering local uf to global\n");
+				        	        uf_global.allgather(&uftmp, mpi);
 
-			A_local.setToZero();
-			B_local.setToZero();
+							A_local.setToZero();
+							B_local.setToZero();
 
-        	        printf("starting iteration over global lattice\n");
-	                for(int x = 0; x < cnfg->Nxl; x++){
-	        	        for(int y = 0; y < cnfg->Nyl; y++){
+				        	        printf("starting iteration over global lattice\n");
+					                for(int x = 0; x < cnfg->Nxl; x++){
+	        	        				for(int y = 0; y < cnfg->Nyl; y++){
 
-        		                int x_global = x + mpi->getPosX()*cnfg->Nxl;
-                	                int y_global = y + mpi->getPosY()*cnfg->Nyl;
+				        		                int x_global = x + mpi->getPosX()*cnfg->Nxl;
+                	        				        int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-					prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, &B_local, &uf_global, &postable, rr_hatta, cnfg->CouplingChoice, cnfg->KernelChoice);
+									prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, 
+											&B_local, &uf_global, &postable, rr_hatta, cnfg->CouplingChoice, cnfg->KernelChoice);
 
-                        	}
-                	}
+                        					}
+                					}
 
-		}
+						}//end if position space evolution
 
-		update_uf(&uftmp, &B_local, &A_local, cnfg->step);
+						//-----------UPDATE WILSON LINES-----------------
+
+						update_uf(&uftmp, &B_local, &A_local, cnfg->step);
 		
-	        clock_gettime(CLOCK_MONOTONIC, &finishe);
+					        clock_gettime(CLOCK_MONOTONIC, &finishe);
 
-        	elapsede = (finishe.tv_sec - starte.tv_sec);
-	        elapsede += (finishe.tv_nsec - starte.tv_nsec) / 1000000000.0;
+				        	elapsede = (finishe.tv_sec - starte.tv_sec);
+					        elapsede += (finishe.tv_nsec - starte.tv_nsec) / 1000000000.0;
 
-        	std::cout<<"Evolution time: " << elapsede << std::endl;
+				        	std::cout<<"Evolution time: " << elapsede << std::endl;
 
-	    	//-------------------------------------------------------
-		//------CORRELATION FUNCTION-----------------------------
-		//-------------------------------------------------------
+					    	//-------------------------------------------------------
+						//------CORRELATION FUNCTION-----------------------------
+						//-------------------------------------------------------
 
-		if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
+						if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
 
-			int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
+							int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
 
-			uf_copy = uftmp;
+							uf_copy = uftmp;
 
-			fourier2->execute2D(&uf_copy,1);
+							fourier2->execute2D(&uf_copy,1);
     
-			uf_copy.trace(corr);
+							uf_copy.trace(corr);
 
-		    	corr_global->allgather(corr, mpi);	
+						    	corr_global->allgather(corr, mpi);	
 
-   			corr_global->average_and_symmetrize();
+				   			corr_global->average_and_symmetrize();
 
-			if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
-				corr_global->reduce_hatta(&sum[time], &err[time], mpi, ix, iy);
-			}else{
-				corr_global->reduce(&sum[time], &err[time], mpi);
-			}
-		}
+							if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
+								corr_global->reduce_hatta(&sum[time], &err[time], mpi, ix, iy);
+							}else{
+								corr_global->reduce(&sum[time], &err[time], mpi);
+							}
+						}
+
+					}//end evolution loop
+
+		//end of hatta iteration over positions
+		}}}
+
+    	}//if evolution
+
+	//if no evolution - compute correlation function directly from initial condition
+	if( cnfg->EvolutionChoice == NO_EVOLUTION ){
+
+		int time = 0;
+
+		uf_copy = uf;
+
+		fourier2->execute2D(&uf_copy,1);
+    
+		uf_copy.trace(corr);
+
+	    	corr_global->allgather(corr, mpi);	
+
+		corr_global->reduce(&sum[time], &err[time], mpi);
 	}
 
-//end of hatta iteration over positions
-}}}
 
         clock_gettime(CLOCK_MONOTONIC, &finish);
 
@@ -346,16 +402,22 @@ if(iy >= 0 && iy < Ny){
 
        	std::cout<<"Statistics time: " << elapsed << std::endl;
 
-    }
+}//end of stat loop
 
-    const std::string file_name = "output_optimized";
+//------------------------------------------------------
+//----------WRITE DOWN CORRELATION FNUCTION TO FILE-----
+//------------------------------------------------------
 
-    for(int i = cnfg->measurements-1; i < cnfg->measurements; i++){
-            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
-    }
+	const std::string file_name = "output_optimized";
+
+    	for(int i = 0; i < cnfg->measurements; i++){
+        	print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
+    	}
+
+
 
 //-------------------------------------------------------
-//------DEALLOCATE AND CLEAN UP--------------------------
+//------CLEAN FINISH: DEALLOCATE AND CLEAN UP------------
 //-------------------------------------------------------
 
     delete cnfg;
