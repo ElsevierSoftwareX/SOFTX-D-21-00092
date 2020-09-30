@@ -111,13 +111,16 @@ public:
 			EvolutionChoice = MOMENTUM_EVOLUTION;
 			printf("SETUP: MOMENTUM_EOLUTION\n");
 		}
-		if(strcmp(evolution, "POSITION_EVOLUTION") == 0){
+		else if(strcmp(evolution, "POSITION_EVOLUTION") == 0){
 			EvolutionChoice = POSITION_EVOLUTION;
 			printf("SETUP: POSITION_EVOLUTION\n");
 		}
-		if(strcmp(evolution, "NO_EVOLUTION") == 0){
+		else if(strcmp(evolution, "NO_EVOLUTION") == 0){
 			EvolutionChoice = NO_EVOLUTION;
 			printf("SETUP: NO_EVOLUTION\n");
+		}else{
+			printf("SETUP: EVOLUTION METHOD/NO_EVOLUTION OPTION UNRECOGNIZED; ABORTING\n");
+			exit(0);
 		}
 
 
@@ -125,17 +128,20 @@ public:
 			CouplingChoice = SQRT_COUPLING_CONSTANT;
 			printf("SETUP: SQRT_COUPLING_CONSTANT\n");
 		}
-		if(strcmp(coupling, "NOISE_COUPLING_CONSTANT") == 0){
+		else if(strcmp(coupling, "NOISE_COUPLING_CONSTANT") == 0){
 			CouplingChoice = NOISE_COUPLING_CONSTANT;
 			printf("SETUP: NOISE_COUPLING_CONSTANT\n");
 		}
-		if(strcmp(coupling, "HATTA_COUPLING_CONSTANT") == 0){
+		else if(strcmp(coupling, "HATTA_COUPLING_CONSTANT") == 0){
 			CouplingChoice = HATTA_COUPLING_CONSTANT;
-			printf("SETUP: HATT_COUPLING_CONSTANT\n");
+			printf("SETUP: HATTA_COUPLING_CONSTANT\n");
 		}
-		if(strcmp(coupling, "NO_COUPLING_CONSTANT") == 0){
+		else if(strcmp(coupling, "NO_COUPLING_CONSTANT") == 0){
 			CouplingChoice = NO_COUPLING_CONSTANT;
 			printf("SETUP: NO_COUPLING_CONSTANT\n");
+		}else{
+			printf("SETUP: COUPLING_CONSTANT/NO_COUPLING_CONSTANT OPTION UNRECOGNIZED; ABORTING\n"); 
+			exit(0);
 		}
 
 
@@ -143,9 +149,12 @@ public:
 			KernelChoice = LINEAR_KERNEL;
 			printf("SETUP: LINEAR_KENREL\n");
 		}
-		if(strcmp(kernel, "SIN_KERNEL") == 0){
+		else if(strcmp(kernel, "SIN_KERNEL") == 0){
 			KernelChoice = SIN_KERNEL;
 			printf("SETUP: SIN_KERNEL\n");
+		}else{
+			printf("SETUP: KERNEL UNRECOGNIZED\n");
+			exit(0);
 		}
 
 

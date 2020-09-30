@@ -415,7 +415,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 
                 if(cnfg->EvolutionChoice == POSITION_EVOLUTION)
                         file_name += "POSITION_EVOLUTION_";
-                
+  
+		if(cnfg->EvolutionChoice == NO_EVOLUTION)
+                        file_name += "NO_EVOLUTION_";
+             
 
                 if(cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT)
                         file_name += "SQRT_COUPLING_CONSTANT_";
@@ -425,7 +428,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 
                 if(cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT)
                         file_name += "HATTA_COUPLING_CONSTANT_";
-                
+  
+		if(cnfg->CouplingChoice == NO_COUPLING_CONSTANT)
+                        file_name += "NO_COUPLING_CONSTANT_";
+             
 
                 if(cnfg->KernelChoice == LINEAR_KERNEL)
                         file_name += "LINEAR_KERNEL";
