@@ -89,7 +89,7 @@ class fftw {
 
         fftw_plan_with_nthreads(nthreads);
 
-	printf("FFTW plan setup with %i threads created\n", nthreads);
+//	printf("FFTW plan setup with %i threads created\n", nthreads);
 
         Nxl = cnfg->Nxl;
         Nyl = cnfg->Nyl;

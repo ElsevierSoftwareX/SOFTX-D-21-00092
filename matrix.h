@@ -189,6 +189,7 @@ template<class T> int gmatrix<T>::decompose(gfield<T,1>* corr){
 
 		int ii = abs(xi-xj)*Ny + abs(yi-yj);
 
+//here is a seg fault
                 this->u[i*Nyg+j] = (corr->u[ii] - sum) /  //distance between i and j
                                       this->u[j*Nyg+j]; 
             } 

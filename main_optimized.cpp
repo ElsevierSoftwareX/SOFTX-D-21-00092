@@ -414,7 +414,34 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         	print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
     	}
 
+        std::string file_name = "output_optimized_";
 
+                if(cnfg->EvolutionChoice == MOMENTUM_EVOLUTION)
+                        file_name += "MOMENTUM_EVOLUTION_";
+                
+                if(cnfg->EvolutionChoice == POSITION_EVOLUTION)
+                        file_name += "POSITION_EVOLUTION_";
+                
+
+                if(cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT)
+                        file_name += "SQRT_COUPLING_CONSTANT_";
+                
+                if(cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT)
+                        file_name += "NOISE_COUPLING_CONSTANT_";
+                
+                if(cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT)
+                        file_name += "HATTA_COUPLING_CONSTANT_";
+                
+
+                if(cnfg->KernelChoice == LINEAR_KERNEL)
+                        file_name += "LINEAR_KERNEL";
+                
+                if(cnfg->KernelChoice == SIN_KERNEL)
+                        file_name += "SIN_KERNEL";
+                
+    for(int i = 0; i < cnfg->measurements; i++){
+            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
+    }
 
 //-------------------------------------------------------
 //------CLEAN FINISH: DEALLOCATE AND CLEAN UP------------
