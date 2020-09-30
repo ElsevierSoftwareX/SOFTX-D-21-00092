@@ -131,11 +131,11 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		friend class fftw2D;
 
-		inline int getNxg(void){
+		inline int getNxg(void) const {
 			return Nxg;
 		}
 
-		inline int getNyg(void){
+		inline int getNyg(void) const {
 			return Nyg;
 		}
 
@@ -198,11 +198,11 @@ template<class T, int t> class lfield: public field<T,t> {
 
 		friend class gfield<T,t>;
 
-		inline int getNxl(void){
+		inline int getNxl(void) const {
 			return Nxl;
 		}
 
-		inline int getNyl(void){
+		inline int getNyl(void) const {
 			return Nyl;
 		}
 
@@ -734,7 +734,7 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig){
                          std::hash<std::thread::id> hasher;
                          generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
                 }
-                std::normal_distribution<double> distribution{0.0, MVconfig->g_parameter * MVconfig->mu_parameter / sqrt(MVconfig->Ny_parameter) };
+                std::normal_distribution<double> distribution{0.0, MVconfig->gGet() * MVconfig->muGet() / sqrt(MVconfig->NyGet()) };
 
 
 	    //set to zero
@@ -1572,20 +1572,7 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 		B.m[7] = std::conj(this->u[i*t+5]/(1.0*Nx*Ny));
 		B.m[8] = std::conj(this->u[i*t+8]/(1.0*Nx*Ny));
 
-		//printf("A.m[0].r = %f, A.m[1].r = %f, A.m[2].r = %f\n", A.m[0].real(), A.m[1].real(), A.m[2].real());
-		//printf("A.m[0].i = %f, A.m[1].i = %f, A.m[2].i = %f\n", A.m[0].imag(), A.m[1].imag(), A.m[2].imag());
-		//printf("A.m[3].r = %f, A.m[4].r = %f, A.m[5].r = %f\n", A.m[3].real(), A.m[4].real(), A.m[5].real());
-		//printf("A.m[3].i = %f, A.m[4].i = %f, A.m[5].i = %f\n", A.m[3].imag(), A.m[4].imag(), A.m[5].imag());
-		//printf("A.m[6].r = %f, A.m[7].r = %f, A.m[8].r = %f\n", A.m[6].real(), A.m[7].real(), A.m[8].real());
-		//printf("A.m[6].i = %f, A.m[7].i = %f, A.m[8].i = %f\n", A.m[6].imag(), A.m[7].imag(), A.m[8].imag());
-
-		//printf("B.m[0].r = %f, B.m[4].r = %f, B.m[8].r = %f\n", B.m[0].real(), B.m[4].real(), B.m[8].real());
-		//printf("B.m[0].i = %f, B.m[4].i = %f, B.m[8].i = %f\n", B.m[0].imag(), B.m[4].imag(), B.m[8].imag());
-
                 C = A*B;
-
-		//printf("C.m[0].r = %f, C.m[4].r = %f, C.m[8].r = %f\n", C.m[0].real(), C.m[4].real(), C.m[8].real());
-		//printf("C.m[0].i = %f, C.m[4].i = %f, C.m[8].i = %f\n", C.m[0].imag(), C.m[4].imag(), C.m[8].imag());
 
                 cc->u[i*1+0] = C.m[0] + C.m[4] + C.m[8];
 	}
@@ -1663,15 +1650,9 @@ return 1;
 
 template<class T, int t> lfield<T,t>* gfield<T,t>::reduce(int NNx, int NNy, mpi_class* mpi){
 
-//	printf("Nxg = %i, Nyg = %i, NNx = %i, NNy = %i\n", Nxg, Nyg, NNx, NNy);
-//	printf("pos_x = %i, pox_y = %i\n", mpi->getPosX(), mpi->getPosY());
-
-
 	lfield<T,t>* corr_tmp = new lfield<T,t>(NNx,NNy);
 
-//	std::complex<double> x = 0;
 	corr_tmp->setToZero();	
-//	printf("reduce: t = %i\n", t);
 
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < NNx; i++){
@@ -1681,16 +1662,14 @@ template<class T, int t> lfield<T,t>* gfield<T,t>::reduce(int NNx, int NNy, mpi_
 		}
 	}
 
-//	printf("x = %e, %e\n", x.real(), x.imag());
-
 return corr_tmp;
 }
 
 
 template<class T, int t> int gfield<T,t>::reduce(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi){
 
-	int NNx = sum->Nxl;
-	int NNy = sum->Nyl;
+	int NNx = sum->getNxl();
+	int NNy = sum->getNyl();
 
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < NNx; i++){
@@ -1706,11 +1685,11 @@ return 1;
 
 template<class T, int t> int gfield<T,t>::reduce_hatta(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi, int xr, int yr ){
 
-	int NNx = sum->Nxl;
-	int NNy = sum->Nyl;
+	int NNx = sum->getNxl();
+	int NNy = sum->getNyl();
 
-	int xr_local = xr%(sum->Nxl);
-	int yr_local = yr%(sum->Nyl);
+	int xr_local = xr%(sum->getNxl());
+	int yr_local = yr%(sum->getNyl());
 
 //check MPI parallelization!!!
 
@@ -1721,7 +1700,7 @@ template<class T, int t> int gfield<T,t>::reduce_hatta(lfield<T,t>* sum, lfield<
 	//!!! we should only select the momenta which correspond to the distance rr !!!
 
 //we only set it on the rank which contains this part of the global lattice
-if( mpi->getPosX() == xr/(sum->Nxl) && mpi->getPosY() == yr/(sum->Nyl) ){
+if( mpi->getPosX() == xr/(sum->getNxl()) && mpi->getPosY() == yr/(sum->getNyl()) ){
 
 	sum->u[(xr_local*NNy+yr_local)*t+0] += this->u[(xr*Ny+yr)*t+0];
 	err->u[(xr_local*NNy+yr_local)*t+0] += pow(this->u[(xr*Ny+yr)*t+0],2.0);
@@ -1747,11 +1726,11 @@ template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local,
 		double sum_im = 0;
 
 		#pragma omp parallel for collapse(2) default(shared) reduction(+:sum_re) reduction(+:sum_im)
-		for(int xx = 0; xx < f->Nxg; xx++){
-			for(int yy = 0; yy < f->Nyg; yy++){
+		for(int xx = 0; xx < f->getNxg(); xx++){
+			for(int yy = 0; yy < f->getNyg(); yy++){
 
-				sum_re += f->u[(xx*f->Nyg+yy)*t+k].real();		
-				sum_im += f->u[(xx*f->Nyg+yy)*t+k].imag();		
+				sum_re += f->u[(xx*f->getNyg()+yy)*t+k].real();		
+				sum_im += f->u[(xx*f->getNyg()+yy)*t+k].imag();		
 
 			}
 		}
@@ -1769,32 +1748,17 @@ template<class T, int t> int gfield<T,t>::setCorrelationsForCouplingConstant(){
 	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 	const double f = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
 
-	printf("coupling constant at 0 = %f\n", pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2));
-	printf("coupling constant at 0 = %f\n", 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2));
-	printf("coupling constant at 0 = %f\n", w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2));
-	printf("coupling constant at 0 = %f\n", pow( w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2) , 0.2 ) );
-	printf("coupling constant at 0 = %f\n", log( pow( w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
-	printf("coupling constant at 0 = %f\n", f / log( pow( w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2) , 0.2 ) ));
-	printf("coupling constant at 0 = %f\n", sqrt( f / log( pow( w + 1.26/pow(6.0*6.0*(0+1)/Nxg/Nyg,1.0/0.2) , 0.2 ) )));
-
-
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxg; xx++){
 		for(int yy = 0; yy < Nxg; yy++){
 
 			int i = xx*Nyg+yy;
 
-                        //double dx = Nxg*sin(M_PI*(xx+1)/Nxg)/M_PI;
-                        //double dy = Nyg*sin(M_PI*(yy+1)/Nyg)/M_PI;
-
 			double sqrt_coupling_constant = f / log( pow( w + 1.26/(1.0e-12+pow(6.0*6.0*(xx*xx+yy*yy)/Nxg/Nyg,1.0/0.2)) , 0.2 ) );
         
 			this->u[i*t+0] = sqrt_coupling_constant;
 		}
 	}
-
-	//this->u[0] = 1.0;
-
 
 return 1;
 }
@@ -1830,12 +1794,9 @@ template<class T, int t> int gfield<T,t>::multiplyByCholesky(gmatrix<T>* mm){
 	
 				tmp->u[(xx*Nyg+yy)*t+tt] = 0;
 
-				//printf("diagonal cholesky (%i, %i) = %f %f\n", xx, yy, mm->u[(xx*Nyg+yy)*Nxg*Nyg + xx*Nyg+yy].real(), mm->u[(xx*Nyg+yy)*Nxg*Nyg + xx*Nyg+yy].imag());
-
 				for(int xxi = 0; xxi < Nxg; xxi++){
 					for(int yyi = 0; yyi < Nyg; yyi++){
 	
-						//transposed 12.7.2020
 						tmp->u[(xx*Nyg+yy)*t+tt] += mm->u[(xx*Nyg+yy)*Nxg*Nyg + xxi*Nyg+yyi] * this->u[(xxi*Nyg+yyi)*t+tt];
 
 					}
@@ -1865,24 +1826,11 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom){
 		for(int yy = 0; yy < Nxl; yy++){
 
 			int i = xx*Nyl+yy;
-//			if((yy+xx)%2 == 0)       
-			//printf("%f %f %f\n", Nx*Ny*(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
 			printf("%i %i %f %f\n", xx+1, yy+1, this->u[i*t+k].real(), this->u[i*t+k].imag());
 
 		}
 	}
-/*
-	for(int xx = 0; xx < Nxl; xx++){
-		for(int yy = 0; yy < Nxl; yy++){
 
-			int i = yy*Nyl+xx;
-       			if((xx+yy)%2==1)
-			//printf("%f %f %f\n", Nx*Ny*(mom->phat2(i)), mom->phat2(i)*this->u[0][i].real(), mom->phat2(i)*this->u[0][i].imag());
-			printf("%i %i %f %f\n", xx+1, yy+1, this->u[k][i].real(), this->u[k][i].imag());
-
-		}
-	}
-*/
 	}
 	
 return 1;
@@ -1923,18 +1871,18 @@ return 1;
 template<class T, int t> int print(lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double x, mpi_class* mpi){
 
 
-        printf("### object size = %i, %i\n", sum->Nxl, sum->Nyl);
+        printf("### object size = %i, %i\n", sum->getNxl(), sum->getNyl());
 
         for(int k = 0; k < mpi->getSize(); k++){
 
                 if( mpi->getRank() == k ){
 
-                        for(int xx = 0; xx < sum->Nxl; xx++){
-                                for(int yy = 0; yy < sum->Nyl; yy++){
+                        for(int xx = 0; xx < sum->getNxl(); xx++){
+                                for(int yy = 0; yy < sum->getNyl(); yy++){
 
-                                        int i = xx*(sum->Nyl)+yy;
+                                        int i = xx*(sum->getNyl())+yy;
 
-                                        if( fabs(xx + mpi->getPosX()*(sum->Nxl) - yy - mpi->getPosY()*(sum->Nyl)) <= 4 ){
+                                        if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
 
                                                 printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(sum->u[i*t+0].real()), x*(mom->phat2(i))*(err->u[i*t+0].real()));
 
@@ -2084,15 +2032,15 @@ return 1;
 
 template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* uxiulocal_y, lfield<T,t>* uf, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y){
 
-//                uf_hermitian = uf.hermitian();
-//
-//                uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
-//              uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
-//
-//                delete uf_hermitian;
+///                uf_hermitian = uf.hermitian();
+///
+///                uxiulocal_x = uf * xi_local_x * (*uf_hermitian);
+///                uxiulocal_y = uf * xi_local_y * (*uf_hermitian);
+///
+///                delete uf_hermitian;
 
-//        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
-        for(int i = 0; i < uf->Nxl*uf->Nyl; i++){
+        #pragma omp parallel for simd default(shared)
+        for(int i = 0; i < uf->getNxl()*uf->getNyl(); i++){
 
 	        su3_matrix<double> A,B,C,D,E,F;
 
@@ -2125,47 +2073,17 @@ template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* ux
 return 1;
 }
 
-template<class T, int t> int prepare_B_local(lfield<T,t>* B_local, lfield<T,t>* uxiulocal_x, lfield<T,t>* uxiulocal_y, lfield<T,t>* kernel_pbarx, lfield<T,t>* kernel_pbary){
-
-                //uxiulocal_x = kernel_pbarx * uxiulocal_x;
-                //uxiulocal_y = kernel_pbary * uxiulocal_y;
-
-                //B_local = uxiulocal_x + uxiulocal_y;
-
-        su3_matrix<double> A,B,C,D,E,F;
-
-        #pragma omp parallel for simd default(shared) private(A,B,C,D,E,F)
-        for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
-
-                for(int k = 0; k < t; k++){
-			A.m[k] = kernel_pbarx->u[i*t+k];
-			B.m[k] = kernel_pbary->u[i*t+k];
-
-	                C.m[k] = uxiulocal_x->u[i*t+k]/(1.0*Nx*Ny);
-        	        D.m[k] = uxiulocal_y->u[i*t+k]/(1.0*Nx*Ny);
-		}
-
-		E = A * C + B * D;
-
-                for(int k = 0; k < t; k++){
- 	              	B_local->u[i*t+k] = E.m[k];
-                }
-	}
-
-return 1;
-}
-
 
 template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lfield<T,t>* A_local, double step){
 
-//              A_local.exponentiate(sqrt(step));
+///              A_local.exponentiate(sqrt(step));
+///
+///              B_local.exponentiate(-sqrt(step));
+///
+///              uf = B_local * uf * A_local;
 
-//              B_local.exponentiate(-sqrt(step));
-
-//              uf = B_local * uf * A_local;
-
-//        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
-        for(int i = 0; i < B_local->Nxl*B_local->Nyl; i++){
+        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
+        for(int i = 0; i < B_local->getNxl()*B_local->getNyl(); i++){
 
 	        su3_matrix<double> A,B,C,D,E,F;
 
@@ -2191,15 +2109,15 @@ return 1;
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom, mpi_class* mpi, Coupling p, Kernel kk){
 
         #pragma omp parallel for simd collapse(2) default(shared)
-        for(int ix = 0; ix < A_local->Nxl; ix++){
-        for(int iy = 0; iy < A_local->Nyl; iy++){
+        for(int ix = 0; ix < A_local->getNxl(); ix++){
+        for(int iy = 0; iy < A_local->getNyl(); iy++){
 
-		int i = ix*A_local->Nyl + iy;
+		int i = ix*A_local->getNyl() + iy;
 
 	        su3_matrix<double> C,D,E;
 
-		int xx = ix + mpi->getPosX()*(A_local->Nxl);
-		int yy = iy + mpi->getPosY()*(A_local->Nyl);
+		int xx = ix + mpi->getPosX()*(A_local->getNxl());
+		int yy = iy + mpi->getPosY()*(A_local->getNyl());
 
                 if( xx >= Nx/2 )
                 	xx = xx - Nx;
@@ -2275,15 +2193,16 @@ return 1;
 
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, lfield<T,t>* kernel_pbarx, lfield<T,t>* kernel_pbary){
 
-//              xi_local_x_tmp = kernel_pbarx * xi_local_x;
-//              xi_local_y_tmp = kernel_pbary * xi_local_y;
+///              xi_local_x_tmp = kernel_pbarx * xi_local_x;
+///              xi_local_y_tmp = kernel_pbary * xi_local_y;
 
-//              A_local = xi_local_x_tmp + xi_local_y_tmp;
+///              A_local = xi_local_x_tmp + xi_local_y_tmp;
 
-        su3_matrix<double> A,B,C,D,E,F;
 
-//        #pragma omp parallel for simd default(shared) private(A,B,C,D,E,F)
-        for(int i = 0; i < A_local->Nxl*A_local->Nyl; i++){
+        #pragma omp parallel for simd default(shared) 
+        for(int i = 0; i < A_local->getNxl()*A_local->getNyl(); i++){
+
+	        su3_matrix<double> A,B,C,D,E,F;
 
                 for(int k = 0; k < t; k++){
 			A.m[k] = kernel_pbarx->u[i*t+k];
@@ -2309,9 +2228,6 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 return 1;
 }
 
-//              xi_local_x.setGaussian(mpi, cnfg);
-//              xi_local_y.setGaussian(mpi, cnfg);
-
 template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, mpi_class* mpi, config* cnfg){
 
 	if(t == 9){
@@ -2322,34 +2238,17 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 	// 3 4 5
 	// 6 7 8
 
-        //rand_class* rr = new rand_class(mpi,cnfg);
-
 	#pragma omp parallel for simd default(shared)
-	for(int i = 0; i < xi_local_x->Nxl*xi_local_x->Nyl; i++){
+	for(int i = 0; i < xi_local_x->getNxl()*xi_local_x->getNyl(); i++){
 
 		static __thread std::ranlux24* generator = nullptr;
 	        if (!generator){
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 		}
-		//momentum evolution with FFT
 		std::normal_distribution<double> distribution{0.0,1.0};	
-  		//momentum evolution without FFT
-    		//std::normal_distribution<double> distribution{0.0,sqrt(1.0*Nx*Ny)};
-		//std::normal_distribution<double> distribution{0.0,1.0/sqrt(1.0*Nx*Ny)};	
-
-    		//return distribution(*generator);
-
-//        std::ranlux24_base rgenerator;
-//        std::uniform_real_distribution<double> distribution{0.0,1.0};
-//
-//        rand_class(mpi_class *mpi, config *cnfg){
-//
-//        rgenerator.seed(cnfg->seed + 64*mpi->getRank() + omp_get_thread_num());
-//
-//        }
-
-	    //set to zero
+  
+    	    //set to zero
 	    for(int j = 0; j < t; j++){
 		xi_local_x->u[i*t+j] = 0.0;
 		xi_local_y->u[i*t+j] = 0.0;
@@ -2362,67 +2261,46 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
                 	n[k] = distribution(*generator);
                 	m[k] = distribution(*generator);
 	    }
-//sqrt( -2.0 * log( EPS + distribution(*generator) ) ) * cos( distribution(*generator) * 2.0 * M_PI);
-//                	n[k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
-	
-   	    //these are the LAMBDAs and not the generators t^a = lambda/2.
 
 	    std::complex<double> unit(0.0,1.0);
 	    double sqrt_3 = sqrt(3.0);
 
-            //lambda_nr(1)%su3(1,2) =  runit
-            //lambda_nr(1)%su3(2,1) =  runit
 		xi_local_x->u[i*t+1] += n[0];
 		xi_local_x->u[i*t+3] += n[0];
 		xi_local_y->u[i*t+1] += m[0];
 		xi_local_y->u[i*t+3] += m[0];
 
-            //lambda_nr(2)%su3(1,2) = -iunit
-            //lambda_nr(2)%su3(2,1) =  iunit
-		xi_local_x->u[i*t+1] += unit*n[1];
+       		xi_local_x->u[i*t+1] += unit*n[1];
 		xi_local_x->u[i*t+3] -= unit*n[1];
 		xi_local_y->u[i*t+1] += unit*m[1];
 		xi_local_y->u[i*t+3] -= unit*m[1];
 
-            //lambda_nr(3)%su3(1,1) =  runit
-            //lambda_nr(3)%su3(2,2) = -runit
-		xi_local_x->u[i*t+0] += n[2];
+       		xi_local_x->u[i*t+0] += n[2];
 		xi_local_x->u[i*t+4] -= n[2];
 		xi_local_y->u[i*t+0] += m[2];
 		xi_local_y->u[i*t+4] -= m[2];
 
-            //lambda_nr(4)%su3(1,3) =  runit
-            //lambda_nr(4)%su3(3,1) =  runit
-		xi_local_x->u[i*t+2] += n[3];
+       		xi_local_x->u[i*t+2] += n[3];
 		xi_local_x->u[i*t+6] += n[3];
 		xi_local_y->u[i*t+2] += m[3];
 		xi_local_y->u[i*t+6] += m[3];
 
-            //lambda_nr(5)%su3(1,3) = -iunit
-            //lambda_nr(5)%su3(3,1) =  iunit
-		xi_local_x->u[i*t+2] += unit*n[4];
+       		xi_local_x->u[i*t+2] += unit*n[4];
 		xi_local_x->u[i*t+6] -= unit*n[4];
 		xi_local_y->u[i*t+2] += unit*m[4];
 		xi_local_y->u[i*t+6] -= unit*m[4];
 
-            //lambda_nr(6)%su3(2,3) =  runit
-            //lambda_nr(6)%su3(3,2) =  runit
-		xi_local_x->u[i*t+5] += n[5];
+       		xi_local_x->u[i*t+5] += n[5];
 		xi_local_x->u[i*t+7] += n[5];
 		xi_local_y->u[i*t+5] += m[5];
 		xi_local_y->u[i*t+7] += m[5];
 
-            //lambda_nr(7)%su3(2,3) = -iunit
-            //lambda_nr(7)%su3(3,2) =  iunit
-		xi_local_x->u[i*t+5] += unit*n[6];
+       		xi_local_x->u[i*t+5] += unit*n[6];
 		xi_local_x->u[i*t+7] -= unit*n[6];
 		xi_local_y->u[i*t+5] += unit*m[6];
 		xi_local_y->u[i*t+7] -= unit*m[6];
 
-            //lambda_nr(8)%su3(1,1) =  cst8
-            //lambda_nr(8)%su3(2,2) =  cst8
-            //lambda_nr(8)%su3(3,3) =  -(two*cst8)
-		xi_local_x->u[i*t+0] += n[7]/sqrt_3;
+       		xi_local_x->u[i*t+0] += n[7]/sqrt_3;
 		xi_local_x->u[i*t+4] += n[7]/sqrt_3;
 		xi_local_x->u[i*t+8] += -2.0*n[7]/sqrt_3;
 		xi_local_y->u[i*t+0] += m[7]/sqrt_3;
@@ -2451,21 +2329,17 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
 	// 3 4 5
 	// 6 7 8
 
-        //rand_class* rr = new rand_class(mpi,cnfg);
-
 	const double tmp = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 	const double tmp2 = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
 
-//	#pragma omp parallel for simd default(shared)
-	for(int i = 0; i < xi_local_x->Nxl*xi_local_x->Nyl; i++){
+	#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < xi_local_x->getNxl()*xi_local_x->getNyl(); i++){
 
 	    static __thread std::ranlux24* generator = nullptr;
 	    if (!generator){
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 	    }
-//    	    std::normal_distribution<double> distribution{0.0, 1.0*Nx*Ny};
-//    	    std::normal_distribution<double> distribution{0.0, sqrt(1.0*Nx*Ny)};
     	    std::normal_distribution<double> distribution{0.0, 1.0};
 
 
@@ -2484,67 +2358,46 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
                 	n[k] = distribution(*generator)*sqrt_coupling_constant;
                 	m[k] = distribution(*generator)*sqrt_coupling_constant;
 	    }
-//sqrt( -2.0 * log( EPS + distribution(*generator) ) ) * cos( distribution(*generator) * 2.0 * M_PI);
-//                	n[k] = sqrt( -2.0 * log( EPS + rr->get() ) ) * cos( rr->get() * 2.0 * M_PI);
-	
-   	    //these are the LAMBDAs and not the generators t^a = lambda/2.
 
 	    std::complex<double> unit(0.0,1.0);
 	    double sqrt_3 = sqrt(3.0);
 
-            //lambda_nr(1)%su3(1,2) =  runit
-            //lambda_nr(1)%su3(2,1) =  runit
 		xi_local_x->u[i*t+1] += n[0];
 		xi_local_x->u[i*t+3] += n[0];
 		xi_local_y->u[i*t+1] += m[0];
 		xi_local_y->u[i*t+3] += m[0];
 
-            //lambda_nr(2)%su3(1,2) = -iunit
-            //lambda_nr(2)%su3(2,1) =  iunit
-		xi_local_x->u[i*t+1] += unit*n[1];
+       		xi_local_x->u[i*t+1] += unit*n[1];
 		xi_local_x->u[i*t+3] -= unit*n[1];
 		xi_local_y->u[i*t+1] += unit*m[1];
 		xi_local_y->u[i*t+3] -= unit*m[1];
 
-            //lambda_nr(3)%su3(1,1) =  runit
-            //lambda_nr(3)%su3(2,2) = -runit
-		xi_local_x->u[i*t+0] += n[2];
+       		xi_local_x->u[i*t+0] += n[2];
 		xi_local_x->u[i*t+4] -= n[2];
 		xi_local_y->u[i*t+0] += m[2];
 		xi_local_y->u[i*t+4] -= m[2];
 
-            //lambda_nr(4)%su3(1,3) =  runit
-            //lambda_nr(4)%su3(3,1) =  runit
-		xi_local_x->u[i*t+2] += n[3];
+       		xi_local_x->u[i*t+2] += n[3];
 		xi_local_x->u[i*t+6] += n[3];
 		xi_local_y->u[i*t+2] += m[3];
 		xi_local_y->u[i*t+6] += m[3];
 
-            //lambda_nr(5)%su3(1,3) = -iunit
-            //lambda_nr(5)%su3(3,1) =  iunit
-		xi_local_x->u[i*t+2] += unit*n[4];
+       		xi_local_x->u[i*t+2] += unit*n[4];
 		xi_local_x->u[i*t+6] -= unit*n[4];
 		xi_local_y->u[i*t+2] += unit*m[4];
 		xi_local_y->u[i*t+6] -= unit*m[4];
 
-            //lambda_nr(6)%su3(2,3) =  runit
-            //lambda_nr(6)%su3(3,2) =  runit
-		xi_local_x->u[i*t+5] += n[5];
+       		xi_local_x->u[i*t+5] += n[5];
 		xi_local_x->u[i*t+7] += n[5];
 		xi_local_y->u[i*t+5] += m[5];
 		xi_local_y->u[i*t+7] += m[5];
 
-            //lambda_nr(7)%su3(2,3) = -iunit
-            //lambda_nr(7)%su3(3,2) =  iunit
-		xi_local_x->u[i*t+5] += unit*n[6];
+       		xi_local_x->u[i*t+5] += unit*n[6];
 		xi_local_x->u[i*t+7] -= unit*n[6];
 		xi_local_y->u[i*t+5] += unit*m[6];
 		xi_local_y->u[i*t+7] -= unit*m[6];
 
-            //lambda_nr(8)%su3(1,1) =  cst8
-            //lambda_nr(8)%su3(2,2) =  cst8
-            //lambda_nr(8)%su3(3,3) =  -(two*cst8)
-		xi_local_x->u[i*t+0] += n[7]/sqrt_3;
+       		xi_local_x->u[i*t+0] += n[7]/sqrt_3;
 		xi_local_x->u[i*t+4] += n[7]/sqrt_3;
 		xi_local_x->u[i*t+8] += -2.0*n[7]/sqrt_3;
 		xi_local_y->u[i*t+0] += m[7]/sqrt_3;
@@ -2590,17 +2443,6 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 		        su3_matrix<double> C,D,E,F,G,H,K;
 
                         int i = xx*Ny+yy;
-
-
-/*
-                        double dx2 = Nx*sin(M_PI*(x_global-xx)/Nx)/M_PI;
-                        double dy2 = Ny*sin(M_PI*(y_global-yy)/Ny)/M_PI;
-
-                        double dx = 0.5*Nx*sin(2.0*M_PI*(x_global-xx)/Nx)/M_PI;
-                        double dy = 0.5*Ny*sin(2.0*M_PI*(y_global-yy)/Ny)/M_PI;
-
-                        double rrr = 1.0*(dx2*dx2+dy2*dy2);
-*/
 
 			double dx;
 			double dy;
@@ -2711,10 +2553,10 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 	}
 
         for(int k = 0; k < t; k++){
-              	A_local->u[(x*A_local->Nyl+y)*t+k].real(sumAlocalRe[k]);
-              	B_local->u[(x*A_local->Nyl+y)*t+k].real(sumBlocalRe[k]);
-              	A_local->u[(x*A_local->Nyl+y)*t+k].imag(sumAlocalIm[k]);
-              	B_local->u[(x*A_local->Nyl+y)*t+k].imag(sumBlocalIm[k]);
+              	A_local->u[(x*A_local->getNyl()+y)*t+k].real(sumAlocalRe[k]);
+              	B_local->u[(x*A_local->getNyl()+y)*t+k].real(sumBlocalRe[k]);
+              	A_local->u[(x*A_local->getNyl()+y)*t+k].imag(sumAlocalIm[k]);
+              	B_local->u[(x*A_local->getNyl()+y)*t+k].imag(sumBlocalIm[k]);
 	}
 
 return 1;
@@ -2730,14 +2572,14 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
         f = fopen(filename, "a+");
 
-        for(int xx = 0; xx < sum->Nxl; xx++){
-                for(int yy = 0; yy < sum->Nyl; yy++){
+        for(int xx = 0; xx < sum->getNxl(); xx++){
+                for(int yy = 0; yy < sum->getNyl(); yy++){
 
-                        int i = xx*(sum->Nyl)+yy;
+                        int i = xx*(sum->getNyl())+yy;
 
-                        if( fabs(xx + mpi->getPosX()*(sum->Nxl) - yy - mpi->getPosY()*(sum->Nyl)) <= 4 ){
+                        if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
 
-                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->Nxl)), yy+(mpi->getPosY()*(sum->Nyl)), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(sum->u[i*t+0].real()), x*(mom->phat2(i))*(err->u[i*t+0].real()));
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(sum->u[i*t+0].real()), x*(mom->phat2(i))*(err->u[i*t+0].real()));
 
                         }
                 }

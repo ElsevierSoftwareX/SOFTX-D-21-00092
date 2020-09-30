@@ -217,13 +217,13 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	uf.setToUnit();
 
-    	for(int i = 0; i < MVmodel->Ny_parameter; i++){
+    	for(int i = 0; i < MVmodel->NyGet(); i++){
 	
 		f.setMVModel(MVmodel);
 
 		fourier2->execute2D(&f, 1);
 
-		f.solvePoisson(cnfg->mass * pow(MVmodel->g_parameter,2.0) * MVmodel->mu_parameter, MVmodel->g_parameter, momtable);
+		f.solvePoisson(cnfg->mass * pow(MVmodel->gGet(),2.0) * MVmodel->muGet(), MVmodel->gGet(), momtable);
 
 	    	fourier2->execute2D(&f, 0);
 

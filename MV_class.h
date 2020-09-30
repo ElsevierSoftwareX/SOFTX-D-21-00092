@@ -45,11 +45,13 @@
 
 class MV_class{
 
-	public:
+	private:
 
 	double g_parameter;
 	double mu_parameter;
 	int Ny_parameter;
+
+	public:
 
 	MV_class(double g, double mu, int N){
 
@@ -57,6 +59,19 @@ class MV_class{
 		mu_parameter = mu;
 		Ny_parameter = N;
 	}
+
+	double gGet(){
+		return g_parameter;
+	}
+
+	double muGet(){
+		return mu_parameter;
+	}
+
+	int NyGet(){
+		return Ny_parameter;
+	}
+
 };
 
 #endif
