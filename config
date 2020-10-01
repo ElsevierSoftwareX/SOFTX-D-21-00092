@@ -1,11 +1,11 @@
-stat = 2000
+stat = 10
 mu = 30.72
 mass = 0.0001
-elementaryWilsonLines = 100
+elementaryWilsonLines = 50
 file_name = output
 langevin_steps = 100
-measurements = 1
+measurements = 100
 step = 0.0004
-EvolutionChoice = NO_EVOLUTION
-CouplingChoice = NO_COUPLING_CONSTANT
-KernelChoice = SIN_KERNEL
+EvolutionChoice = MOMENTUM_EVOLUTION
+CouplingChoice = NOISE_COUPLING_CONSTANT
+KernelChoice = LINEAR_KERNEL

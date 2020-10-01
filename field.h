@@ -2384,7 +2384,8 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
     	    std::normal_distribution<double> distribution{0.0, 1.0};
 
 
-	    double sqrt_coupling_constant = sqrt(tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ));
+	    //double sqrt_coupling_constant = sqrt(tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ));
+	    double sqrt_coupling_constant = tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) );
 
 	    //set to zero
 	    for(int j = 0; j < t; j++){
