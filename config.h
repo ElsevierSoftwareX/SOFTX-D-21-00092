@@ -28,8 +28,8 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 64
-#define Ny 64
+#define Nx 192
+#define Ny Nx
 
 #include <iostream>
 #include <stdlib.h>

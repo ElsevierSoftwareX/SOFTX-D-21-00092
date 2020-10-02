@@ -440,7 +440,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                         file_name += "SIN_KERNEL";
                 
     for(int i = 0; i < cnfg->measurements; i++){
-            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
+            print(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
     }
 
 //-------------------------------------------------------

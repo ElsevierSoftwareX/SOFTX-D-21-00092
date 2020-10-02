@@ -485,7 +485,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     const std::string file_name = "output_explicit";
 
     for(int i = cnfg->measurements-1; i < cnfg->measurements; i++){
-            print(i, &sum[i], &err[i], momtable, 1.0/3.0/cnfg->stat, mpi, file_name);
+            print(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
     }
 
 

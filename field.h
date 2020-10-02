@@ -2621,7 +2621,15 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
                         if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
 
-                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(sum->u[i*t+0].real()), x*(mom->phat2(i))*(err->u[i*t+0].real()));
+				double kt = sqrt(mom->phat2(i));
+				double c =  (mom->phat2(i))*(sum->u[i*t+0].real())/x/3.0;
+				double ce = (mom->phat2(i))*(err->u[i*t+0].real())/x/3.0;
+
+                                //cfit[j] = 1024.0*1024.0*3.0*c[i];
+                                //cefit[j] = 1024.0*1024.0*3.0*(sqrt(64.0*64.0*3.0*kt[i]*kt[i]*ce[i]-3.0*64.0*3.0*64.0*c[i]*c[i])/64.0/sqrt(64.0));
+                                //ktfit[j] = 1024.0*kt[i];
+
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), Nx*kt, Nx*Nx*3.0*c, Nx*Nx*3.0*sqrt(x*x*3.0*kt*kt*ce - 3.0*x*3.0*x*c*c)/x/sqrt(x));
 
                         }
                 }
