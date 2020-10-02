@@ -167,7 +167,6 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		int multiplyByCholesky(gmatrix<T>* mm);
 
-		lfield<T,t>* reduce(int NNx, int NNy, mpi_class* mpi);
 		int reduce(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi);
 		int reduce_hatta(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi, int xr, int yr);
 
@@ -295,8 +294,7 @@ template<class T, int t> class lfield: public field<T,t> {
 
 		int setMVModel(MV_class* MVconfig);
 		int setUnitModel(rand_class* rr);
-
-		int setGaussian(mpi_class* rr, config* cnfg);
+		int setGaussian(void);
 
 		int solvePoisson(double mass, double g, momenta* momtable);
 
@@ -387,6 +385,10 @@ template<class T, int t> gfield<T,t>& gfield<T,t>::operator= ( const gfield<T,t>
 		return *this;
 		}
 
+/********************************************//**
+ * Overloaded multiplication and assignement operator. In the optimized version the exponentiation from the Lie algebra to the Lie group is included in order to minimize
+ * thread creation and synchronization.
+ ***********************************************/
 template<class T, int t> lfield<T,t>& lfield<T,t>::operator*= ( const lfield<T,t>& f ){
 
 			if( this != &f ){
@@ -584,7 +586,9 @@ template<class T, int t> gfield<T,t> operator + ( const gfield<T,t> &f, const gf
 		}
 
 
-
+/********************************************//**
+ * Specialization of the MPI Allgather function to the lfield class. Takes data from local lfield objects and copies it to gfield class. Works only with parallelization in a single direction: x-direction is assumed to be parallelized.
+ ***********************************************/
 template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_class* mpi){
 
 
@@ -653,6 +657,9 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_cla
 	return 1;
 }
 
+/********************************************//**
+ * Function exchanging boundary values through MPI Send and Recv functions. Not used at the moment. May be useful for the parallel calculation of correlation functions with Wilson line derivatives.
+ ***********************************************/
 template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi){
 
     double *bufor_send_n;
@@ -710,7 +717,7 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
 		this->u[buf_pos_ex(Nxl+1,yy)] = bufor_receive_p[yy];
 	    }
     }
-
+/*
     if( mpi->getExchangeY() == 1 ){
 
 	    int xx; 
@@ -759,10 +766,13 @@ template<class T,int t> int lfield<T,t>::mpi_exchange_boundaries(mpi_class* mpi)
 		this->u[buf_pos_ex(xx,Nyl+1)] = bufor_receive_p[xx];
 	    }
     }
-
+*/
 return 1;
 }
 
+/********************************************//**
+ * Method to set the values of lfield object according to the McLerran-Venugopalan model. Model parameters are transferred though the MV_class object.
+ ***********************************************/
 template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig){
 
 	if(t == 9){
@@ -839,6 +849,9 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig){
 return 1;
 }
 
+/********************************************//**
+ * Method to set the values of lfield object with gaussian distribution for all matrix elements. Receives a pointer to the wrapper of the C++ random generator. Not parallelized with threads. Not used in physical application.
+ ***********************************************/
 template<class T, int t> int lfield<T,t>::setUnitModel(rand_class* rr){
 
 	if(t == 9){
@@ -871,7 +884,10 @@ return 1;
 }
 
 
-template<class T, int t> int lfield<T,t>::setGaussian(mpi_class* mpi, config* cnfg){
+/********************************************//**
+ * Method to set the values of lfield object with gaussian distribution in the SU(3) group. Thread parallelized. Not used in physical application.
+ ***********************************************/
+template<class T, int t> int lfield<T,t>::setGaussian(){
 
 	if(t == 9){
 
@@ -880,8 +896,6 @@ template<class T, int t> int lfield<T,t>::setGaussian(mpi_class* mpi, config* cn
 	// 0 1 2
 	// 3 4 5
 	// 6 7 8
-
-        //rand_class* rr = new rand_class(mpi,cnfg);
 
 	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
@@ -946,7 +960,9 @@ template<class T, int t> int lfield<T,t>::setGaussian(mpi_class* mpi, config* cn
 return 1;
 }
 
-
+/********************************************//**
+ * Implements the solution of the Poisson equation in momentum space, Eq. 4 of arxiv XXXXXX
+ ***********************************************/
 template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, momenta* mom){
 
 	#pragma omp parallel for simd default(shared)
@@ -959,6 +975,9 @@ template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, m
 return 1;
 }
 
+/********************************************//**
+ * Function to exponentiate elements of the Lie algebra to obtain Lie group elements. Note that for the initial condition the optimized version uses the exponentiation in the overloaded *= operator.
+ ************************************************/
 template<class T, int t > int lfield<T, t>::exponentiate(){
 
 	#pragma omp parallel for simd default(shared)
@@ -971,6 +990,7 @@ template<class T, int t > int lfield<T, t>::exponentiate(){
 			A.m[k] = this->u[i*t+k];
 		}
 		
+		/// The argument allows to include a - sign before exponentiation, without an additional loop
 		A.exponentiate(1.0);
 
 		for(int k = 0; k < t; k++){
@@ -983,6 +1003,9 @@ template<class T, int t > int lfield<T, t>::exponentiate(){
 return 1;
 }
 
+/********************************************//**
+ * Function to exponentiate elements of the Lie algebra to obtain Lie group elements. Note that for the initial condition the optimized version uses the exponentiation in the overloaded *= operator. Additional scaling for the Langevin step size is passed as the double argument.
+ ************************************************/
 template<class T, int t> int lfield<T, t>::exponentiate(double s){
 
 	#pragma omp parallel for simd default(shared)
@@ -995,6 +1018,7 @@ template<class T, int t> int lfield<T, t>::exponentiate(double s){
 			A.m[k] = s*(this->u[i*t+k]);
 		}
 		
+		/// The argument allows to include a - sign before exponentiation, without an additional loop
 		A.exponentiate(-1.0);
 
 		for(int k = 0; k < t; k++){
@@ -1007,7 +1031,9 @@ template<class T, int t> int lfield<T, t>::exponentiate(double s){
 return 1;
 }
 
-
+/********************************************//**
+ * Function to set the value of the JIMWLK kernel in momentum space, the x component. Takes for arguments the momenta object for global momenta values, the mpi_class for parallelization, and the KernelChoice. In the optimized implementation this is included in the prepare_A_local function.
+ ************************************************/
 template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom, mpi_class* mpi, Kernel KernelChoice){
 
 	if(t == 9){
@@ -1060,6 +1086,9 @@ template<class T, int t> int lfield<T,t>::setKernelPbarX(momenta* mom, mpi_class
 return 1;
 }
 
+/********************************************//**
+ * Function to set the value of the JIMWLK kernel in momentum space, the y component. Takes for arguments the momenta object for global momenta values, the mpi_class for parallelization, and the KernelChoice. In the optimized version this is included in the prepare_A_local function.
+ ************************************************/
 template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom, mpi_class* mpi, Kernel KernelChoice){
 
 
@@ -1114,7 +1143,9 @@ template<class T, int t> int lfield<T,t>::setKernelPbarY(momenta* mom, mpi_class
 return 1;
 }
 
-
+/********************************************//**
+ * Function to set the value of the JIMWLK kernel in momentum space, the x component. Takes for arguments the momenta object for global momenta values, the mpi_class for parallelization, and the KernelChoice. It includes the running coupling. In the optimized version this is included in the prepare_A_local function.
+ ************************************************/
 template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(momenta* mom, mpi_class* mpi, Kernel KernelChoice){
 
 	if(t == 9){
@@ -1122,7 +1153,6 @@ template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(mom
 	#pragma omp parallel for simd collapse(2) default(shared)
         for(int ix = 0; ix < Nxl; ix++){
         for(int iy = 0; iy < Nyl; iy++){
-	//for(int i = 0; i < Nxl*Nyl; i++){
 
                 int i = ix*Nyl + iy;
 
@@ -1169,6 +1199,9 @@ template<class T, int t> int lfield<T,t>::setKernelPbarXWithCouplingConstant(mom
 return 1;
 }
 
+/********************************************//**
+ * Function to set the value of the JIMWLK kernel in momentum space, the y component. Takes for arguments the momenta object for global momenta values, the mpi_class for parallelization, and the KernelChoice. It includes the running coupling. In the optimized version this is included in the prepare_A_local function.
+ ************************************************/
 template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(momenta* mom, mpi_class* mpi, Kernel KernelChoice){
 
 
@@ -1177,7 +1210,6 @@ template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(mom
 	#pragma omp parallel for simd default(shared)
         for(int ix = 0; ix < Nxl; ix++){
         for(int iy = 0; iy < Nyl; iy++){
-	//for(int i = 0; i < Nxl*Nyl; i++){
 
                 int i = ix*Nyl + iy;
 
@@ -1224,6 +1256,9 @@ template<class T, int t> int lfield<T,t>::setKernelPbarYWithCouplingConstant(mom
 return 1;
 }
 
+/********************************************//**
+ * Function to set the value of the JIMWLK kernel in position space, the x component. Takes for arguments the global position and the positions object to avoid recomputation of sin functions, and the KernelChoice. Sets the values of the global gfield and has to be rerun for each x_global, y_global position. The values are summed to calculate the corresponding JIMWLK kernel. In the optimized version this is included in the prepare_A_and_B function.
+ ************************************************/
 template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_global, positions* pos, Kernel KernelChoice){
 
 	if(t == 9){
@@ -1291,6 +1326,9 @@ template<class T, int t> int gfield<T,t>::setKernelXbarX(int x_global, int y_glo
 return 1;
 }
 
+/********************************************//**
+ * Function to set the value of the JIMWLK kernel in position space, the y component. Takes for arguments the global position and the positions object to avoid recomputation of sin functions, and the KernelChoice. Sets the values of the global gfield and has to be rerun for each x_global, y_global position. The values are summed to calculate the corresponding JIMWLK kernel. In the optimized version this is included in the prepare_A_and_B function.
+ ************************************************/
 template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_global, positions* pos, Kernel KernelChoice){
 
 	if(t == 9){
@@ -1359,7 +1397,9 @@ template<class T, int t> int gfield<T,t>::setKernelXbarY(int x_global, int y_glo
 return 1;
 }
 
-
+/********************************************//**
+ * Function to set the value of the JIMWLK kernel in position space, the x component. Takes for arguments the global position and the positions object to avoid recomputation of sin functions, and the KernelChoice. Sets the values of the global gfield and has to be rerun for each x_global, y_global position. The values are summed to calculate the corresponding JIMWLK kernel. Includes the effects of the running coupling. In the optimized version this is included in the prepare_A_and_B function.
+ ************************************************/
 template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int x_global, int y_global, positions* pos, Kernel KernelChoice){
 
 	if(t == 9){
@@ -1436,6 +1476,9 @@ template<class T, int t> int gfield<T,t>::setKernelXbarXWithCouplingConstant(int
 return 1;
 }
 
+/********************************************//**
+ * Function to set the value of the JIMWLK kernel in position space, the x component. Takes for arguments the global position and the positions object to avoid recomputation of sin functions, and the KernelChoice. Sets the values of the global gfield and has to be rerun for each x_global, y_global position. The values are summed to calculate the corresponding JIMWLK kernel. Includes the effects of the running coupling. In the optimized version this is included in the prepare_A_and_B function.
+ ************************************************/
 template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int x_global, int y_global, positions* pos, Kernel KernelChoice){
 
 	if(t == 9){
@@ -1514,6 +1557,9 @@ return 1;
 }
 
 
+/********************************************//**
+ * Returns a lfield with the matrices on all sites hermitian conjugated. In the optimized version this operation is merged with other steps.
+ *************************************************/
 template<class T, int t> lfield<T,t>* lfield<T,t>::hermitian(void){
 
 	lfield<T,t>* result = new lfield<T,t>(Nxl, Nyl);
@@ -1548,6 +1594,9 @@ template<class T, int t> lfield<T,t>* lfield<T,t>::hermitian(void){
 return result;
 }
 
+/********************************************//**
+ * Returns a gfield with the matrices on all sites hermitian conjugated. Not used.
+ *************************************************/
 template<class T, int t> gfield<T,t>* gfield<T,t>::hermitian(void){
 
 	gfield<T,t>* result = new gfield<T,t>(Nx, Ny);
@@ -1582,11 +1631,10 @@ template<class T, int t> gfield<T,t>* gfield<T,t>::hermitian(void){
 return result;
 }
 
-//template<typename T>
-
+/********************************************//**
+ * For all sites of the local lfield, the method computes the trace and stores it in the one element lfield object provided by the pointer in the argument.
+ *************************************************/
 template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
-
-//template<class T, int t> int lfield<T,t>::trace(template<class TT, int tt> lfield<TT,tt>* cc){
 
 	// 0 1 2
 	// 3 4 5
@@ -1602,18 +1650,18 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
                 su3_matrix<double> C;
 
                 for(int k = 0; k < t; k++){
-                        A.m[k] = this->u[i*t+k]/(1.0*Nx*Ny);
+                        A.m[k] = this->u[i*t+k];
                 }
 
-		B.m[0] = std::conj(this->u[i*t+0]/(1.0*Nx*Ny));
-		B.m[1] = std::conj(this->u[i*t+3]/(1.0*Nx*Ny));
-		B.m[2] = std::conj(this->u[i*t+6]/(1.0*Nx*Ny));
-		B.m[3] = std::conj(this->u[i*t+1]/(1.0*Nx*Ny));
-		B.m[4] = std::conj(this->u[i*t+4]/(1.0*Nx*Ny));
-		B.m[5] = std::conj(this->u[i*t+7]/(1.0*Nx*Ny));
-		B.m[6] = std::conj(this->u[i*t+2]/(1.0*Nx*Ny));
-		B.m[7] = std::conj(this->u[i*t+5]/(1.0*Nx*Ny));
-		B.m[8] = std::conj(this->u[i*t+8]/(1.0*Nx*Ny));
+		B.m[0] = std::conj(this->u[i*t+0]);
+		B.m[1] = std::conj(this->u[i*t+3]);
+		B.m[2] = std::conj(this->u[i*t+6]);
+		B.m[3] = std::conj(this->u[i*t+1]);
+		B.m[4] = std::conj(this->u[i*t+4]);
+		B.m[5] = std::conj(this->u[i*t+7]);
+		B.m[6] = std::conj(this->u[i*t+2]);
+		B.m[7] = std::conj(this->u[i*t+5]);
+		B.m[8] = std::conj(this->u[i*t+8]);
 
                 C = A*B;
 
@@ -1630,6 +1678,9 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 return 1;
 }
 
+/********************************************//**
+ * For all sites of the local lfield, the method takes the first element and stores it in the one element lfield object provided by the pointer in the argument. For testing purposes only, not used in physical application.
+ *************************************************/
 template<class T, int t> int lfield<T,t>::average(lfield<double,1>* cc){
 
 	if(t == 9 ){
@@ -1654,8 +1705,9 @@ template<class T, int t> int lfield<T,t>::average(lfield<double,1>* cc){
 return 1;
 }
 
-
-
+/********************************************//**
+ * The method symmetrizes the data assuming x <-> y symmetry (rotations by 90 degrees) and mirror images along the Nx/2 and Ny/2 axes.
+ *************************************************/
 template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 
 	printf("avegare_and_symmetrize: t = %i\n", t);
@@ -1690,25 +1742,9 @@ template<class T, int t> int gfield<T,t>::average_and_symmetrize(void){
 return 1;
 }
 
-
-template<class T, int t> lfield<T,t>* gfield<T,t>::reduce(int NNx, int NNy, mpi_class* mpi){
-
-	lfield<T,t>* corr_tmp = new lfield<T,t>(NNx,NNy);
-
-	corr_tmp->setToZero();	
-
-	#pragma omp parallel for simd collapse(2) default(shared)
-	for(int i = 0; i < NNx; i++){
-		for(int j = 0; j < NNy; j++){
-			//x += this->u[(i+mpi->getPosX()*NNx)*Nyg+j+mpi->getPosY()*NNy][0];
-			corr_tmp->u[(i*NNy+j)*t+0] = this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+0];
-		}
-	}
-
-return corr_tmp;
-}
-
-
+/********************************************//**
+ * The method reduces the global gfield object into local lfield sum and lfield err objects: each MPI rank takes the appropriate part of the global object.
+*************************************************/
 template<class T, int t> int gfield<T,t>::reduce(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi){
 
 	int NNx = sum->getNxl();
@@ -1717,7 +1753,6 @@ template<class T, int t> int gfield<T,t>::reduce(lfield<T,t>* sum, lfield<T,t>* 
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < NNx; i++){
 		for(int j = 0; j < NNy; j++){
-			//x += this->u[(i+mpi->getPosX()*NNx)*Nyg+j+mpi->getPosY()*NNy][0];
 			sum->u[(i*NNy+j)*t+0] += this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+0];
 			err->u[(i*NNy+j)*t+0] += pow(this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+0],2.0);
 		}
@@ -1726,6 +1761,9 @@ template<class T, int t> int gfield<T,t>::reduce(lfield<T,t>* sum, lfield<T,t>* 
 return 1;
 }
 
+/********************************************//**
+ * The method reduces the global gfield object into local lfield sum and lfield err objects: each MPI rank takes the appropriate part of the global object. Specialization to the HATTA_COUPLING_CONSTANT: we take from the global object only the elements for which the correlation function was evaluated, given by the two integer arguments xr and yr.
+*************************************************/
 template<class T, int t> int gfield<T,t>::reduce_hatta(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi, int xr, int yr ){
 
 	int NNx = sum->getNxl();
@@ -1757,10 +1795,9 @@ if( mpi->getPosX() == xr/(sum->getNxl()) && mpi->getPosY() == yr/(sum->getNyl())
 return 1;
 }
 
-
-
-
-
+/********************************************//**
+ * The method reduces the global gfield object into local lfield by performing a sum over the volume. Used in the explicit formulation.
+*************************************************/
 template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local, gfield<T,t>* f){
 
 		for(int k = 0; k < t; k++){
@@ -1786,26 +1823,9 @@ template<class T, int t> int lfield<T,t>::reduceAndSet(int x_local, int y_local,
 return 1;
 }
 
-template<class T, int t> int gfield<T,t>::setCorrelationsForCouplingConstant(){
-
-	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
-	const double f = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
-
-	#pragma omp parallel for simd collapse(2) default(shared)
-	for(int xx = 0; xx < Nxg; xx++){
-		for(int yy = 0; yy < Nxg; yy++){
-
-			int i = xx*Nyg+yy;
-
-			double sqrt_coupling_constant = f / log( pow( w + 1.26/(1.0e-12+pow(6.0*6.0*(xx*xx+yy*yy)/Nxg/Nyg,1.0/0.2)) , 0.2 ) );
-        
-			this->u[i*t+0] = sqrt_coupling_constant;
-		}
-	}
-
-return 1;
-}
-
+/********************************************//**
+ * The method creates a one-element lfield object with the value of the coupling constant evaluated for each distance.
+*************************************************/
 template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(momenta* mom){
 
 	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
@@ -1826,6 +1846,9 @@ template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(mom
 return 1;
 }
 
+/********************************************//**
+ * The method multiplies the global gfield object by the Cholesky decomposition of the correation matrix.
+*************************************************/
 template<class T, int t> int gfield<T,t>::multiplyByCholesky(gmatrix<T>* mm){
 
 	gfield<T,t>* tmp = new gfield<T,t>(Nxg, Nyg); 
@@ -1861,6 +1884,9 @@ template<class T, int t> int gfield<T,t>::multiplyByCholesky(gmatrix<T>* mm){
 return 1;
 } 
 
+/********************************************//**
+ * Simple print function. Not used in the optimized version.
+*************************************************/
 template<class T, int t> int lfield<T,t>::print(momenta* mom){
 
 	for(int k = 0; k < t; k++){
@@ -1879,6 +1905,9 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom){
 return 1;
 }
 
+/********************************************//**
+ * Simple print function. Not used in the optimized version.
+*************************************************/
 template<class T, int t> int lfield<T,t>::print(momenta* mom, double x, mpi_class* mpi){
 
 
@@ -1911,6 +1940,9 @@ template<class T, int t> int lfield<T,t>::print(momenta* mom, double x, mpi_clas
 return 1;
 }
 
+/********************************************//**
+ * Simple print function. Not used in the optimized version.
+*************************************************/
 template<class T, int t> int print(lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double x, mpi_class* mpi){
 
 
@@ -1945,6 +1977,9 @@ template<class T, int t> int print(lfield<T,t>* sum, lfield<T,t>* err, momenta* 
 return 1;
 }
 
+/********************************************//**
+ * Simple print function. Not used in the optimized version.
+*************************************************/
 template<class T, int t> int lfield<T,t>::printDebug(){
 
 	for(int xx = 0; xx < Nxl; xx++){
@@ -1962,6 +1997,9 @@ template<class T, int t> int lfield<T,t>::printDebug(){
 return 1;
 }
 
+/********************************************//**
+ * Simple print function. Not used in the optimized version.
+*************************************************/
 template<class T, int t> int gfield<T,t>::printDebug(){
 
 	for(int xx = 0; xx < Nxg; xx++){
@@ -1979,6 +2017,9 @@ template<class T, int t> int gfield<T,t>::printDebug(){
 return 1;
 }
 
+/********************************************//**
+ * Simple print function. Not used in the optimized version.
+*************************************************/
 template<class T, int t> int lfield<T,t>::printDebug(double x){
 
 
@@ -2001,7 +2042,9 @@ template<class T, int t> int lfield<T,t>::printDebug(double x){
 return 1;
 }
 
-
+/********************************************//**
+ * Simple print function. Not used in the optimized version.
+*************************************************/
 template<class T, int t> int lfield<T,t>::printDebug(int ii){
 
 	int xxx = ii/Nyl;
@@ -2029,7 +2072,9 @@ template<class T, int t> int lfield<T,t>::printDebug(int ii){
 return 1;
 }
 
-
+/********************************************//**
+ * Simple print function. Not used in the optimized version.
+*************************************************/
 template<class T, int t> int lfield<T,t>::printDebug(double x, mpi_class* mpi){
 
 	for(int xx = 0; xx < Nxl; xx++){
@@ -2044,6 +2089,9 @@ template<class T, int t> int lfield<T,t>::printDebug(double x, mpi_class* mpi){
 return 1;
 }
 
+/********************************************//**
+ * Simple print function. Not used in the optimized version.
+*************************************************/
 template<class T, int t> int lfield<T,t>::printDebugRadial(double x){
 
 	for(int xx = 0; xx < Nxl; xx++){
@@ -2072,7 +2120,9 @@ template<class T, int t> int lfield<T,t>::printDebugRadial(double x){
 return 1;
 }
 
-
+/********************************************//**
+ * Optimized method to compute the product of Wilson line U, noise vector xi and hermitian conjugate of the Wilson line. 
+*************************************************/
 template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* uxiulocal_y, lfield<T,t>* uf, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y){
 
 ///                uf_hermitian = uf.hermitian();
@@ -2116,7 +2166,9 @@ template<class T, int t> int uxiulocal(lfield<T,t>* uxiulocal_x, lfield<T,t>* ux
 return 1;
 }
 
-
+/********************************************//**
+ * Main method for the advance of the Wilson lines in rapidity according to the Langevin equation. Operates on the first argument, takes the A and B matrices and the Langevin discretization step. Implementation of Eq. 22 of arxiv XXXXXX
+*************************************************/
 template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lfield<T,t>* A_local, double step){
 
 ///              A_local.exponentiate(sqrt(step));
@@ -2125,7 +2177,7 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 ///
 ///              uf = B_local * uf * A_local;
 
-        #pragma omp parallel for simd default(shared) //private(A,B,C,D,E,F)
+        #pragma omp parallel for simd default(shared)
         for(int i = 0; i < B_local->getNxl()*B_local->getNyl(); i++){
 
 	        su3_matrix<double> A,B,C,D,E,F;
@@ -2149,6 +2201,9 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 return 1;
 }
 
+/********************************************//**
+ * Optimized method for the evaluation of the A and B matrices. Operates on the first argument, takes the xi_x, xi_y and momenta. Construction of the JIMWLK kernel is performed here due to optimization reasons. Implementation of Eqs. 35 ad 38 of arxiv XXXXXX
+*************************************************/
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom, mpi_class* mpi, Coupling p, Kernel kk){
 
         #pragma omp parallel for simd collapse(2) default(shared)
@@ -2234,6 +2289,9 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 return 1;
 }
 
+/********************************************//**
+ * Unoptimized method for the evaluation of the A and B matrices. Operates on the first argument, takes the xi_x, xi_y and the precomputed kernel objects. Implementation of Eqs. 35 ad 38 of arxiv XXXXXX
+*************************************************/
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, lfield<T,t>* kernel_pbarx, lfield<T,t>* kernel_pbary){
 
 ///              xi_local_x_tmp = kernel_pbarx * xi_local_x;
@@ -2269,6 +2327,9 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 return 1;
 }
 
+/********************************************//**
+ * Method for generation of the noise vectors with a gaussian distribution in the Lie algebra. Implementation of Eqs. 24 ad 25 of arxiv XXXXXX
+*************************************************/
 template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, mpi_class* mpi, config* cnfg){
 
 	if(t == 9){
@@ -2360,6 +2421,9 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 return 1;
 }
 
+/********************************************//**
+ * Method for generation of the noise vectors with a gaussian distribution rescaled by the coupling constant in the Lie algebra. Implementation of Eq. 47 of arxiv XXXXXX
+*************************************************/
 template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom, mpi_class* mpi, config* cnfg){
 
 	if(t == 9){
@@ -2384,7 +2448,6 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
     	    std::normal_distribution<double> distribution{0.0, 1.0};
 
 
-	    //double sqrt_coupling_constant = sqrt(tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ));
 	    double sqrt_coupling_constant = tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) );
 
 	    //set to zero
@@ -2458,7 +2521,9 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
 return 1;
 }
 
-
+/********************************************//**
+ * Optimized method for the evaluation of the A and B matrices. Operates on the seven and eight arguments, takes the xi_x, xi_y, positions and the actual Wilson line field uf_global. Construction of the JIMWLK kernel is performed here due to optimization reasons. Used in the position space construction. Implementation of Eqs. 34 ad 38 of arxiv XXXXXX in position space, without Fourier transforms
+*************************************************/
 template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, int y_global, gfield<T,t>* xi_global_x, gfield<T,t>* xi_global_y, 
 				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable, int rr, Coupling p, Kernel kk){
 
@@ -2604,6 +2669,10 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 return 1;
 }
 
+
+/********************************************//**
+ * Main output function. Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation and its standard deviation. Additional arguments are needed: momenta* to print the k_T. The statistics is passed through x argument.
+ ***********************************************/
 template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double x, mpi_class* mpi, std::string const &fileroot){
 
 

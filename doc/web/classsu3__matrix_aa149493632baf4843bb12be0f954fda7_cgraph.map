@@ -1,4 +1,4 @@
 <map id="su3_matrix::su3_matrix" name="su3_matrix::su3_matrix">
 <area shape="rect" id="node2" href="$classsu3__matrix.html#aedf511a4b74bf6f2a4a5ba681c1df72e" title="su3_matrix::exponentiate" alt="" coords="212,5,380,32"/>
-<area shape="rect" id="node3" href="$su3__matrix_8h.html#ab226771af05ad43c66ee5a218eee0bdd" title="function_zheevh3" alt="" coords="428,5,552,32"/>
+<area shape="rect" id="node3" href="$su3__matrix_8h.html#ab226771af05ad43c66ee5a218eee0bdd" title=" Calculates the eigenvalues and normalized eigenvectors of a hermitian 3x3 matrix A using Cardano&#39;s m..." alt="" coords="428,5,552,32"/>
 </map>

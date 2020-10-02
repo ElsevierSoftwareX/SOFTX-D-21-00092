@@ -1,12 +1,12 @@
 <map id="zhetrd3" name="zhetrd3">
 <area shape="rect" id="node2" href="$zheevq3_8c.html#a366e69621f4accef15af90601590718c" title="zheevq3" alt="" coords="119,132,189,159"/>
-<area shape="rect" id="node3" href="$zheevh3_8h.html#ab226771af05ad43c66ee5a218eee0bdd" title="function_zheevh3" alt="" coords="237,107,361,133"/>
+<area shape="rect" id="node3" href="$zheevh3_8h.html#ab226771af05ad43c66ee5a218eee0bdd" title=" Calculates the eigenvalues and normalized eigenvectors of a hermitian 3x3 matrix A using Cardano&#39;s m..." alt="" coords="237,107,361,133"/>
 <area shape="rect" id="node11" href="$zheevh3_8c.html#ae81794e4c790741d03e9349abe29e876" title="zheevh3" alt="" coords="264,157,335,184"/>
 <area shape="rect" id="node4" href="$classsu3__matrix.html#aedf511a4b74bf6f2a4a5ba681c1df72e" title="su3_matrix::exponentiate" alt="" coords="409,81,577,108"/>
 <area shape="rect" id="node10" href="$classsu3__matrix.html#ae0bc960763b5576f3172dca81b45af1a" title="su3_matrix::zheevh3" alt="" coords="422,132,565,159"/>
-<area shape="rect" id="node5" href="$classlfield.html#ad794d8e7e1cb4685d665e0b474f8901b" title="lfield::operator*=" alt="" coords="646,5,763,32"/>
-<area shape="rect" id="node6" href="$classlfield.html#a8299544558cca4ccb188039e6d868aee" title="lfield::exponentiate" alt="" coords="639,56,770,83"/>
-<area shape="rect" id="node8" href="$field_8h.html#aea30ef7d1293ae1aa73d254f8eaef4c7" title="update_uf" alt="" coords="665,107,744,133"/>
+<area shape="rect" id="node5" href="$classlfield.html#ad794d8e7e1cb4685d665e0b474f8901b" title="Overloaded multiplication and assignement operator. " alt="" coords="646,5,763,32"/>
+<area shape="rect" id="node6" href="$classlfield.html#a8299544558cca4ccb188039e6d868aee" title="Function to exponentiate elements of the Lie algebra to obtain Lie group elements. " alt="" coords="639,56,770,83"/>
+<area shape="rect" id="node8" href="$field_8h.html#aea30ef7d1293ae1aa73d254f8eaef4c7" title="Main method for the advance of the Wilson lines in rapidity according to the Langevin equation..." alt="" coords="665,107,744,133"/>
 <area shape="rect" id="node9" href="$classsu3__matrix.html#aa149493632baf4843bb12be0f954fda7" title="su3_matrix::su3_matrix" alt="" coords="625,157,784,184"/>
 <area shape="rect" id="node7" href="$main__explicit_8cpp.html#a0ddf1224851353fc92bfbff6f499fa97" title="main" alt="" coords="832,81,883,108"/>
 </map>

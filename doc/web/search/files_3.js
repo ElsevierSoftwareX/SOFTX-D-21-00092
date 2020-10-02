@@ -1,7 +1,6 @@
 var searchData=
 [
   ['main_5fexplicit_2ecpp',['main_explicit.cpp',['../main__explicit_8cpp.html',1,'']]],
-  ['main_5fomp_2ecpp',['main_omp.cpp',['../main__omp_8cpp.html',1,'']]],
   ['main_5foptimized_2ecpp',['main_optimized.cpp',['../main__optimized_8cpp.html',1,'']]],
   ['matrix_2eh',['matrix.h',['../matrix_8h.html',1,'']]],
   ['momenta_2eh',['momenta.h',['../momenta_8h.html',1,'']]],

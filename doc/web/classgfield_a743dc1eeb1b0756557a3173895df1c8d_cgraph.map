@@ -1,4 +1,6 @@
 <map id="gfield::reduce" name="gfield::reduce">
-<area shape="rect" id="node2" href="$classmpi__class.html#ab876ade2f1b994bb1c920d1de9375cf6" title="mpi_class::getPosX" alt="" coords="153,5,292,32"/>
-<area shape="rect" id="node3" href="$classmpi__class.html#aa894e45879f0e9a081efd4d4118b2491" title="mpi_class::getPosY" alt="" coords="153,56,292,83"/>
+<area shape="rect" id="node2" href="$classlfield.html#a6525c9ba54e57f27ff551fc3f6169f14" title="lfield::getNxl" alt="" coords="175,5,270,32"/>
+<area shape="rect" id="node3" href="$classlfield.html#a7eba0ea85f6f0df54a45cf97cd3ad53d" title="lfield::getNyl" alt="" coords="175,56,270,83"/>
+<area shape="rect" id="node4" href="$classmpi__class.html#ab876ade2f1b994bb1c920d1de9375cf6" title="mpi_class::getPosX" alt="" coords="153,107,292,133"/>
+<area shape="rect" id="node5" href="$classmpi__class.html#aa894e45879f0e9a081efd4d4118b2491" title="mpi_class::getPosY" alt="" coords="153,157,292,184"/>
 </map>

@@ -18,7 +18,7 @@
 <!-- Node12 -->
 <g id="node2" class="node">
 <title>Node12</title>
-<g id="a_node2"><a xlink:href="classlfield.html#afd673e79539094a4042199fe8b29560e" target="_top" xlink:title="lfield::mpi_exchange\l_boundaries">
+<g id="a_node2"><a xlink:href="classlfield.html#afd673e79539094a4042199fe8b29560e" target="_top" xlink:title="Function exchanging boundary values through MPI Send and Recv functions. ">
 <polygon fill="#ffffff" stroke="#000000" points="167,-.5 167,-30.5 273,-30.5 273,-.5 167,-.5"/>
 <text text-anchor="start" x="175" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::mpi_exchange</text>
 <text text-anchor="middle" x="220" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">_boundaries</text>

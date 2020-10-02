@@ -1,3 +1,5 @@
 <map id="generate_gaussian_with_noise_coupling_constant" name="generate_gaussian_with_noise_coupling_constant">
-<area shape="rect" id="node2" href="$classmomenta.html#a5b2ec8b44c4874d8e18036c8927461db" title="momenta::phat2" alt="" coords="225,13,341,39"/>
+<area shape="rect" id="node2" href="$classlfield.html#a6525c9ba54e57f27ff551fc3f6169f14" title="lfield::getNxl" alt="" coords="236,5,331,32"/>
+<area shape="rect" id="node3" href="$classlfield.html#a7eba0ea85f6f0df54a45cf97cd3ad53d" title="lfield::getNyl" alt="" coords="236,56,331,83"/>
+<area shape="rect" id="node4" href="$classmomenta.html#a5b2ec8b44c4874d8e18036c8927461db" title="momenta::phat2" alt="" coords="225,107,341,133"/>
 </map>

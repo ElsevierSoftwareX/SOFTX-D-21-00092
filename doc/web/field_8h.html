@@ -112,7 +112,7 @@ Include dependency graph for field.h:</div>
 </div><div class="textblock"><div class="dynheader">
 This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h__dep__incl.svg" width="4174" height="216"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+<div class="center"><div class="zoom"><iframe scrolling="no" frameborder="0" src="field_8h__dep__incl.svg" width="100%" height="462"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div></div>
 </div>
 </div>
 <p><a href="field_8h_source.html">Go to the source code of this file.</a></p>
@@ -148,33 +148,39 @@ Functions</h2></td></tr>
 <tr class="separator:a37042ea36be49b649f301e9b193b7089"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a463f2cc1e2cd9fa4d1fc3f800835a2aa"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
 <tr class="memitem:a463f2cc1e2cd9fa4d1fc3f800835a2aa"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#a463f2cc1e2cd9fa4d1fc3f800835a2aa">print</a> (<a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *sum, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *err, <a class="el" href="classmomenta.html">momenta</a> *mom, double x, <a class="el" href="classmpi__class.html">mpi_class</a> *mpi)</td></tr>
+<tr class="memdesc:a463f2cc1e2cd9fa4d1fc3f800835a2aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple print function.  <a href="#a463f2cc1e2cd9fa4d1fc3f800835a2aa">More...</a><br /></td></tr>
 <tr class="separator:a463f2cc1e2cd9fa4d1fc3f800835a2aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a127febd6e7d0a0da0fc2d4fee0081bd4"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
 <tr class="memitem:a127febd6e7d0a0da0fc2d4fee0081bd4"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#a127febd6e7d0a0da0fc2d4fee0081bd4">uxiulocal</a> (<a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *uxiulocal_x, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *uxiulocal_y, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *uf, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_x, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_y)</td></tr>
+<tr class="memdesc:a127febd6e7d0a0da0fc2d4fee0081bd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optimized method to compute the product of Wilson line U, noise vector xi and hermitian conjugate of the Wilson line.  <a href="#a127febd6e7d0a0da0fc2d4fee0081bd4">More...</a><br /></td></tr>
 <tr class="separator:a127febd6e7d0a0da0fc2d4fee0081bd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3dd9df396497b96e32d2131888de00c4"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
-<tr class="memitem:a3dd9df396497b96e32d2131888de00c4"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#a3dd9df396497b96e32d2131888de00c4">prepare_B_local</a> (<a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *B_local, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *uxiulocal_x, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *uxiulocal_y, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *kernel_pbarx, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *kernel_pbary)</td></tr>
-<tr class="separator:a3dd9df396497b96e32d2131888de00c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea30ef7d1293ae1aa73d254f8eaef4c7"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
 <tr class="memitem:aea30ef7d1293ae1aa73d254f8eaef4c7"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#aea30ef7d1293ae1aa73d254f8eaef4c7">update_uf</a> (<a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *uf, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *B_local, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *A_local, double step)</td></tr>
+<tr class="memdesc:aea30ef7d1293ae1aa73d254f8eaef4c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main method for the advance of the Wilson lines in rapidity according to the Langevin equation.  <a href="#aea30ef7d1293ae1aa73d254f8eaef4c7">More...</a><br /></td></tr>
 <tr class="separator:aea30ef7d1293ae1aa73d254f8eaef4c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a775fa9c6bfba32acd280006a6fd3e524"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
 <tr class="memitem:a775fa9c6bfba32acd280006a6fd3e524"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#a775fa9c6bfba32acd280006a6fd3e524">prepare_A_local</a> (<a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *A_local, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_x, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_y, <a class="el" href="classmomenta.html">momenta</a> *mom, <a class="el" href="classmpi__class.html">mpi_class</a> *mpi, <a class="el" href="config_8h.html#a967b0559766c873f7c65c83cb9428a09">Coupling</a> p, <a class="el" href="config_8h.html#a8d71fe894b897c26adb0313a574b9839">Kernel</a> kk)</td></tr>
+<tr class="memdesc:a775fa9c6bfba32acd280006a6fd3e524"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optimized method for the evaluation of the A and B matrices.  <a href="#a775fa9c6bfba32acd280006a6fd3e524">More...</a><br /></td></tr>
 <tr class="separator:a775fa9c6bfba32acd280006a6fd3e524"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02b61a8ee4a5ec5bfcbb7b096651a1a1"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
 <tr class="memitem:a02b61a8ee4a5ec5bfcbb7b096651a1a1"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#a02b61a8ee4a5ec5bfcbb7b096651a1a1">prepare_A_local</a> (<a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *A_local, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_x, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_y, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *kernel_pbarx, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *kernel_pbary)</td></tr>
+<tr class="memdesc:a02b61a8ee4a5ec5bfcbb7b096651a1a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unoptimized method for the evaluation of the A and B matrices.  <a href="#a02b61a8ee4a5ec5bfcbb7b096651a1a1">More...</a><br /></td></tr>
 <tr class="separator:a02b61a8ee4a5ec5bfcbb7b096651a1a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a87926e17588c01dfa811c26d05bf8792"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
 <tr class="memitem:a87926e17588c01dfa811c26d05bf8792"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#a87926e17588c01dfa811c26d05bf8792">generate_gaussian</a> (<a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_x, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_y, <a class="el" href="classmpi__class.html">mpi_class</a> *mpi, <a class="el" href="classconfig.html">config</a> *cnfg)</td></tr>
+<tr class="memdesc:a87926e17588c01dfa811c26d05bf8792"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for generation of the noise vectors with a gaussian distribution in the Lie algebra.  <a href="#a87926e17588c01dfa811c26d05bf8792">More...</a><br /></td></tr>
 <tr class="separator:a87926e17588c01dfa811c26d05bf8792"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1991c064deb041673a7fd9e56ddcc0b"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
 <tr class="memitem:ab1991c064deb041673a7fd9e56ddcc0b"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#ab1991c064deb041673a7fd9e56ddcc0b">generate_gaussian_with_noise_coupling_constant</a> (<a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_x, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *xi_local_y, <a class="el" href="classmomenta.html">momenta</a> *mom, <a class="el" href="classmpi__class.html">mpi_class</a> *mpi, <a class="el" href="classconfig.html">config</a> *cnfg)</td></tr>
+<tr class="memdesc:ab1991c064deb041673a7fd9e56ddcc0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for generation of the noise vectors with a gaussian distribution rescaled by the coupling constant in the Lie algebra.  <a href="#ab1991c064deb041673a7fd9e56ddcc0b">More...</a><br /></td></tr>
 <tr class="separator:ab1991c064deb041673a7fd9e56ddcc0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae43c2aa5da993ce8ed28c1953c02805a"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
 <tr class="memitem:ae43c2aa5da993ce8ed28c1953c02805a"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#ae43c2aa5da993ce8ed28c1953c02805a">prepare_A_and_B_local</a> (int x, int y, int x_global, int y_global, <a class="el" href="classgfield.html">gfield</a>&lt; T, t &gt; *xi_global_x, <a class="el" href="classgfield.html">gfield</a>&lt; T, t &gt; *xi_global_y, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *A_local, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *B_local, <a class="el" href="classgfield.html">gfield</a>&lt; T, t &gt; *uf_global, <a class="el" href="classpositions.html">positions</a> *postable, int rr, <a class="el" href="config_8h.html#a967b0559766c873f7c65c83cb9428a09">Coupling</a> p, <a class="el" href="config_8h.html#a8d71fe894b897c26adb0313a574b9839">Kernel</a> kk)</td></tr>
+<tr class="memdesc:ae43c2aa5da993ce8ed28c1953c02805a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optimized method for the evaluation of the A and B matrices.  <a href="#ae43c2aa5da993ce8ed28c1953c02805a">More...</a><br /></td></tr>
 <tr class="separator:ae43c2aa5da993ce8ed28c1953c02805a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4dfef0244018f283b891e1be03aaf822"><td class="memTemplParams" colspan="2">template&lt;class T , int t&gt; </td></tr>
 <tr class="memitem:a4dfef0244018f283b891e1be03aaf822"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="field_8h.html#a4dfef0244018f283b891e1be03aaf822">print</a> (int measurement, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *sum, <a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *err, <a class="el" href="classmomenta.html">momenta</a> *mom, double x, <a class="el" href="classmpi__class.html">mpi_class</a> *mpi, std::string const &amp;fileroot)</td></tr>
+<tr class="memdesc:a4dfef0244018f283b891e1be03aaf822"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main output function.  <a href="#a4dfef0244018f283b891e1be03aaf822">More...</a><br /></td></tr>
 <tr class="separator:a4dfef0244018f283b891e1be03aaf822"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
@@ -218,11 +224,19 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02315">2315</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p>Method for generation of the noise vectors with a gaussian distribution in the Lie algebra. </p>
+<p>Implementation of Eqs. 24 ad 25 of arxiv XXXXXX </p>
 
-<p class="reference">References <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nxl</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02333">2333</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+
+<p class="reference">References <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="main__optimized_8cpp_source.html#l00064">main()</a>.</p>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a87926e17588c01dfa811c26d05bf8792_cgraph.svg" width="284" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
@@ -277,15 +291,18 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02444">2444</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p>Method for generation of the noise vectors with a gaussian distribution rescaled by the coupling constant in the Lie algebra. </p>
+<p>Implementation of Eq. 47 of arxiv XXXXXX </p>
 
-<p class="reference">References <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nxl</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, <a class="el" href="momenta_8h_source.html#l00127">momenta::phat2()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02427">2427</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+
+<p class="reference">References <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="momenta_8h_source.html#l00153">momenta::phat2()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="main__optimized_8cpp_source.html#l00064">main()</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_ab1991c064deb041673a7fd9e56ddcc0b_cgraph.svg" width="347" height="52"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_ab1991c064deb041673a7fd9e56ddcc0b_cgraph.svg" width="347" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
@@ -323,14 +340,13 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l00424">424</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l00439">439</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
 
-<p class="reference">References <a class="el" href="field_8h_source.html#l00201">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00205">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00225">lfield&lt; T, t &gt;::setToZero()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="reference">References <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="su3__matrix_8h_source.html#l00060">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00237">lfield&lt; T, t &gt;::setToZero()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a3bdeaa38edf27a3f664c8312f15f8a88_cgraph.svg" width="250" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a3bdeaa38edf27a3f664c8312f15f8a88_cgraph.svg" width="250" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -363,14 +379,13 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l00461">461</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l00476">476</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
 
-<p class="reference">References <a class="el" href="field_8h_source.html#l00134">gfield&lt; T, t &gt;::getNxg()</a>, <a class="el" href="field_8h_source.html#l00138">gfield&lt; T, t &gt;::getNyg()</a>, <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00161">gfield&lt; T, t &gt;::setToZero()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="reference">References <a class="el" href="field_8h_source.html#l00147">gfield&lt; T, t &gt;::getNxg()</a>, <a class="el" href="field_8h_source.html#l00151">gfield&lt; T, t &gt;::getNyg()</a>, <a class="el" href="su3__matrix_8h_source.html#l00060">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00173">gfield&lt; T, t &gt;::setToZero()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_ae2e78230fe4fa881c6233010eba186f2_cgraph.svg" width="254" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_ae2e78230fe4fa881c6233010eba186f2_cgraph.svg" width="254" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -403,14 +418,13 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l00500">500</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l00515">515</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
 
-<p class="reference">References <a class="el" href="field_8h_source.html#l00201">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00205">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00225">lfield&lt; T, t &gt;::setToZero()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="reference">References <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="su3__matrix_8h_source.html#l00060">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00237">lfield&lt; T, t &gt;::setToZero()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a3b4f42aa9c3b63b4579c4ce8922a9fb4_cgraph.svg" width="252" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a3b4f42aa9c3b63b4579c4ce8922a9fb4_cgraph.svg" width="252" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -443,14 +457,13 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l00537">537</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l00552">552</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
 
-<p class="reference">References <a class="el" href="field_8h_source.html#l00134">gfield&lt; T, t &gt;::getNxg()</a>, <a class="el" href="field_8h_source.html#l00138">gfield&lt; T, t &gt;::getNyg()</a>, <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00161">gfield&lt; T, t &gt;::setToZero()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="reference">References <a class="el" href="field_8h_source.html#l00147">gfield&lt; T, t &gt;::getNxg()</a>, <a class="el" href="field_8h_source.html#l00151">gfield&lt; T, t &gt;::getNyg()</a>, <a class="el" href="su3__matrix_8h_source.html#l00060">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00173">gfield&lt; T, t &gt;::setToZero()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a37042ea36be49b649f301e9b193b7089_cgraph.svg" width="256" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a37042ea36be49b649f301e9b193b7089_cgraph.svg" width="256" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -549,22 +562,23 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02567">2567</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p>Optimized method for the evaluation of the A and B matrices. </p>
+<p>Operates on the seven and eight arguments, takes the xi_x, xi_y, positions and the actual Wilson line field uf_global. Construction of the JIMWLK kernel is performed here due to optimization reasons. Used in the position space construction. Implementation of Eqs. 34 ad 38 of arxiv XXXXXX in position space, without Fourier transforms </p>
 
-<p class="reference">References <a class="el" href="config_8h_source.html#l00040">HATTA_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00042">LINEAR_KERNEL</a>, <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="config_8h_source.html#l00040">NO_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00040">NOISE_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, <a class="el" href="config_8h_source.html#l00042">SIN_KERNEL</a>, <a class="el" href="config_8h_source.html#l00040">SQRT_COUPLING_CONSTANT</a>, <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>, <a class="el" href="positions_8h_source.html#l00167">positions::xbar2()</a>, <a class="el" href="positions_8h_source.html#l00172">positions::xhatX()</a>, and <a class="el" href="positions_8h_source.html#l00177">positions::xhatY()</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02527">2527</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+
+<p class="reference">References <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="config_8h_source.html#l00040">HATTA_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00042">LINEAR_KERNEL</a>, <a class="el" href="su3__matrix_8h_source.html#l00060">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="config_8h_source.html#l00040">NO_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00040">NOISE_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="config_8h_source.html#l00042">SIN_KERNEL</a>, <a class="el" href="config_8h_source.html#l00040">SQRT_COUPLING_CONSTANT</a>, <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>, <a class="el" href="positions_8h_source.html#l00181">positions::xbar2()</a>, <a class="el" href="positions_8h_source.html#l00186">positions::xhatX()</a>, and <a class="el" href="positions_8h_source.html#l00191">positions::xhatY()</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="main__optimized_8cpp_source.html#l00064">main()</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_ae43c2aa5da993ce8ed28c1953c02805a_cgraph.svg" width="334" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_ae43c2aa5da993ce8ed28c1953c02805a_cgraph.svg" width="334" height="190"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_ae43c2aa5da993ce8ed28c1953c02805a_icgraph.svg" width="268" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_ae43c2aa5da993ce8ed28c1953c02805a_icgraph.svg" width="268" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -627,22 +641,23 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02191">2191</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p>Optimized method for the evaluation of the A and B matrices. </p>
+<p>Operates on the first argument, takes the xi_x, xi_y and momenta. Construction of the JIMWLK kernel is performed here due to optimization reasons. Implementation of Eqs. 35 ad 38 of arxiv XXXXXX </p>
 
-<p class="reference">References <a class="el" href="mpi__class_8h_source.html#l00157">mpi_class::getPosX()</a>, <a class="el" href="mpi__class_8h_source.html#l00162">mpi_class::getPosY()</a>, <a class="el" href="config_8h_source.html#l00042">LINEAR_KERNEL</a>, <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="config_8h_source.html#l00040">NO_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00040">NOISE_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nxl</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, <a class="el" href="momenta_8h_source.html#l00132">momenta::pbarX()</a>, <a class="el" href="momenta_8h_source.html#l00137">momenta::pbarY()</a>, <a class="el" href="momenta_8h_source.html#l00127">momenta::phat2()</a>, <a class="el" href="config_8h_source.html#l00042">SIN_KERNEL</a>, <a class="el" href="config_8h_source.html#l00040">SQRT_COUPLING_CONSTANT</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02207">2207</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+
+<p class="reference">References <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="mpi__class_8h_source.html#l00157">mpi_class::getPosX()</a>, <a class="el" href="mpi__class_8h_source.html#l00162">mpi_class::getPosY()</a>, <a class="el" href="config_8h_source.html#l00042">LINEAR_KERNEL</a>, <a class="el" href="su3__matrix_8h_source.html#l00060">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="config_8h_source.html#l00040">NO_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00040">NOISE_COUPLING_CONSTANT</a>, <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="momenta_8h_source.html#l00158">momenta::pbarX()</a>, <a class="el" href="momenta_8h_source.html#l00163">momenta::pbarY()</a>, <a class="el" href="momenta_8h_source.html#l00153">momenta::phat2()</a>, <a class="el" href="config_8h_source.html#l00042">SIN_KERNEL</a>, <a class="el" href="config_8h_source.html#l00040">SQRT_COUPLING_CONSTANT</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="main__optimized_8cpp_source.html#l00064">main()</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a775fa9c6bfba32acd280006a6fd3e524_cgraph.svg" width="312" height="240"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a775fa9c6bfba32acd280006a6fd3e524_cgraph.svg" width="312" height="342"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a775fa9c6bfba32acd280006a6fd3e524_icgraph.svg" width="224" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a775fa9c6bfba32acd280006a6fd3e524_icgraph.svg" width="224" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -693,68 +708,18 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02276">2276</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p>Unoptimized method for the evaluation of the A and B matrices. </p>
+<p>Operates on the first argument, takes the xi_x, xi_y and the precomputed kernel objects. Implementation of Eqs. 35 ad 38 of arxiv XXXXXX </p>
+<p>xi_local_x_tmp = kernel_pbarx * xi_local_x; xi_local_y_tmp = kernel_pbary * xi_local_y;</p>
+<p>A_local = xi_local_x_tmp + xi_local_y_tmp; </p>
 
-<p class="reference">References <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nxl</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02295">2295</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
 
-</div>
-</div>
-<a id="a3dd9df396497b96e32d2131888de00c4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3dd9df396497b96e32d2131888de00c4">&#9670;&nbsp;</a></span>prepare_B_local()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class T , int t&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">int prepare_B_local </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *&#160;</td>
-          <td class="paramname"><em>B_local</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *&#160;</td>
-          <td class="paramname"><em>uxiulocal_x</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *&#160;</td>
-          <td class="paramname"><em>uxiulocal_y</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *&#160;</td>
-          <td class="paramname"><em>kernel_pbarx</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classlfield.html">lfield</a>&lt; T, t &gt; *&#160;</td>
-          <td class="paramname"><em>kernel_pbary</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02128">2128</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
-
-<p class="reference">References <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nxl</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
-
-<p class="reference">Referenced by <a class="el" href="test__momentum__evolution__coupling__lambda_8cpp_source.html#l00037">main()</a>.</p>
+<p class="reference">References <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="su3__matrix_8h_source.html#l00060">su3_matrix&lt; T &gt;::m</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 <div class="dynheader">
-Here is the caller graph for this function:</div>
+Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a3dd9df396497b96e32d2131888de00c4_icgraph.svg" width="224" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a02b61a8ee4a5ec5bfcbb7b096651a1a1_cgraph.svg" width="268" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -805,22 +770,23 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l01923">1923</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p>Simple print function. </p>
+<p>Not used in the optimized version. </p>
 
-<p class="reference">References <a class="el" href="mpi__class_8h_source.html#l00157">mpi_class::getPosX()</a>, <a class="el" href="mpi__class_8h_source.html#l00162">mpi_class::getPosY()</a>, <a class="el" href="mpi__class_8h_source.html#l00099">mpi_class::getRank()</a>, <a class="el" href="mpi__class_8h_source.html#l00104">mpi_class::getSize()</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nxl</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, <a class="el" href="momenta_8h_source.html#l00127">momenta::phat2()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l01946">1946</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
 
-<p class="reference">Referenced by <a class="el" href="main__explicit_8cpp_source.html#l00062">main()</a>, and <a class="el" href="field_8h_source.html#l00259">lfield&lt; T, t &gt;::setToFixed()</a>.</p>
+<p class="reference">References <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="mpi__class_8h_source.html#l00157">mpi_class::getPosX()</a>, <a class="el" href="mpi__class_8h_source.html#l00162">mpi_class::getPosY()</a>, <a class="el" href="mpi__class_8h_source.html#l00099">mpi_class::getRank()</a>, <a class="el" href="mpi__class_8h_source.html#l00104">mpi_class::getSize()</a>, <a class="el" href="momenta_8h_source.html#l00153">momenta::phat2()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+
+<p class="reference">Referenced by <a class="el" href="main__explicit_8cpp_source.html#l00062">main()</a>, and <a class="el" href="field_8h_source.html#l00271">lfield&lt; T, t &gt;::setToFixed()</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a463f2cc1e2cd9fa4d1fc3f800835a2aa_cgraph.svg" width="244" height="240"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a463f2cc1e2cd9fa4d1fc3f800835a2aa_cgraph.svg" width="244" height="342"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a463f2cc1e2cd9fa4d1fc3f800835a2aa_icgraph.svg" width="327" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a463f2cc1e2cd9fa4d1fc3f800835a2aa_icgraph.svg" width="327" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -883,14 +849,16 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02723">2723</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p>Main output function. </p>
+<p>Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation and its standard deviation. Additional arguments are needed: momenta* to print the k_T. The statistics is passed through x argument. </p>
 
-<p class="reference">References <a class="el" href="mpi__class_8h_source.html#l00157">mpi_class::getPosX()</a>, <a class="el" href="mpi__class_8h_source.html#l00162">mpi_class::getPosY()</a>, <a class="el" href="mpi__class_8h_source.html#l00099">mpi_class::getRank()</a>, <a class="el" href="mpi__class_8h_source.html#l00104">mpi_class::getSize()</a>, <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nxl</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, <a class="el" href="momenta_8h_source.html#l00127">momenta::phat2()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02676">2676</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+
+<p class="reference">References <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="mpi__class_8h_source.html#l00157">mpi_class::getPosX()</a>, <a class="el" href="mpi__class_8h_source.html#l00162">mpi_class::getPosY()</a>, <a class="el" href="mpi__class_8h_source.html#l00099">mpi_class::getRank()</a>, <a class="el" href="mpi__class_8h_source.html#l00104">mpi_class::getSize()</a>, <a class="el" href="config_8h_source.html#l00031">Nx</a>, <a class="el" href="config_8h_source.html#l00032">Ny</a>, <a class="el" href="momenta_8h_source.html#l00153">momenta::phat2()</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a4dfef0244018f283b891e1be03aaf822_cgraph.svg" width="244" height="240"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a4dfef0244018f283b891e1be03aaf822_cgraph.svg" width="244" height="342"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -935,22 +903,26 @@ template&lt;class T , int t&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02159">2159</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p>Main method for the advance of the Wilson lines in rapidity according to the Langevin equation. </p>
+<p>Operates on the first argument, takes the A and B matrices and the Langevin discretization step. Implementation of Eq. 22 of arxiv XXXXXX </p>
+<p>A_local.exponentiate(sqrt(step));</p>
+<p>B_local.exponentiate(-sqrt(step));</p>
+<p>uf = B_local * uf * A_local; </p>
 
-<p class="reference">References <a class="el" href="su3__matrix_8h_source.html#l00173">su3_matrix&lt; T &gt;::exponentiate()</a>, <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nxl</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02172">2172</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+
+<p class="reference">References <a class="el" href="su3__matrix_8h_source.html#l00174">su3_matrix&lt; T &gt;::exponentiate()</a>, <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="su3__matrix_8h_source.html#l00060">su3_matrix&lt; T &gt;::m</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="main__explicit_8cpp_source.html#l00062">main()</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_aea30ef7d1293ae1aa73d254f8eaef4c7_cgraph.svg" width="478" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_aea30ef7d1293ae1aa73d254f8eaef4c7_cgraph.svg" width="478" height="139"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_aea30ef7d1293ae1aa73d254f8eaef4c7_icgraph.svg" width="188" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_aea30ef7d1293ae1aa73d254f8eaef4c7_icgraph.svg" width="188" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>
@@ -1000,19 +972,28 @@ template&lt;class T , int t&gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Optimized method to compute the product of Wilson line U, noise vector xi and hermitian conjugate of the Wilson line. </p>
+<p>uf_hermitian = uf.hermitian();</p>
+<p>uxiulocal_x = uf * xi_local_x * (*uf_hermitian); uxiulocal_y = uf * xi_local_y * (*uf_hermitian);</p>
+<p>delete uf_hermitian;</p>
 <p>(1.0*Nx*Ny);</p>
 <p>(1.0*Nx*Ny); </p>
 
-<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02085">2085</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="field_8h_source.html#l02126">2126</a> of file <a class="el" href="field_8h_source.html">field.h</a>.</p>
 
-<p class="reference">References <a class="el" href="su3__matrix_8h_source.html#l00059">su3_matrix&lt; T &gt;::m</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nxl</a>, <a class="el" href="field_8h_source.html#l00185">lfield&lt; T, t &gt;::Nyl</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
+<p class="reference">References <a class="el" href="field_8h_source.html#l00213">lfield&lt; T, t &gt;::getNxl()</a>, <a class="el" href="field_8h_source.html#l00217">lfield&lt; T, t &gt;::getNyl()</a>, <a class="el" href="su3__matrix_8h_source.html#l00060">su3_matrix&lt; T &gt;::m</a>, and <a class="el" href="field_8h_source.html#l00067">field&lt; T, t &gt;::u</a>.</p>
 
 <p class="reference">Referenced by <a class="el" href="main__optimized_8cpp_source.html#l00064">main()</a>.</p>
 <div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a127febd6e7d0a0da0fc2d4fee0081bd4_cgraph.svg" width="227" height="88"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
+</div>
+<div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a127febd6e7d0a0da0fc2d4fee0081bd4_icgraph.svg" width="183" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe>
-</div>
+<div class="center"><iframe scrolling="no" frameborder="0" src="field_8h_a127febd6e7d0a0da0fc2d4fee0081bd4_icgraph.svg" width="183" height="38"><p><b>This browser is not able to show SVG: try Firefox, Chrome, Safari, or Opera instead.</b></p></iframe></div>
 </div>
 
 </div>

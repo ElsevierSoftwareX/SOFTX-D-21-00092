@@ -1,4 +1,6 @@
 <map id="gfield::reduce_hatta" name="gfield::reduce_hatta">
-<area shape="rect" id="node2" href="$classmpi__class.html#ab876ade2f1b994bb1c920d1de9375cf6" title="mpi_class::getPosX" alt="" coords="189,5,328,32"/>
-<area shape="rect" id="node3" href="$classmpi__class.html#aa894e45879f0e9a081efd4d4118b2491" title="mpi_class::getPosY" alt="" coords="189,56,328,83"/>
+<area shape="rect" id="node2" href="$classlfield.html#a6525c9ba54e57f27ff551fc3f6169f14" title="lfield::getNxl" alt="" coords="211,5,306,32"/>
+<area shape="rect" id="node3" href="$classlfield.html#a7eba0ea85f6f0df54a45cf97cd3ad53d" title="lfield::getNyl" alt="" coords="211,56,306,83"/>
+<area shape="rect" id="node4" href="$classmpi__class.html#ab876ade2f1b994bb1c920d1de9375cf6" title="mpi_class::getPosX" alt="" coords="189,107,328,133"/>
+<area shape="rect" id="node5" href="$classmpi__class.html#aa894e45879f0e9a081efd4d4118b2491" title="mpi_class::getPosY" alt="" coords="189,157,328,184"/>
 </map>

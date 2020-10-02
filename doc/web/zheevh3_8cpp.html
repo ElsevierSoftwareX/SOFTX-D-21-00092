@@ -113,6 +113,8 @@ Macros</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:ab226771af05ad43c66ee5a218eee0bdd"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:ab226771af05ad43c66ee5a218eee0bdd"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="zheevh3_8cpp.html#ab226771af05ad43c66ee5a218eee0bdd">function_zheevh3</a> (std::complex&lt; T &gt; A[3][3], std::complex&lt; T &gt; Q[3][3], T w[3])</td></tr>
+<tr class="memdesc:ab226771af05ad43c66ee5a218eee0bdd"><td class="mdescLeft">&#160;</td><td class="mdescRight"><hr/>
+<p> Calculates the eigenvalues and normalized eigenvectors of a hermitian 3x3 matrix A using Cardano's method for the eigenvalues and an analytical method based on vector cross products for the eigenvectors.  <a href="#ab226771af05ad43c66ee5a218eee0bdd">More...</a><br /></td></tr>
 <tr class="separator:ab226771af05ad43c66ee5a218eee0bdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
@@ -195,9 +197,27 @@ template&lt;class T &gt; </div>
       </table>
 </div><div class="memdoc">
 
+<p><hr/>
+<p> Calculates the eigenvalues and normalized eigenvectors of a hermitian 3x3 matrix A using Cardano's method for the eigenvalues and an analytical method based on vector cross products for the eigenvectors. </p>
+<p>However, if conditions are such that a large error in the results is to be expected, the routine falls back to using the slower, but more accurate QL algorithm. Only the diagonal and upper triangular parts of A need </p><h2>to contain meaningful values. Access to A is read-only. </h2>
+<p>Parameters: A: The hermitian input matrix Q: Storage buffer for eigenvectors </p><h2>w: Storage buffer for eigenvalues </h2>
+<p>Return value: 0: Success </p><h2>-1: Error </h2>
+<p>Dependencies: </p><h2><a class="el" href="zheevc3_8c.html#ab0c3602a614a9b3c61afb58b183f58ff">zheevc3()</a>, <a class="el" href="zhetrd3_8c.html#a05eb839b1245d01d2e98e7de084eb9ee">zhetrd3()</a>, <a class="el" href="zheevq3_8c.html#a366e69621f4accef15af90601590718c">zheevq3()</a> </h2>
+<p>Version history: v1.1: Simplified fallback condition &ndash;&gt; speed-up </p><h2>v1.0: First released version </h2>
+<p>Squared norm or inverse norm of current eigenvector</p>
+<p>Estimated maximum roundoff error</p>
+<p>Intermediate storage</p>
+<p>Loop counter</p>
+<p>Calculate eigenvalues</p>
+<p>Calculate first eigenvector by the formula v[0] = conj( (A - w[0]).e1 x (A - w[0]).e2 )</p>
+<p>If vectors are nearly linearly dependent, or if there might have been large cancellations in the calculation of A(I,I) - W(1), fall back to QL algorithm Note that this simultaneously ensures that multiple eigenvalues do not cause problems: If W(1) = W(2), then A - W(1) * I has rank 1, i.e. all columns of A - W(1) * I are linearly dependent.</p>
+<p>This is the standard branch</p>
+<p>Calculate second eigenvector by the formula v[1] = conj( (A - w[1]).e1 x (A - w[1]).e2 )</p>
+<p>Calculate third eigenvector according to v[2] = conj(v[0] x v[1]) </p>
+
 <p class="definition">Definition at line <a class="el" href="zheevh3_8cpp_source.html#l00032">32</a> of file <a class="el" href="zheevh3_8cpp_source.html">zheevh3.cpp</a>.</p>
 
-<p class="reference">References <a class="el" href="su3__matrix_8h_source.html#l00047">SQR</a>, <a class="el" href="su3__matrix_8h_source.html#l00048">SQR_ABS</a>, <a class="el" href="zheevc3_8c_source.html#l00033">zheevc3()</a>, and <a class="el" href="zheevq3_8c_source.html#l00031">zheevq3()</a>.</p>
+<p class="reference">References <a class="el" href="su3__matrix_8h_source.html#l00048">SQR</a>, <a class="el" href="su3__matrix_8h_source.html#l00049">SQR_ABS</a>, <a class="el" href="zheevc3_8c_source.html#l00033">zheevc3()</a>, and <a class="el" href="zheevq3_8c_source.html#l00031">zheevq3()</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">

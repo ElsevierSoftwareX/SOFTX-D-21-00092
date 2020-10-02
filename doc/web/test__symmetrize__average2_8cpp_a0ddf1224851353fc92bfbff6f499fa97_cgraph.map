@@ -2,20 +2,23 @@
 <area shape="rect" id="node2" href="$classfftw2D.html#a63f6a1404cba25536f52b693f1f85a50" title="fftw2D::init2D" alt="" coords="153,5,256,32"/>
 <area shape="rect" id="node3" href="$classmpi__class.html#a995c216b811090aa6255523e0e2a8e8a" title="mpi_class::mpi_exchange_grid" alt="" coords="104,56,305,83"/>
 <area shape="rect" id="node4" href="$classmpi__class.html#a0326e6a2416b3aacd64a3dcc84ddb79b" title="mpi_class::mpi_init" alt="" coords="137,107,272,133"/>
-<area shape="rect" id="node5" href="$classmomenta.html#ad86512de264263c1d6aef474b8829999" title="momenta::set" alt="" coords="153,157,256,184"/>
-<area shape="rect" id="node6" href="$classlfield.html#a6220e9fc7f5d24c493f7ab3382fb36aa" title="lfield::setToFixed" alt="" coords="143,208,266,235"/>
-<area shape="rect" id="node19" href="$classlfield.html#ad980584011ceafb6abbaf0a450bda309" title="lfield::setToZero" alt="" coords="147,259,263,285"/>
-<area shape="rect" id="node20" href="$classlfield.html#aa00604913a5b5456eaad72fcc36a6b42" title="lfield::trace" alt="" coords="161,309,248,336"/>
-<area shape="rect" id="node7" href="$classgfield.html#a39a5a9c26ecccd46720fd6d2369302b2" title="gfield::setCorrelationsFor\lCouplingConstant" alt="" coords="353,91,521,133"/>
-<area shape="rect" id="node8" href="$classgfield.html#a8a7aa9669d548e51089535f807e0ae4b" title="gfield::hermitian" alt="" coords="380,157,495,184"/>
-<area shape="rect" id="node9" href="$classgfield.html#a9d5e1ced7bf2e0c89ce72eefc08e63ad" title="gfield::operator=" alt="" coords="379,208,495,235"/>
-<area shape="rect" id="node12" href="$field_8h.html#a463f2cc1e2cd9fa4d1fc3f800835a2aa" title="print" alt="" coords="414,284,461,311"/>
-<area shape="rect" id="node18" href="$classgfield.html#aa7216414b47a54279908e9572ac5f488" title="gfield::printDebug" alt="" coords="375,335,499,361"/>
-<area shape="rect" id="node10" href="$classgfield.html#abc5227b4d044f39bb8f6ceebd4552861" title="gfield::getNxg" alt="" coords="587,132,690,159"/>
-<area shape="rect" id="node11" href="$classgfield.html#a963fa744ca9d2464463cfe4195a0ba90" title="gfield::getNyg" alt="" coords="587,183,690,209"/>
-<area shape="rect" id="node13" href="$classmpi__class.html#ab876ade2f1b994bb1c920d1de9375cf6" title="mpi_class::getPosX" alt="" coords="569,233,708,260"/>
-<area shape="rect" id="node14" href="$classmpi__class.html#aa894e45879f0e9a081efd4d4118b2491" title="mpi_class::getPosY" alt="" coords="569,284,708,311"/>
-<area shape="rect" id="node15" href="$classmpi__class.html#a6ba81c7f035bcbbb4c5c1273d0850aba" title="mpi_class::getRank" alt="" coords="569,335,708,361"/>
-<area shape="rect" id="node16" href="$classmpi__class.html#af78626438bee67b2eacf5bd583d4e4ce" title="mpi_class::getSize" alt="" coords="572,385,705,412"/>
-<area shape="rect" id="node17" href="$classmomenta.html#a5b2ec8b44c4874d8e18036c8927461db" title="momenta::phat2" alt="" coords="581,436,697,463"/>
+<area shape="rect" id="node5" href="$classMV__class.html#a01e071bdc58b1b0ff4ec57870b34f073" title="MV_class::NyGet" alt="" coords="141,157,268,184"/>
+<area shape="rect" id="node6" href="$classmomenta.html#ad86512de264263c1d6aef474b8829999" title="momenta::set" alt="" coords="153,208,256,235"/>
+<area shape="rect" id="node7" href="$classlfield.html#a6220e9fc7f5d24c493f7ab3382fb36aa" title="lfield::setToFixed" alt="" coords="143,259,266,285"/>
+<area shape="rect" id="node22" href="$classlfield.html#ad980584011ceafb6abbaf0a450bda309" title="lfield::setToZero" alt="" coords="147,309,263,336"/>
+<area shape="rect" id="node23" href="$classlfield.html#aa00604913a5b5456eaad72fcc36a6b42" title="For all sites of the local lfield, the method computes the trace and stores it in the one element lfi..." alt="" coords="161,360,248,387"/>
+<area shape="rect" id="node8" href="$classgfield.html#a39a5a9c26ecccd46720fd6d2369302b2" title="gfield::setCorrelationsFor\lCouplingConstant" alt="" coords="353,142,521,183"/>
+<area shape="rect" id="node9" href="$classgfield.html#a8a7aa9669d548e51089535f807e0ae4b" title="Returns a gfield with the matrices on all sites hermitian conjugated. " alt="" coords="380,208,495,235"/>
+<area shape="rect" id="node10" href="$classgfield.html#a9d5e1ced7bf2e0c89ce72eefc08e63ad" title="gfield::operator=" alt="" coords="379,259,495,285"/>
+<area shape="rect" id="node13" href="$field_8h.html#a463f2cc1e2cd9fa4d1fc3f800835a2aa" title="Simple print function. " alt="" coords="414,360,461,387"/>
+<area shape="rect" id="node21" href="$classgfield.html#aa7216414b47a54279908e9572ac5f488" title="Simple print function. " alt="" coords="375,411,499,437"/>
+<area shape="rect" id="node11" href="$classgfield.html#a53fa88cad304f3381b70aef740e903b4" title="gfield::getNxg" alt="" coords="587,157,690,184"/>
+<area shape="rect" id="node12" href="$classgfield.html#a12884fdf0eca769d389e04c4200263d2" title="gfield::getNyg" alt="" coords="587,208,690,235"/>
+<area shape="rect" id="node14" href="$classlfield.html#a6525c9ba54e57f27ff551fc3f6169f14" title="lfield::getNxl" alt="" coords="591,259,686,285"/>
+<area shape="rect" id="node15" href="$classlfield.html#a7eba0ea85f6f0df54a45cf97cd3ad53d" title="lfield::getNyl" alt="" coords="591,309,686,336"/>
+<area shape="rect" id="node16" href="$classmpi__class.html#ab876ade2f1b994bb1c920d1de9375cf6" title="mpi_class::getPosX" alt="" coords="569,360,708,387"/>
+<area shape="rect" id="node17" href="$classmpi__class.html#aa894e45879f0e9a081efd4d4118b2491" title="mpi_class::getPosY" alt="" coords="569,411,708,437"/>
+<area shape="rect" id="node18" href="$classmpi__class.html#a6ba81c7f035bcbbb4c5c1273d0850aba" title="mpi_class::getRank" alt="" coords="569,461,708,488"/>
+<area shape="rect" id="node19" href="$classmpi__class.html#af78626438bee67b2eacf5bd583d4e4ce" title="mpi_class::getSize" alt="" coords="572,512,705,539"/>
+<area shape="rect" id="node20" href="$classmomenta.html#a5b2ec8b44c4874d8e18036c8927461db" title="momenta::phat2" alt="" coords="581,563,697,589"/>
 </map>

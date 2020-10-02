@@ -18,7 +18,7 @@
 <!-- Node3 -->
 <g id="node2" class="node">
 <title>Node3</title>
-<g id="a_node2"><a xlink:href="zheevh3_8h.html#ab226771af05ad43c66ee5a218eee0bdd" target="_top" xlink:title="function_zheevh3">
+<g id="a_node2"><a xlink:href="zheevh3_8h.html#ab226771af05ad43c66ee5a218eee0bdd" target="_top" xlink:title=" Calculates the eigenvalues and normalized eigenvectors of a hermitian 3x3 matrix A using Cardano&#39;s m...">
 <polygon fill="#ffffff" stroke="#000000" points="89,-38.5 89,-57.5 182,-57.5 182,-38.5 89,-38.5"/>
 <text text-anchor="middle" x="135.5" y="-45.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">function_zheevh3</text>
 </a>
@@ -78,7 +78,7 @@
 <!-- Node5 -->
 <g id="node4" class="node">
 <title>Node5</title>
-<g id="a_node4"><a xlink:href="classlfield.html#ad794d8e7e1cb4685d665e0b474f8901b" target="_top" xlink:title="lfield::operator*=">
+<g id="a_node4"><a xlink:href="classlfield.html#ad794d8e7e1cb4685d665e0b474f8901b" target="_top" xlink:title="Overloaded multiplication and assignement operator. ">
 <polygon fill="#ffffff" stroke="#000000" points="395.5,-114.5 395.5,-133.5 483.5,-133.5 483.5,-114.5 395.5,-114.5"/>
 <text text-anchor="middle" x="439.5" y="-121.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::operator*=</text>
 </a>
@@ -93,7 +93,7 @@
 <!-- Node6 -->
 <g id="node5" class="node">
 <title>Node6</title>
-<g id="a_node5"><a xlink:href="classlfield.html#a8299544558cca4ccb188039e6d868aee" target="_top" xlink:title="lfield::exponentiate">
+<g id="a_node5"><a xlink:href="classlfield.html#a8299544558cca4ccb188039e6d868aee" target="_top" xlink:title="Function to exponentiate elements of the Lie algebra to obtain Lie group elements. ">
 <polygon fill="#ffffff" stroke="#000000" points="390.5,-76.5 390.5,-95.5 488.5,-95.5 488.5,-76.5 390.5,-76.5"/>
 <text text-anchor="middle" x="439.5" y="-83.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::exponentiate</text>
 </a>
@@ -108,7 +108,7 @@
 <!-- Node8 -->
 <g id="node7" class="node">
 <title>Node8</title>
-<g id="a_node7"><a xlink:href="field_8h.html#aea30ef7d1293ae1aa73d254f8eaef4c7" target="_top" xlink:title="update_uf">
+<g id="a_node7"><a xlink:href="field_8h.html#aea30ef7d1293ae1aa73d254f8eaef4c7" target="_top" xlink:title="Main method for the advance of the Wilson lines in rapidity according to the Langevin equation...">
 <polygon fill="#ffffff" stroke="#000000" points="410,-38.5 410,-57.5 469,-57.5 469,-38.5 410,-38.5"/>
 <text text-anchor="middle" x="439.5" y="-45.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">update_uf</text>
 </a>

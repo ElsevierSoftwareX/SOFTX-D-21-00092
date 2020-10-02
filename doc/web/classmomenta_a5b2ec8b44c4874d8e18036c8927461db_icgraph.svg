@@ -64,7 +64,7 @@ var sectionId = 'dynsection-5';
 <!-- Node27 -->
 <g id="node2" class="node">
 <title>Node27</title>
-<g id="a_node2"><a xlink:href="field_8h.html#ab1991c064deb041673a7fd9e56ddcc0b" target="_top" xlink:title="generate_gaussian_with\l_noise_coupling_constant">
+<g id="a_node2"><a xlink:href="field_8h.html#ab1991c064deb041673a7fd9e56ddcc0b" target="_top" xlink:title="Method for generation of the noise vectors with a gaussian distribution rescaled by the coupling cons...">
 <polygon fill="#ffffff" stroke="#000000" points="124,-455 124,-485 253,-485 253,-455 124,-455"/>
 <text text-anchor="start" x="132" y="-473" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">generate_gaussian_with</text>
 <text text-anchor="middle" x="188.5" y="-462" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">_noise_coupling_constant</text>
@@ -95,7 +95,7 @@ var sectionId = 'dynsection-5';
 <!-- Node30 -->
 <g id="node5" class="node">
 <title>Node30</title>
-<g id="a_node5"><a xlink:href="field_8h.html#a775fa9c6bfba32acd280006a6fd3e524" target="_top" xlink:title="prepare_A_local">
+<g id="a_node5"><a xlink:href="field_8h.html#a775fa9c6bfba32acd280006a6fd3e524" target="_top" xlink:title="Optimized method for the evaluation of the A and B matrices. ">
 <polygon fill="#ffffff" stroke="#000000" points="145.5,-378.5 145.5,-397.5 231.5,-397.5 231.5,-378.5 145.5,-378.5"/>
 <text text-anchor="middle" x="188.5" y="-385.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">prepare_A_local</text>
 </a>
@@ -110,7 +110,7 @@ var sectionId = 'dynsection-5';
 <!-- Node31 -->
 <g id="node6" class="node">
 <title>Node31</title>
-<g id="a_node6"><a xlink:href="classlfield.html#adc12acff8aae699d6672814e537435dd" target="_top" xlink:title="lfield::print">
+<g id="a_node6"><a xlink:href="classlfield.html#adc12acff8aae699d6672814e537435dd" target="_top" xlink:title="Simple print function. ">
 <polygon fill="#ffffff" stroke="#000000" points="157.5,-340.5 157.5,-359.5 219.5,-359.5 219.5,-340.5 157.5,-340.5"/>
 <text text-anchor="middle" x="188.5" y="-347.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::print</text>
 </a>
@@ -125,7 +125,7 @@ var sectionId = 'dynsection-5';
 <!-- Node32 -->
 <g id="node7" class="node">
 <title>Node32</title>
-<g id="a_node7"><a xlink:href="field_8h.html#a463f2cc1e2cd9fa4d1fc3f800835a2aa" target="_top" xlink:title="print">
+<g id="a_node7"><a xlink:href="field_8h.html#a463f2cc1e2cd9fa4d1fc3f800835a2aa" target="_top" xlink:title="Simple print function. ">
 <polygon fill="#ffffff" stroke="#000000" points="171,-302.5 171,-321.5 206,-321.5 206,-302.5 171,-302.5"/>
 <text text-anchor="middle" x="188.5" y="-309.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">print</text>
 </a>
@@ -140,7 +140,7 @@ var sectionId = 'dynsection-5';
 <!-- Node36 -->
 <g id="node11" class="node">
 <title>Node36</title>
-<g id="a_node11"><a xlink:href="classlfield.html#a14cbafc22e451ce6ecaea0744b56dff6" target="_top" xlink:title="lfield::setCorrelationsFor\lCouplingConstant">
+<g id="a_node11"><a xlink:href="classlfield.html#a14cbafc22e451ce6ecaea0744b56dff6" target="_top" xlink:title="The method creates a one&#45;element lfield object with the value of the coupling constant evaluated for ...">
 <polygon fill="#ffffff" stroke="#000000" points="127,-253 127,-283 250,-283 250,-253 127,-253"/>
 <text text-anchor="start" x="135" y="-271" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::setCorrelationsFor</text>
 <text text-anchor="middle" x="188.5" y="-260" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">CouplingConstant</text>
@@ -156,7 +156,7 @@ var sectionId = 'dynsection-5';
 <!-- Node37 -->
 <g id="node12" class="node">
 <title>Node37</title>
-<g id="a_node12"><a xlink:href="classlfield.html#a1370b1b3fd05bfcffb64018dd3bedf70" target="_top" xlink:title="lfield::setKernelPbarX">
+<g id="a_node12"><a xlink:href="classlfield.html#a1370b1b3fd05bfcffb64018dd3bedf70" target="_top" xlink:title="Function to set the value of the JIMWLK kernel in momentum space, the x component. ">
 <polygon fill="#ffffff" stroke="#000000" points="133,-214.5 133,-233.5 244,-233.5 244,-214.5 133,-214.5"/>
 <text text-anchor="middle" x="188.5" y="-221.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::setKernelPbarX</text>
 </a>
@@ -171,7 +171,7 @@ var sectionId = 'dynsection-5';
 <!-- Node38 -->
 <g id="node13" class="node">
 <title>Node38</title>
-<g id="a_node13"><a xlink:href="classlfield.html#a1caeadd397716179bb8d72b60236cffb" target="_top" xlink:title="lfield::setKernelPbarXWith\lCouplingConstant">
+<g id="a_node13"><a xlink:href="classlfield.html#a1caeadd397716179bb8d72b60236cffb" target="_top" xlink:title="Function to set the value of the JIMWLK kernel in momentum space, the x component. ">
 <polygon fill="#ffffff" stroke="#000000" points="123,-165 123,-195 254,-195 254,-165 123,-165"/>
 <text text-anchor="start" x="131" y="-183" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::setKernelPbarXWith</text>
 <text text-anchor="middle" x="188.5" y="-172" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">CouplingConstant</text>
@@ -187,7 +187,7 @@ var sectionId = 'dynsection-5';
 <!-- Node39 -->
 <g id="node14" class="node">
 <title>Node39</title>
-<g id="a_node14"><a xlink:href="classlfield.html#a6b6c5fddce5518d9909f64b89b873a68" target="_top" xlink:title="lfield::setKernelPbarY">
+<g id="a_node14"><a xlink:href="classlfield.html#a6b6c5fddce5518d9909f64b89b873a68" target="_top" xlink:title="Function to set the value of the JIMWLK kernel in momentum space, the y component. ">
 <polygon fill="#ffffff" stroke="#000000" points="133,-126.5 133,-145.5 244,-145.5 244,-126.5 133,-126.5"/>
 <text text-anchor="middle" x="188.5" y="-133.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::setKernelPbarY</text>
 </a>
@@ -202,7 +202,7 @@ var sectionId = 'dynsection-5';
 <!-- Node40 -->
 <g id="node15" class="node">
 <title>Node40</title>
-<g id="a_node15"><a xlink:href="classlfield.html#af3c6253e8700837bcc8121ef328f41ef" target="_top" xlink:title="lfield::setKernelPbarYWith\lCouplingConstant">
+<g id="a_node15"><a xlink:href="classlfield.html#af3c6253e8700837bcc8121ef328f41ef" target="_top" xlink:title="Function to set the value of the JIMWLK kernel in momentum space, the y component. ">
 <polygon fill="#ffffff" stroke="#000000" points="123,-77 123,-107 254,-107 254,-77 123,-77"/>
 <text text-anchor="start" x="131" y="-95" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::setKernelPbarYWith</text>
 <text text-anchor="middle" x="188.5" y="-84" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">CouplingConstant</text>
@@ -218,7 +218,7 @@ var sectionId = 'dynsection-5';
 <!-- Node41 -->
 <g id="node16" class="node">
 <title>Node41</title>
-<g id="a_node16"><a xlink:href="classlfield.html#a5b407bbd988e3b009ef8364bbe705beb" target="_top" xlink:title="lfield::solvePoisson">
+<g id="a_node16"><a xlink:href="classlfield.html#a5b407bbd988e3b009ef8364bbe705beb" target="_top" xlink:title="Implements the solution of the Poisson equation in momentum space, Eq. ">
 <polygon fill="#ffffff" stroke="#000000" points="138,-38.5 138,-57.5 239,-57.5 239,-38.5 138,-38.5"/>
 <text text-anchor="middle" x="188.5" y="-45.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::solvePoisson</text>
 </a>

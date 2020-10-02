@@ -1,5 +1,5 @@
 <map id="main" name="main">
-<area shape="rect" id="node2" href="$classlfield.html#a8299544558cca4ccb188039e6d868aee" title="lfield::exponentiate" alt="" coords="139,5,270,32"/>
+<area shape="rect" id="node2" href="$classlfield.html#a8299544558cca4ccb188039e6d868aee" title="Function to exponentiate elements of the Lie algebra to obtain Lie group elements. " alt="" coords="139,5,270,32"/>
 <area shape="rect" id="node5" href="$classmpi__class.html#a9988290cf6944a7efcd1b1144adff7a7" title="mpi_class::getColComm" alt="" coords="121,56,288,83"/>
 <area shape="rect" id="node6" href="$classmpi__class.html#aeaf1450d343b4bf5b4dc4af51475212d" title="mpi_class::getRowComm" alt="" coords="118,107,291,133"/>
 <area shape="rect" id="node7" href="$classfftw2D.html#a63f6a1404cba25536f52b693f1f85a50" title="fftw2D::init2D" alt="" coords="153,157,256,184"/>
@@ -7,12 +7,15 @@
 <area shape="rect" id="node9" href="$classmpi__class.html#a20929c3a4bb045fb41696ba09cee4680" title="mpi_class::mpi_exchange\l_groups" alt="" coords="118,259,291,301"/>
 <area shape="rect" id="node10" href="$classmpi__class.html#a0326e6a2416b3aacd64a3dcc84ddb79b" title="mpi_class::mpi_init" alt="" coords="137,325,272,352"/>
 <area shape="rect" id="node11" href="$classmomenta.html#ad86512de264263c1d6aef474b8829999" title="momenta::set" alt="" coords="153,376,256,403"/>
-<area shape="rect" id="node12" href="$classlfield.html#a751b066f2c88db69b0315de9354e082b" title="lfield::setMVModel" alt="" coords="139,427,270,453"/>
-<area shape="rect" id="node13" href="$classlfield.html#a150f51189f23b793ba04f077a1d3c063" title="lfield::setToUnit" alt="" coords="147,477,262,504"/>
-<area shape="rect" id="node14" href="$classlfield.html#ad980584011ceafb6abbaf0a450bda309" title="lfield::setToZero" alt="" coords="147,528,263,555"/>
-<area shape="rect" id="node15" href="$classlfield.html#a5b407bbd988e3b009ef8364bbe705beb" title="lfield::solvePoisson" alt="" coords="137,579,272,605"/>
-<area shape="rect" id="node17" href="$classlfield.html#aa00604913a5b5456eaad72fcc36a6b42" title="lfield::trace" alt="" coords="161,629,248,656"/>
+<area shape="rect" id="node12" href="$classlfield.html#a751b066f2c88db69b0315de9354e082b" title="Method to set the values of lfield object according to the McLerran&#45;Venugopalan model. " alt="" coords="139,427,270,453"/>
+<area shape="rect" id="node16" href="$classlfield.html#a150f51189f23b793ba04f077a1d3c063" title="lfield::setToUnit" alt="" coords="147,477,262,504"/>
+<area shape="rect" id="node17" href="$classlfield.html#ad980584011ceafb6abbaf0a450bda309" title="lfield::setToZero" alt="" coords="147,528,263,555"/>
+<area shape="rect" id="node18" href="$classlfield.html#a5b407bbd988e3b009ef8364bbe705beb" title="Implements the solution of the Poisson equation in momentum space, Eq. " alt="" coords="137,579,272,605"/>
+<area shape="rect" id="node20" href="$classlfield.html#aa00604913a5b5456eaad72fcc36a6b42" title="For all sites of the local lfield, the method computes the trace and stores it in the one element lfi..." alt="" coords="161,629,248,656"/>
 <area shape="rect" id="node3" href="$classsu3__matrix.html#aedf511a4b74bf6f2a4a5ba681c1df72e" title="su3_matrix::exponentiate" alt="" coords="353,5,521,32"/>
-<area shape="rect" id="node4" href="$su3__matrix_8h.html#ab226771af05ad43c66ee5a218eee0bdd" title="function_zheevh3" alt="" coords="569,5,693,32"/>
-<area shape="rect" id="node16" href="$classmomenta.html#a5b2ec8b44c4874d8e18036c8927461db" title="momenta::phat2" alt="" coords="379,579,495,605"/>
+<area shape="rect" id="node4" href="$su3__matrix_8h.html#ab226771af05ad43c66ee5a218eee0bdd" title=" Calculates the eigenvalues and normalized eigenvectors of a hermitian 3x3 matrix A using Cardano&#39;s m..." alt="" coords="569,5,693,32"/>
+<area shape="rect" id="node13" href="$classMV__class.html#a191e58941f9dd9fd71bc411833b4b3b6" title="MV_class::gGet" alt="" coords="379,376,495,403"/>
+<area shape="rect" id="node14" href="$classMV__class.html#ae17d5e3746cda12cb9b8ea5f6278a1a2" title="MV_class::muGet" alt="" coords="374,427,501,453"/>
+<area shape="rect" id="node15" href="$classMV__class.html#a01e071bdc58b1b0ff4ec57870b34f073" title="MV_class::NyGet" alt="" coords="374,477,501,504"/>
+<area shape="rect" id="node19" href="$classmomenta.html#a5b2ec8b44c4874d8e18036c8927461db" title="momenta::phat2" alt="" coords="379,579,495,605"/>
 </map>

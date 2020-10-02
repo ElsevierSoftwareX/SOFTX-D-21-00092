@@ -1,3 +1,3 @@
 <map id="lfield::buf_pos" name="lfield::buf_pos">
-<area shape="rect" id="node2" href="$classlfield.html#afd673e79539094a4042199fe8b29560e" title="lfield::mpi_exchange\l_boundaries" alt="" coords="156,5,297,47"/>
+<area shape="rect" id="node2" href="$classlfield.html#afd673e79539094a4042199fe8b29560e" title="Function exchanging boundary values through MPI Send and Recv functions. " alt="" coords="156,5,297,47"/>
 </map>

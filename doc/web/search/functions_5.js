@@ -6,10 +6,10 @@ var searchData=
   ['getcolcomm',['getColComm',['../classmpi__class.html#a9988290cf6944a7efcd1b1144adff7a7',1,'mpi_class']]],
   ['getexchangex',['getExchangeX',['../classmpi__class.html#a563349e5d424fd15cb3c743bee847859',1,'mpi_class']]],
   ['getexchangey',['getExchangeY',['../classmpi__class.html#a9e3f485947dab4c5af0a581fd54bceb9',1,'mpi_class']]],
-  ['getnxg',['getNxg',['../classgfield.html#abc5227b4d044f39bb8f6ceebd4552861',1,'gfield']]],
-  ['getnxl',['getNxl',['../classlfield.html#a3182dddf09856d6c2f715412b1e93dcc',1,'lfield']]],
-  ['getnyg',['getNyg',['../classgfield.html#a963fa744ca9d2464463cfe4195a0ba90',1,'gfield']]],
-  ['getnyl',['getNyl',['../classlfield.html#a0d5c1f786c377cd838c0122b3148ed6e',1,'lfield']]],
+  ['getnxg',['getNxg',['../classgfield.html#a53fa88cad304f3381b70aef740e903b4',1,'gfield']]],
+  ['getnxl',['getNxl',['../classlfield.html#a6525c9ba54e57f27ff551fc3f6169f14',1,'lfield']]],
+  ['getnyg',['getNyg',['../classgfield.html#a12884fdf0eca769d389e04c4200263d2',1,'gfield']]],
+  ['getnyl',['getNyl',['../classlfield.html#a7eba0ea85f6f0df54a45cf97cd3ad53d',1,'lfield']]],
   ['getposx',['getPosX',['../classmpi__class.html#ab876ade2f1b994bb1c920d1de9375cf6',1,'mpi_class']]],
   ['getposy',['getPosY',['../classmpi__class.html#aa894e45879f0e9a081efd4d4118b2491',1,'mpi_class']]],
   ['getrank',['getRank',['../classmpi__class.html#a6ba81c7f035bcbbb4c5c1273d0850aba',1,'mpi_class']]],
@@ -20,5 +20,6 @@ var searchData=
   ['getyneighbournext',['getYNeighbourNext',['../classmpi__class.html#a0ce0703c55de3e00bbb2d02278813aa3',1,'mpi_class']]],
   ['getyneighbourprevious',['getYNeighbourPrevious',['../classmpi__class.html#a95d2bc3939d1e18198533e6bbd7e63f4',1,'mpi_class']]],
   ['gfield',['gfield',['../classgfield.html#af1114ecf45147ec0543de5f4095c4d10',1,'gfield']]],
+  ['gget',['gGet',['../classMV__class.html#a191e58941f9dd9fd71bc411833b4b3b6',1,'MV_class']]],
   ['gmatrix',['gmatrix',['../classgmatrix.html#a83129b995ca68883879892c4254b5704',1,'gmatrix']]]
 ];

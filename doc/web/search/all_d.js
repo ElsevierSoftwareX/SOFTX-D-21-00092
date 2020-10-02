@@ -4,6 +4,7 @@ var searchData=
   ['n1',['N1',['../classfftw.html#a5bf35c748851f2ee90ce0c5d6f816321',1,'fftw']]],
   ['n_5fpos_5fx',['n_pos_x',['../classmpi__class.html#ac8567bd584b726552f9bce44912d8ec0',1,'mpi_class']]],
   ['n_5fpos_5fy',['n_pos_y',['../classmpi__class.html#a5c389b3369fc6aff8dd1f1cafb404d27',1,'mpi_class']]],
+  ['nn',['NN',['../saturation_8cpp.html#a170755e30c36be4904106b7bb279b1ec',1,'saturation.cpp']]],
   ['no_5fcoupling_5fconstant',['NO_COUPLING_CONSTANT',['../config_8h.html#a967b0559766c873f7c65c83cb9428a09a9cda83473e0513925e4ee6b4e687f89f',1,'config.h']]],
   ['no_5fevolution',['NO_EVOLUTION',['../config_8h.html#a7759da59005c21f899b795ffa18e3487aa8167a8300e4a50f056a07244c3f0970',1,'config.h']]],
   ['noise_5fcoupling_5fconstant',['NOISE_COUPLING_CONSTANT',['../config_8h.html#a967b0559766c873f7c65c83cb9428a09a86eaed9fc51d851e6abcc2f49dc5c2cc',1,'config.h']]],
@@ -14,6 +15,7 @@ var searchData=
   ['ny',['Ny',['../config_8h.html#a104a7795534fc75b6dbc144e96ff0bae',1,'config.h']]],
   ['ny_5fparameter',['Ny_parameter',['../classMV__class.html#a8b31fb7a34c745ccc3465c3faa0a3c44',1,'MV_class']]],
   ['nyg',['Nyg',['../classgfield.html#a6edf736345bc12e0d54f9ba4958c1561',1,'gfield::Nyg()'],['../classgfield.html#ab7217b172099b533f822816fd5a125ed',1,'gfield::Nyg()'],['../classgmatrix.html#a0d0ad3dc7b3560c69a48189d6c2bf05f',1,'gmatrix::Nyg()'],['../classgmatrix.html#a020b5378718f9ae55852aec82221518a',1,'gmatrix::Nyg()'],['../classpositions.html#a42648ca4428eb0e45ebc76c6264c69e7',1,'positions::Nyg()']]],
+  ['nyget',['NyGet',['../classMV__class.html#a01e071bdc58b1b0ff4ec57870b34f073',1,'MV_class']]],
   ['nyl',['Nyl',['../classconfig.html#a0ec0b3cbf1e19d723686c3d625673953',1,'config::Nyl()'],['../classfield.html#aabaaa2c27b4e6d4053db822cc216c3a2',1,'field::Nyl()'],['../classlfield.html#a23257459a4b7cb765b1bf681b6a9ce85',1,'lfield::Nyl()'],['../classlfield.html#a3e4af818794bcdded6611d809f59a954',1,'lfield::Nyl()'],['../classmatrix.html#a8c8fbb12726a9eb6d56ac687df1f2311',1,'matrix::Nyl()'],['../classlmatrix.html#ad7be08214dff914981f7789d4a41669a',1,'lmatrix::Nyl()'],['../classlmatrix.html#a3bad03612e7730e7a70290fadeee8759',1,'lmatrix::Nyl()'],['../classmomenta.html#a685ef70f65cabff34208bdbb731822fc',1,'momenta::Nyl()'],['../classfftw.html#a56e856ebc2a5c2d9474d6ece588714ca',1,'fftw::Nyl()']]],
   ['nyl_5fbuf',['Nyl_buf',['../classconfig.html#a745f07d2ca5c79f100ab0b11daa8139c',1,'config::Nyl_buf()'],['../classlfield.html#aeb58a6d93f2e1237f49d79094193c94d',1,'lfield::Nyl_buf()']]]
 ];

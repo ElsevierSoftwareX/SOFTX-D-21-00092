@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['update_5fuf',['update_uf',['../field_8h.html#aea30ef7d1293ae1aa73d254f8eaef4c7',1,'field.h']]],
-  ['uxiulocal',['uxiulocal',['../field_8h.html#a127febd6e7d0a0da0fc2d4fee0081bd4',1,'field.h']]]
+  ['tovector',['toVector',['../classsu3__matrix.html#a8dc7951739c8aab2ca6216121f2c65b8',1,'su3_matrix']]],
+  ['trace',['trace',['../classlfield.html#aa00604913a5b5456eaad72fcc36a6b42',1,'lfield']]]
 ];

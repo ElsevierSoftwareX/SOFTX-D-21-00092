@@ -1,9 +1,10 @@
 var searchData=
 [
+  ['saturation_2ecpp',['saturation.cpp',['../saturation_8cpp.html',1,'']]],
   ['seed',['seed',['../classconfig.html#acb191b28c6fdacf696839169d5f29e84',1,'config']]],
   ['set',['set',['../classmomenta.html#ad86512de264263c1d6aef474b8829999',1,'momenta::set()'],['../classpositions.html#a47352568d81e13ce66741116baf75473',1,'positions::set()']]],
   ['setcorrelationsforcouplingconstant',['setCorrelationsForCouplingConstant',['../classgfield.html#a39a5a9c26ecccd46720fd6d2369302b2',1,'gfield::setCorrelationsForCouplingConstant()'],['../classlfield.html#a14cbafc22e451ce6ecaea0744b56dff6',1,'lfield::setCorrelationsForCouplingConstant()']]],
-  ['setgaussian',['setGaussian',['../classlfield.html#a6f7ec82c0653a48437f83bda21e94a40',1,'lfield']]],
+  ['setgaussian',['setGaussian',['../classlfield.html#ab60d34037bcdc0fedb0016f9fef19f51',1,'lfield']]],
   ['setkernelpbarx',['setKernelPbarX',['../classlfield.html#a1370b1b3fd05bfcffb64018dd3bedf70',1,'lfield']]],
   ['setkernelpbarxwithcouplingconstant',['setKernelPbarXWithCouplingConstant',['../classlfield.html#a1caeadd397716179bb8d72b60236cffb',1,'lfield']]],
   ['setkernelpbary',['setKernelPbarY',['../classlfield.html#a6b6c5fddce5518d9909f64b89b873a68',1,'lfield']]],
@@ -24,7 +25,7 @@ var searchData=
   ['sqr',['SQR',['../su3__matrix_8h.html#aa7866fa5e4e0ee9b034e9dab6599a9cc',1,'SQR():&#160;su3_matrix.h'],['../zheevc3_8c.html#aa7866fa5e4e0ee9b034e9dab6599a9cc',1,'SQR():&#160;zheevc3.c'],['../zheevc3_8cpp.html#aa7866fa5e4e0ee9b034e9dab6599a9cc',1,'SQR():&#160;zheevc3.cpp'],['../zheevh3_8c.html#aa7866fa5e4e0ee9b034e9dab6599a9cc',1,'SQR():&#160;zheevh3.c'],['../zheevh3_8cpp.html#aa7866fa5e4e0ee9b034e9dab6599a9cc',1,'SQR():&#160;zheevh3.cpp'],['../zheevq3_8c.html#aa7866fa5e4e0ee9b034e9dab6599a9cc',1,'SQR():&#160;zheevq3.c'],['../zheevq3_8cpp.html#aa7866fa5e4e0ee9b034e9dab6599a9cc',1,'SQR():&#160;zheevq3.cpp'],['../zhetrd3_8c.html#aa7866fa5e4e0ee9b034e9dab6599a9cc',1,'SQR():&#160;zhetrd3.c'],['../zhetrd3_8cpp.html#aa7866fa5e4e0ee9b034e9dab6599a9cc',1,'SQR():&#160;zhetrd3.cpp']]],
   ['sqr_5fabs',['SQR_ABS',['../su3__matrix_8h.html#a3037777638f94ba01c4104dc03dfbf98',1,'SQR_ABS():&#160;su3_matrix.h'],['../zheevc3_8c.html#a3037777638f94ba01c4104dc03dfbf98',1,'SQR_ABS():&#160;zheevc3.c'],['../zheevc3_8cpp.html#a3037777638f94ba01c4104dc03dfbf98',1,'SQR_ABS():&#160;zheevc3.cpp'],['../zheevh3_8c.html#a3037777638f94ba01c4104dc03dfbf98',1,'SQR_ABS():&#160;zheevh3.c'],['../zheevh3_8cpp.html#a3037777638f94ba01c4104dc03dfbf98',1,'SQR_ABS():&#160;zheevh3.cpp'],['../zheevq3_8c.html#a3037777638f94ba01c4104dc03dfbf98',1,'SQR_ABS():&#160;zheevq3.c'],['../zheevq3_8cpp.html#a3037777638f94ba01c4104dc03dfbf98',1,'SQR_ABS():&#160;zheevq3.cpp'],['../zhetrd3_8c.html#a3037777638f94ba01c4104dc03dfbf98',1,'SQR_ABS():&#160;zhetrd3.c'],['../zhetrd3_8cpp.html#a3037777638f94ba01c4104dc03dfbf98',1,'SQR_ABS():&#160;zhetrd3.cpp']]],
   ['sqrt_5fcoupling_5fconstant',['SQRT_COUPLING_CONSTANT',['../config_8h.html#a967b0559766c873f7c65c83cb9428a09ab037784ad5f2392f8ad55ebb9538d8c7',1,'config.h']]],
-  ['stat',['stat',['../classconfig.html#ad05d761e99754a1004d0574bb42e3ad5',1,'config']]],
+  ['stat',['stat',['../classconfig.html#ad05d761e99754a1004d0574bb42e3ad5',1,'config::stat()'],['../saturation_8cpp.html#a47c1b9c9a7b4183ac4fd96dc5ca8e820',1,'STAT():&#160;saturation.cpp']]],
   ['step',['step',['../classconfig.html#aa1c325199c9349611485ac4bcc91eef2',1,'config']]],
   ['su3_5fmatrix',['su3_matrix',['../classsu3__matrix.html',1,'su3_matrix&lt; T &gt;'],['../classsu3__matrix.html#aa149493632baf4843bb12be0f954fda7',1,'su3_matrix::su3_matrix()']]],
   ['su3_5fmatrix_2eh',['su3_matrix.h',['../su3__matrix_8h.html',1,'']]]

@@ -18,7 +18,7 @@
 <!-- Node5 -->
 <g id="node2" class="node">
 <title>Node5</title>
-<g id="a_node2"><a xlink:href="classlfield.html#a3dd9eefafa126590f8a9fa4ee0027d1f" target="_top" xlink:title="lfield::setUnitModel">
+<g id="a_node2"><a xlink:href="classlfield.html#a3dd9eefafa126590f8a9fa4ee0027d1f" target="_top" xlink:title="Method to set the values of lfield object with gaussian distribution for all matrix elements...">
 <polygon fill="#ffffff" stroke="#000000" points="119,-.5 119,-19.5 220,-19.5 220,-.5 119,-.5"/>
 <text text-anchor="middle" x="169.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::setUnitModel</text>
 </a>

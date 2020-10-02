@@ -18,7 +18,7 @@
 <!-- Node11 -->
 <g id="node2" class="node">
 <title>Node11</title>
-<g id="a_node2"><a xlink:href="field_8h.html#a775fa9c6bfba32acd280006a6fd3e524" target="_top" xlink:title="prepare_A_local">
+<g id="a_node2"><a xlink:href="field_8h.html#a775fa9c6bfba32acd280006a6fd3e524" target="_top" xlink:title="Optimized method for the evaluation of the A and B matrices. ">
 <polygon fill="#ffffff" stroke="#000000" points="147.5,-126.5 147.5,-145.5 233.5,-145.5 233.5,-126.5 147.5,-126.5"/>
 <text text-anchor="middle" x="190.5" y="-133.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">prepare_A_local</text>
 </a>
@@ -33,7 +33,7 @@
 <!-- Node13 -->
 <g id="node4" class="node">
 <title>Node13</title>
-<g id="a_node4"><a xlink:href="classlfield.html#a1370b1b3fd05bfcffb64018dd3bedf70" target="_top" xlink:title="lfield::setKernelPbarX">
+<g id="a_node4"><a xlink:href="classlfield.html#a1370b1b3fd05bfcffb64018dd3bedf70" target="_top" xlink:title="Function to set the value of the JIMWLK kernel in momentum space, the x component. ">
 <polygon fill="#ffffff" stroke="#000000" points="135,-88.5 135,-107.5 246,-107.5 246,-88.5 135,-88.5"/>
 <text text-anchor="middle" x="190.5" y="-95.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::setKernelPbarX</text>
 </a>
@@ -48,7 +48,7 @@
 <!-- Node15 -->
 <g id="node6" class="node">
 <title>Node15</title>
-<g id="a_node6"><a xlink:href="classlfield.html#a1caeadd397716179bb8d72b60236cffb" target="_top" xlink:title="lfield::setKernelPbarXWith\lCouplingConstant">
+<g id="a_node6"><a xlink:href="classlfield.html#a1caeadd397716179bb8d72b60236cffb" target="_top" xlink:title="Function to set the value of the JIMWLK kernel in momentum space, the x component. ">
 <polygon fill="#ffffff" stroke="#000000" points="125,-39 125,-69 256,-69 256,-39 125,-39"/>
 <text text-anchor="start" x="133" y="-57" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::setKernelPbarXWith</text>
 <text text-anchor="middle" x="190.5" y="-46" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">CouplingConstant</text>

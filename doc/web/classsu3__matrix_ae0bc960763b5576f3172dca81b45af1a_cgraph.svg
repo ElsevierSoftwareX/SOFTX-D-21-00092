@@ -18,7 +18,7 @@
 <!-- Node27 -->
 <g id="node2" class="node">
 <title>Node27</title>
-<g id="a_node2"><a xlink:href="su3__matrix_8h.html#ab226771af05ad43c66ee5a218eee0bdd" target="_top" xlink:title="function_zheevh3">
+<g id="a_node2"><a xlink:href="su3__matrix_8h.html#ab226771af05ad43c66ee5a218eee0bdd" target="_top" xlink:title=" Calculates the eigenvalues and normalized eigenvectors of a hermitian 3x3 matrix A using Cardano&#39;s m...">
 <polygon fill="#ffffff" stroke="#000000" points="143,-.5 143,-19.5 236,-19.5 236,-.5 143,-.5"/>
 <text text-anchor="middle" x="189.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">function_zheevh3</text>
 </a>

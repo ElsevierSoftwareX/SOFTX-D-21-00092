@@ -18,7 +18,7 @@
 <!-- Node7 -->
 <g id="node2" class="node">
 <title>Node7</title>
-<g id="a_node2"><a xlink:href="classlfield.html#a8299544558cca4ccb188039e6d868aee" target="_top" xlink:title="lfield::exponentiate">
+<g id="a_node2"><a xlink:href="classlfield.html#a8299544558cca4ccb188039e6d868aee" target="_top" xlink:title="Function to exponentiate elements of the Lie algebra to obtain Lie group elements. ">
 <polygon fill="#ffffff" stroke="#000000" points="172.5,-114.5 172.5,-133.5 270.5,-133.5 270.5,-114.5 172.5,-114.5"/>
 <text text-anchor="middle" x="221.5" y="-121.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::exponentiate</text>
 </a>
@@ -33,7 +33,7 @@
 <!-- Node9 -->
 <g id="node4" class="node">
 <title>Node9</title>
-<g id="a_node4"><a xlink:href="classlfield.html#ad794d8e7e1cb4685d665e0b474f8901b" target="_top" xlink:title="lfield::operator*=">
+<g id="a_node4"><a xlink:href="classlfield.html#ad794d8e7e1cb4685d665e0b474f8901b" target="_top" xlink:title="Overloaded multiplication and assignement operator. ">
 <polygon fill="#ffffff" stroke="#000000" points="177.5,-76.5 177.5,-95.5 265.5,-95.5 265.5,-76.5 177.5,-76.5"/>
 <text text-anchor="middle" x="221.5" y="-83.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">lfield::operator*=</text>
 </a>
@@ -63,7 +63,7 @@
 <!-- Node11 -->
 <g id="node6" class="node">
 <title>Node11</title>
-<g id="a_node6"><a xlink:href="field_8h.html#aea30ef7d1293ae1aa73d254f8eaef4c7" target="_top" xlink:title="update_uf">
+<g id="a_node6"><a xlink:href="field_8h.html#aea30ef7d1293ae1aa73d254f8eaef4c7" target="_top" xlink:title="Main method for the advance of the Wilson lines in rapidity according to the Langevin equation...">
 <polygon fill="#ffffff" stroke="#000000" points="192,-.5 192,-19.5 251,-19.5 251,-.5 192,-.5"/>
 <text text-anchor="middle" x="221.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">update_uf</text>
 </a>

@@ -1,4 +1,6 @@
 <map id="update_uf" name="update_uf">
 <area shape="rect" id="node2" href="$classsu3__matrix.html#aedf511a4b74bf6f2a4a5ba681c1df72e" title="su3_matrix::exponentiate" alt="" coords="132,5,300,32"/>
-<area shape="rect" id="node3" href="$su3__matrix_8h.html#ab226771af05ad43c66ee5a218eee0bdd" title="function_zheevh3" alt="" coords="348,5,472,32"/>
+<area shape="rect" id="node4" href="$classlfield.html#a6525c9ba54e57f27ff551fc3f6169f14" title="lfield::getNxl" alt="" coords="169,56,263,83"/>
+<area shape="rect" id="node5" href="$classlfield.html#a7eba0ea85f6f0df54a45cf97cd3ad53d" title="lfield::getNyl" alt="" coords="169,107,263,133"/>
+<area shape="rect" id="node3" href="$su3__matrix_8h.html#ab226771af05ad43c66ee5a218eee0bdd" title=" Calculates the eigenvalues and normalized eigenvectors of a hermitian 3x3 matrix A using Cardano&#39;s m..." alt="" coords="348,5,472,32"/>
 </map>

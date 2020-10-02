@@ -1,8 +1,12 @@
 var searchData=
 [
-  ['rand_5fclass',['rand_class',['../classrand__class.html#a8e8306d5aa18a6729268757934c56d82',1,'rand_class']]],
-  ['read_5fconfig_5ffrom_5ffile',['read_config_from_file',['../classconfig.html#a3db5cd0b2853fec8841e85403af5548f',1,'config']]],
-  ['reduce',['reduce',['../classgfield.html#a64cb5db1c89298f4726366667fd266a0',1,'gfield::reduce(int NNx, int NNy, mpi_class *mpi)'],['../classgfield.html#a743dc1eeb1b0756557a3173895df1c8d',1,'gfield::reduce(lfield&lt; T, t &gt; *sum, lfield&lt; T, t &gt; *err, mpi_class *mpi)']]],
-  ['reduce_5fhatta',['reduce_hatta',['../classgfield.html#a16112e9685d6442818f2a308811620f6',1,'gfield']]],
-  ['reduceandset',['reduceAndSet',['../classlfield.html#ad624c0368bcb52153abf6568d1bce971',1,'lfield']]]
+  ['pbarx',['pbarX',['../classmomenta.html#a98078c7de442771358e691a2b0b037ce',1,'momenta']]],
+  ['pbary',['pbarY',['../classmomenta.html#adf9462fd94288b5cd635a555d689434b',1,'momenta']]],
+  ['phat2',['phat2',['../classmomenta.html#a5b2ec8b44c4874d8e18036c8927461db',1,'momenta']]],
+  ['positions',['positions',['../classpositions.html#a0eb76de8938a8acd4a959c4dfe0aafab',1,'positions::positions(config *cnfg, mpi_class *mpi)'],['../classpositions.html#a5252c7910fbec83df33b169a0106f800',1,'positions::positions(const positions &amp;in)']]],
+  ['prepare_5fa_5fand_5fb_5flocal',['prepare_A_and_B_local',['../field_8h.html#ae43c2aa5da993ce8ed28c1953c02805a',1,'field.h']]],
+  ['prepare_5fa_5flocal',['prepare_A_local',['../field_8h.html#a775fa9c6bfba32acd280006a6fd3e524',1,'prepare_A_local(lfield&lt; T, t &gt; *A_local, lfield&lt; T, t &gt; *xi_local_x, lfield&lt; T, t &gt; *xi_local_y, momenta *mom, mpi_class *mpi, Coupling p, Kernel kk):&#160;field.h'],['../field_8h.html#a02b61a8ee4a5ec5bfcbb7b096651a1a1',1,'prepare_A_local(lfield&lt; T, t &gt; *A_local, lfield&lt; T, t &gt; *xi_local_x, lfield&lt; T, t &gt; *xi_local_y, lfield&lt; T, t &gt; *kernel_pbarx, lfield&lt; T, t &gt; *kernel_pbary):&#160;field.h']]],
+  ['print',['print',['../classlfield.html#ac8a0a9828fb2463e1ab36843598bfa26',1,'lfield::print(momenta *mom)'],['../classlfield.html#adc12acff8aae699d6672814e537435dd',1,'lfield::print(momenta *mom, double x, mpi_class *mpi)'],['../classgmatrix.html#a1adf251b6ea3129012fb213c980fb4e2',1,'gmatrix::print()'],['../classsu3__matrix.html#a040b38ca6c26edef9589917085fda8df',1,'su3_matrix::print()'],['../field_8h.html#a463f2cc1e2cd9fa4d1fc3f800835a2aa',1,'print(lfield&lt; T, t &gt; *sum, lfield&lt; T, t &gt; *err, momenta *mom, double x, mpi_class *mpi):&#160;field.h'],['../field_8h.html#a4dfef0244018f283b891e1be03aaf822',1,'print(int measurement, lfield&lt; T, t &gt; *sum, lfield&lt; T, t &gt; *err, momenta *mom, double x, mpi_class *mpi, std::string const &amp;fileroot):&#160;field.h']]],
+  ['printdebug',['printDebug',['../classgfield.html#aa7216414b47a54279908e9572ac5f488',1,'gfield::printDebug()'],['../classlfield.html#a23763c574d81bf603cc612abed45d9ec',1,'lfield::printDebug()'],['../classlfield.html#a84194edea09f51ff8769752a82cdef44',1,'lfield::printDebug(double x)'],['../classlfield.html#a172cc8a711a50746ee7b7fe4b2189bb9',1,'lfield::printDebug(int i)'],['../classlfield.html#a4c138bcbb790040be8ebdab268470ba3',1,'lfield::printDebug(double x, mpi_class *mpi)']]],
+  ['printdebugradial',['printDebugRadial',['../classlfield.html#ae3a4fb7241b06c3f0ba31d1a8ffed63e',1,'lfield']]]
 ];

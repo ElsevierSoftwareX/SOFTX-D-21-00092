@@ -18,7 +18,7 @@
 <!-- Node2 -->
 <g id="node2" class="node">
 <title>Node2</title>
-<g id="a_node2"><a xlink:href="classgfield.html#ae78f20e8c8337943ec5912e4cfe353b3" target="_top" xlink:title="gfield::average_and\l_symmetrize">
+<g id="a_node2"><a xlink:href="classgfield.html#ae78f20e8c8337943ec5912e4cfe353b3" target="_top" xlink:title="The method symmetrizes the data assuming x &lt;&#45;&gt; y symmetry (rotations by 90 degrees) and mirror images...">
 <polygon fill="#ffffff" stroke="#000000" points="105,-.5 105,-30.5 206,-30.5 206,-.5 105,-.5"/>
 <text text-anchor="start" x="113" y="-18.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">gfield::average_and</text>
 <text text-anchor="middle" x="155.5" y="-7.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">_symmetrize</text>

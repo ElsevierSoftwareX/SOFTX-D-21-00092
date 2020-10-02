@@ -14,7 +14,6 @@ var field_8h =
     [ "prepare_A_and_B_local", "field_8h.html#ae43c2aa5da993ce8ed28c1953c02805a", null ],
     [ "prepare_A_local", "field_8h.html#a775fa9c6bfba32acd280006a6fd3e524", null ],
     [ "prepare_A_local", "field_8h.html#a02b61a8ee4a5ec5bfcbb7b096651a1a1", null ],
-    [ "prepare_B_local", "field_8h.html#a3dd9df396497b96e32d2131888de00c4", null ],
     [ "print", "field_8h.html#a463f2cc1e2cd9fa4d1fc3f800835a2aa", null ],
     [ "print", "field_8h.html#a4dfef0244018f283b891e1be03aaf822", null ],
     [ "update_uf", "field_8h.html#aea30ef7d1293ae1aa73d254f8eaef4c7", null ],

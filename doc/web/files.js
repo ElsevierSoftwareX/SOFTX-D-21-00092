@@ -5,7 +5,6 @@ var files =
     [ "config.h", "config_8h.html", "config_8h" ],
     [ "field.h", "field_8h.html", "field_8h" ],
     [ "main_explicit.cpp", "main__explicit_8cpp.html", "main__explicit_8cpp" ],
-    [ "main_omp.cpp", "main__omp_8cpp.html", "main__omp_8cpp" ],
     [ "main_optimized.cpp", "main__optimized_8cpp.html", "main__optimized_8cpp" ],
     [ "matrix.h", "matrix_8h.html", [
       [ "matrix", "classmatrix.html", "classmatrix" ],
@@ -37,5 +36,6 @@ var files =
     [ "rand_class.h", "rand__class_8h.html", [
       [ "rand_class", "classrand__class.html", "classrand__class" ]
     ] ],
+    [ "saturation.cpp", "saturation_8cpp.html", "saturation_8cpp" ],
     [ "su3_matrix.h", "su3__matrix_8h.html", "su3__matrix_8h" ]
 ];
