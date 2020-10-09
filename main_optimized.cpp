@@ -408,7 +408,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 //----------WRITE DOWN CORRELATION FNUCTION TO FILE-----
 //------------------------------------------------------
 
-        std::string file_name = "output_optimized_";
+//        std::string file_name = "output_optimized_";
+	std::string file_name = cnfg->file_name;
 
                 if(cnfg->EvolutionChoice == MOMENTUM_EVOLUTION)
                         file_name += "MOMENTUM_EVOLUTION_";

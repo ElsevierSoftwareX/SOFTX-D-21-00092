@@ -297,8 +297,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 						printf("Performing evolution step no. %i\n", langevin);
 
-						xi_local_x.setGaussian(mpi, cnfg);
-						xi_local_y.setGaussian(mpi, cnfg);
+						xi_local_x.setGaussian();
+						xi_local_y.setGaussian();
 
 						//-------------MOMENTUM SPACE EVOLUTION-------------
 

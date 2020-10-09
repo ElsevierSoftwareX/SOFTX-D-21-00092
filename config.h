@@ -28,7 +28,7 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 192
+#define Nx 2048
 #define Ny Nx
 
 #include <iostream>
@@ -79,6 +79,8 @@ public:
 		float tmp;
 
 		f = fopen(file_name_cnfg.c_str(), "r+");		
+
+		char str_file_name[200];
 	
 		fscanf(f, "stat = %i\n", &stat);
 		printf("SETUP: stat = %i\n", stat); 
@@ -90,7 +92,10 @@ public:
 		printf("SETUP: mass = %f\n", mass); 
 		fscanf(f, "elementaryWilsonLines = %i\n", &elementaryWilsonLines);
 		printf("SETUP: elementaryWilsonLines = %i\n", elementaryWilsonLines); 
-		fscanf(f, "file_name = %s\n", &file_name[0]);
+		fscanf(f, "file_name = %s\n", &str_file_name);
+	
+		file_name.assign(str_file_name);
+		
 		fscanf(f, "langevin_steps = %i\n", &langevin_steps);
 		printf("SETUP: langevin_steps = %i\n", langevin_steps); 
 		fscanf(f, "measurements = %i\n", &measurements);
