@@ -412,13 +412,13 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	std::string file_name = cnfg->file_name;
 
                 if(cnfg->EvolutionChoice == MOMENTUM_EVOLUTION)
-                        file_name += "MOMENTUM_EVOLUTION_";
+                        file_name += "_MOMENTUM_EVOLUTION_";
                 
                 if(cnfg->EvolutionChoice == POSITION_EVOLUTION)
-                        file_name += "POSITION_EVOLUTION_";
+                        file_name += "_POSITION_EVOLUTION_";
   
 		if(cnfg->EvolutionChoice == NO_EVOLUTION)
-                        file_name += "NO_EVOLUTION_";
+                        file_name += "_NO_EVOLUTION_";
              
 
                 if(cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT)
