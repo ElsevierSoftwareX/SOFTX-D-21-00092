@@ -28,7 +28,7 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 4096
+#define Nx 64
 #define Ny Nx
 
 #include <iostream>
