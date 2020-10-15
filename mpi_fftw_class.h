@@ -207,11 +207,11 @@ if(t == 1 ){
 
 if( COPY ){
 
-	#pragma omp parallel for simd collapse(2) default(shared)
+	//#pragma omp parallel for
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
-                        data_local_single[i*Nyl+j][0] = f->u[(i*Nyl+j)].real(); //data_global[(i+pos_x*Nxl)*N1+j][0];
-                        data_local_single[i*Nyl+j][1] = f->u[(i*Nyl+j)].imag(); //data_global[(i+pos_x*Nxl)*N1+j][1];
+                        data_local_single[i*Nyl+j][0] = f->u[(i*Nyl+j)].real();
+                        data_local_single[i*Nyl+j][1] = f->u[(i*Nyl+j)].imag();
 		}
         }
 
@@ -242,7 +242,7 @@ if( !COPY ){
 
 if( COPY ){
 
-	#pragma omp parallel for simd collapse(2) default(shared)
+	#pragma omp parallel for simd collapse(2)
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
                         f->u[(i*Nyl+j)] = std::complex<double>(data_local_single[i*Nyl+j][0]*scale_after_fft, data_local_single[i*Nyl+j][1]*scale_after_fft);
@@ -255,12 +255,12 @@ if( COPY ){
 
 if( COPY ){
 
-	#pragma omp parallel for simd collapse(2) default(shared)
+	//#pragma omp parallel for
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
 			for(k = 0; k < 9; k++){
-	                        data_local[(i*Nyl+j)*t+k][0] = f->u[(i*Nyl+j)*t+k].real(); //data_global[(i+pos_x*Nxl)*N1+j][0];
-        	                data_local[(i*Nyl+j)*t+k][1] = f->u[(i*Nyl+j)*t+k].imag(); //data_global[(i+pos_x*Nxl)*N1+j][1];
+	                        data_local[(i*Nyl+j)*t+k][0] = f->u[(i*Nyl+j)*t+k].real(); 
+        	                data_local[(i*Nyl+j)*t+k][1] = f->u[(i*Nyl+j)*t+k].imag(); 
 			}
 		}
         }
@@ -286,7 +286,7 @@ if( !COPY ){
 
 if( COPY ){
 
-	#pragma omp parallel for simd collapse(2) default(shared)
+	#pragma omp parallel for simd collapse(2)
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
 			for(k = 0; k < 9; k++){
@@ -313,11 +313,11 @@ const double scale_after_fft = 1.0/sqrt(N0*N1);
 //	scale_after_fft = 1.0;
 //}
 
-	#pragma omp parallel for simd collapse(2) default(shared)
+	//#pragma omp parallel for
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
-                        data_local_single[i*Nyl+j][0] = f[i*Nyl+j].real(); //data_global[(i+pos_x*Nxl)*N1+j][0];
-                        data_local_single[i*Nyl+j][1] = f[i*Nyl+j].imag(); //data_global[(i+pos_x*Nxl)*N1+j][1];
+                        data_local_single[i*Nyl+j][0] = f[i*Nyl+j].real();
+                        data_local_single[i*Nyl+j][1] = f[i*Nyl+j].imag();
 		}
         }
 
@@ -327,7 +327,7 @@ const double scale_after_fft = 1.0/sqrt(N0*N1);
                 fftw_mpi_execute_dft(planK2X_single, data_local_single, data_local_single);
         }
 
-	#pragma omp parallel for simd collapse(2) default(shared)
+	#pragma omp parallel for simd collapse(2)
 	for (i = 0; i < Nxl; ++i){
 		for(j = 0; j < Nyl; j++){
                         f[i*Nyl+j] = std::complex<double>(data_local_single[i*Nyl+j][0]*scale_after_fft, data_local_single[i*Nyl+j][1]*scale_after_fft);

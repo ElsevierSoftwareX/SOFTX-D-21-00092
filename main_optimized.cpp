@@ -439,8 +439,12 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 
                 if(cnfg->KernelChoice == SIN_KERNEL)
                         file_name += "SIN_KERNEL";
-                
+               
+	std::cout << "pelna nazwa pliku: " << file_name << "\n";
+
+
     for(int i = 0; i < cnfg->measurements; i++){
+	    printf("iterator = %i\n", i);
             print(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
     }
 

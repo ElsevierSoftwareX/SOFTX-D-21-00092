@@ -862,7 +862,7 @@ template<class T, int t> int lfield<T,t>::setUnitModel(rand_class* rr){
 	// 3 4 5
 	// 6 7 8
 
-//	#pragma omp parallel for simd default(shared)
+	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 
 
@@ -1831,7 +1831,7 @@ template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(mom
 	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 	const double f = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
 
-	//#pragma omp parallel for simd collapse(2) default(shared)
+	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxl; xx++){
 		for(int yy = 0; yy < Nyl; yy++){
 
@@ -2677,7 +2677,7 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
 
         FILE* f;
-        char filename[100];
+        char filename[500];
 
         sprintf(filename, "%s_%i_%i_mpi%i_r%i.dat", fileroot.c_str(), Nx, Ny, mpi->getSize(), mpi->getRank());
 

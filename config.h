@@ -28,7 +28,7 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 4096
+#define Nx 128
 #define Ny Nx
 
 #include <iostream>
@@ -93,7 +93,7 @@ public:
 		printf("SETUP: mass = %f\n", mass); 
 		fscanf(f, "elementaryWilsonLines = %i\n", &elementaryWilsonLines);
 		printf("SETUP: elementaryWilsonLines = %i\n", elementaryWilsonLines); 
-		fscanf(f, "file_name = %s\n", &str_file_name);
+		fscanf(f, "file_name = %s\n", &str_file_name[0]);
 
 		
                 file_name.assign(str_file_name);
