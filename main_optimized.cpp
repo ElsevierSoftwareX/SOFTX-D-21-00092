@@ -136,8 +136,8 @@ int main(int argc, char *argv[]) {
     lfield<double,1>* corr = new lfield<double,1>(cnfg->Nxl, cnfg->Nyl);
     gfield<double,1>* corr_global = new gfield<double,1>(Nx, Ny);
 
-    std::vector<lfield<double,1>> sum(cnfg->langevin_steps, zero);
-    std::vector<lfield<double,1>> err(cnfg->langevin_steps, zero);
+    std::vector<lfield<double,1>> sum(cnfg->measurements, zero);
+    std::vector<lfield<double,1>> err(cnfg->measurements, zero);
 
 //-------------------------------------------------------
 //-------------------------------------------------------
@@ -277,7 +277,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 						if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION ){
 
-							if( cnfg->CouplingChoice != NOISE_COUPLING_CONSTANT ){
+							if( cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT || cnfg->CouplingChoice == NO_COUPLING_CONSTANT){
 						                fourier2->execute2D(&xi_local_x, 1);
 					        	        fourier2->execute2D(&xi_local_y, 1);
 							}
