@@ -1829,7 +1829,7 @@ return 1;
 template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(momenta* mom){
 
 	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
-	const double f = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
+	const double f = sqrt(2.0) * 4.0*M_PI/ (11.0-2.0*3.0/3.0);
 
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxl; xx++){
@@ -2348,7 +2348,7 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 		}
-		std::normal_distribution<double> distribution{0.0,1.0/sqrt(2.0)};	
+		std::normal_distribution<double> distribution{0.0,1.0}; ///sqrt(2.0)};	
   
     	    //set to zero
 	    for(int j = 0; j < t; j++){
@@ -2445,10 +2445,10 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 	    }
-    	    std::normal_distribution<double> distribution{0.0, 1.0/2.0}; ///sqrt(2.0)};
+    	    std::normal_distribution<double> distribution{0.0, 1.0/sqrt(sqrt(2.0))}; //1.0/2.0};
 
 
-	    double sqrt_coupling_constant = 2.0 * tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) );
+	    double sqrt_coupling_constant = sqrt(2.0) * tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) );
 
 	    //set to zero
 	    for(int j = 0; j < t; j++){
