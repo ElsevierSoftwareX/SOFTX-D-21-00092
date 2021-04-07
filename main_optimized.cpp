@@ -106,6 +106,7 @@ int main(int argc, char *argv[]) {
     lfield<double,9> uf(cnfg->Nxl, cnfg->Nyl);
 
     gfield<double,9> uf_global(Nx, Ny);
+    gfield<double,9> uf_copy_global(Nx, Ny);
 
     //evolution
     lfield<double,9> xi_local_x(cnfg->Nxl, cnfg->Nyl);
@@ -220,7 +221,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		int upper_bound_x = 1;
 		if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
-			upper_bound_x = Nx;
+			upper_bound_x = 48; //Nx;
 		}
 		//hatta iteration over positions
 		//loop over possible distances squared
@@ -229,8 +230,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 			int upper_bound_y = 1;
 			int lower_bound_y = 0;
 			if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){ 
-				lower_bound_y = ix-1;
-				upper_bound_y = ix+2;
+				lower_bound_y = ix; //-1;
+				upper_bound_y = ix+1; //+2;
 			}
 			for(int iy = lower_bound_y; iy < upper_bound_y; iy++){
 				if(iy >= 0 && iy < Ny){
@@ -265,7 +266,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 				                clock_gettime(CLOCK_MONOTONIC, &starte);
 
-				                printf("Performing evolution step no. %i\n", langevin);
+				                printf("Performing evolution step no. %i for position %i %i out of %i %i\n", langevin, ix, iy, upper_bound_x, upper_bound_y);
 
 						if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 							generate_gaussian_with_noise_coupling_constant(&xi_local_x, &xi_local_y, momtable, mpi, cnfg);
@@ -296,6 +297,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 				       			prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
 
 				                	fourier2->execute2D(&B_local, 0);
+
+							MPI_Barrier(MPI_COMM_WORLD);
 	        
 						}//end if momentum evolution	
 		
@@ -333,6 +336,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                         					}
                 					}
 
+							MPI_Barrier(MPI_COMM_WORLD);
+
 						}//end if position space evolution
 
 						//-----------UPDATE WILSON LINES-----------------
@@ -356,19 +361,31 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 							uf_copy = uftmp;
 
-							fourier2->execute2D(&uf_copy,1);
-    
-							uf_copy.trace(corr);
+							if( cnfg->CouplingChoice != HATTA_COUPLING_CONSTANT ){
 
-						    	corr_global->allgather(corr, mpi);	
+								fourier2->execute2D(&uf_copy,1);
+    	
+								uf_copy.trace(corr);
 
-				   			corr_global->average_and_symmetrize();
+							    	corr_global->allgather(corr, mpi);	
 
-							if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
-								corr_global->reduce_hatta(&sum[time], &err[time], mpi, ix, iy);
-							}else{
+					   			corr_global->average_and_symmetrize();
+
+								//corr_global->reduce_position(corr, mpi);
+
+								//fourier2->execute2D(corr,0);
+
+							    	//corr_global->allgather(corr, mpi);	
+
 								corr_global->reduce(&sum[time], &err[time], mpi);
+		
+							}else{
+
+					        	        uf_copy_global.allgather(&uf_copy, mpi);
+
+								uf_copy_global.average_reduce_hatta(&sum[time], &err[time], mpi, ix, iy);
 							}
+							
 						}
 
 					}//end evolution loop

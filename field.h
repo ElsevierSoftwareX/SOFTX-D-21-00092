@@ -168,7 +168,9 @@ template<class T, int t> class gfield: public field<T,t> {
 		int multiplyByCholesky(gmatrix<T>* mm);
 
 		int reduce(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi);
+		int reduce_position(lfield<T,t>* sum, mpi_class* mpi);
 		int reduce_hatta(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi, int xr, int yr);
+		int average_reduce_hatta(lfield<T,1>* sum, lfield<T,1>* err, mpi_class* mpi, int xr, int yr);
 
 		int setToZero(void){
 			for(int i = 0; i < t*Nxg*Nyg; i ++){
@@ -1762,6 +1764,27 @@ return 1;
 }
 
 /********************************************//**
+ * The method reduces the global gfield object into local lfield sum and lfield err objects: each MPI rank takes the appropriate part of the global object. Auxiliary method
+ * to write out the final correlation function in position space.
+*************************************************/
+template<class T, int t> int gfield<T,t>::reduce_position(lfield<T,t>* sum, mpi_class* mpi){
+
+	int NNx = sum->getNxl();
+	int NNy = sum->getNyl();
+
+	#pragma omp parallel for simd collapse(2) default(shared)
+	for(int i = 0; i < NNx; i++){
+		for(int j = 0; j < NNy; j++){
+			sum->u[(i*NNy+j)*t+0] = this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+0];
+		}
+	}
+
+return 1;
+}
+
+
+
+/********************************************//**
  * The method reduces the global gfield object into local lfield sum and lfield err objects: each MPI rank takes the appropriate part of the global object. Specialization to the HATTA_COUPLING_CONSTANT: we take from the global object only the elements for which the correlation function was evaluated, given by the two integer arguments xr and yr.
 *************************************************/
 template<class T, int t> int gfield<T,t>::reduce_hatta(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi, int xr, int yr ){
@@ -1794,6 +1817,55 @@ if( mpi->getPosX() == xr/(sum->getNxl()) && mpi->getPosY() == yr/(sum->getNyl())
 
 return 1;
 }
+
+/********************************************//**
+ * The method averages and reduces the global gfield object into local lfield sum and lfield err objects: each MPI rank takes the appropriate part of the global object. Specialization to the HATTA_COUPLING_CONSTANT: we take from the global object only the elements for which the correlation function was evaluated, given by the two integer arguments xr and yr.
+*************************************************/
+template<class T, int t> int gfield<T,t>::average_reduce_hatta(lfield<T,1>* sum, lfield<T,1>* err, mpi_class* mpi, int xr, int yr ){
+
+	int NNx = sum->getNxl();
+	int NNy = sum->getNyl();
+
+	int xr_local = xr%(sum->getNxl());
+	int yr_local = yr%(sum->getNyl());
+
+//average: we take all correlations at the separation given by xr and yr
+// this is the only correlation length which has the correct scale in the Hatta prescription
+
+	double trace = 0;
+
+	#pragma omp parallel for simd collapse(2) default(shared) reduction(+:trace)
+	for(int ix = 0; ix < Nxg; ix++){
+		for(int jy = 0; jy < Nyg; jy++){
+			
+                                su3_matrix<double> A,B,C;
+
+				int ixx = (ix+xr)%Nxg;
+				int iyy = (jy+yr)%Nyg;
+
+                                for(int k = 0; k < t; k++){
+
+                                        A.m[k] = this->u[(ix*Nyg+jy)*t+k];
+                                        B.m[k] = this->u[(ixx*Nyg+iyy)*t+k];
+                                }
+
+                                C = A^B; //A^dagger times B
+				
+				trace += C.m[0].real() + C.m[4].real() + C.m[8].real();
+		}
+	}
+
+//we only set it on the rank which contains this part of the global lattice
+if( mpi->getPosX() == xr/(sum->getNxl()) && mpi->getPosY() == yr/(sum->getNyl()) ){
+
+	sum->u[(xr_local*NNy+yr_local)*t+0] += trace/(1.0*Nx*Ny);
+	err->u[(xr_local*NNy+yr_local)*t+0] += pow(trace/(1.0*Nx*Ny),2.0);
+}
+	
+return 1;
+}
+
+
 
 /********************************************//**
  * The method reduces the global gfield object into local lfield by performing a sum over the volume. Used in the explicit formulation.
@@ -2348,7 +2420,7 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 		}
-		std::normal_distribution<double> distribution{0.0,1.0}; ///sqrt(2.0)};	
+		std::normal_distribution<double> distribution{0.0,1.0};	
   
     	    //set to zero
 	    for(int j = 0; j < t; j++){
@@ -2445,10 +2517,10 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 	    }
-    	    std::normal_distribution<double> distribution{0.0, 1.0/sqrt(sqrt(2.0))}; //1.0/2.0};
+    	    std::normal_distribution<double> distribution{0.0, 1.0};
 
 
-	    double sqrt_coupling_constant = sqrt(2.0) * tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) );
+	    double sqrt_coupling_constant = tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) );
 
 	    //set to zero
 	    for(int j = 0; j < t; j++){
