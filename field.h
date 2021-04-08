@@ -2031,7 +2031,7 @@ template<class T, int t> int print(lfield<T,t>* sum, lfield<T,t>* err, momenta* 
 
                                         if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
 
-                                                printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), x*(mom->phat2(i))*(sum->u[i*t+0].real()), x*(mom->phat2(i))*(err->u[i*t+0].real()));
+                                                printf("%i %i %i %i %f %e %e\n", xx, mpi->getPosX(), yy, mpi->getPosY(), sqrt(mom->phat2(i)), (1.0/x)*(mom->phat2(i))*(sum->u[i*t+0].real()), (mom->phat2(i))*sqrt(x*err->u[i*t+0].real()-sum->u[i*t+0].real()*sum->u[i*t+0].real())/sqrt(1.0*x)/(1.0*x));
 
                                         }
                                 }
@@ -2760,6 +2760,7 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
                         int i = xx*(sum->getNyl())+yy;
 
+			/*
                         if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
 
 				double kt = sqrt(mom->phat2(i));
@@ -2772,8 +2773,24 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
                                 fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), Nx*kt, Nx*Nx*3.0*c, Nx*Nx*3.0*sqrt(x*x*3.0*kt*kt*ce - 3.0*x*3.0*x*c*c)/x/sqrt(x));
 
+			}
+			*/
+
+                        if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
+
+				double kt = sqrt(mom->phat2(i));
+				double c =  (sum->u[i*t+0].real())/x/3.0;
+				double ce = (err->u[i*t+0].real())/x/3.0;
+
+                                //cfit[j] = 1024.0*1024.0*3.0*c[i];
+                                //cefit[j] = 1024.0*1024.0*3.0*(sqrt(64.0*64.0*3.0*kt[i]*kt[i]*ce[i]-3.0*64.0*3.0*64.0*c[i]*c[i])/64.0/sqrt(64.0));
+                                //ktfit[j] = 1024.0*kt[i];
+
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), Nx*kt, 3.0*c, 3.0*sqrt(x*x*3.0*ce - 3.0*x*3.0*x*c*c)/x/sqrt(x));
+
                         }
-                }
+
+		}
         }
 
         fclose(f);

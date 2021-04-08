@@ -371,11 +371,12 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 					   			corr_global->average_and_symmetrize();
 
-								//corr_global->reduce_position(corr, mpi);
+									//additional steps to get the final correlator in position space
+									corr_global->reduce_position(corr, mpi);
 
-								//fourier2->execute2D(corr,0);
+									fourier2->execute2D(corr,0);
 
-							    	//corr_global->allgather(corr, mpi);	
+								    	corr_global->allgather(corr, mpi);	
 
 								corr_global->reduce(&sum[time], &err[time], mpi);
 		

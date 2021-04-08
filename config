@@ -1,11 +1,11 @@
-stat = 4
+stat = 16
 mu = 30.72
 mass = 0.0001
 elementaryWilsonLines = 50
-file_name = lasttest_position_runningcoupling_noise
+file_name = test_correlation_function_position_space2
 langevin_steps = 200
 measurements = 200
 step = 0.0004
-EvolutionChoice = POSITION_EVOLUTION
-CouplingChoice = NOISE_COUPLING_CONSTANT
+EvolutionChoice = MOMENTUM_EVOLUTION
+CouplingChoice = SQRT_COUPLING_CONSTANT
 KernelChoice = SIN_KERNEL
