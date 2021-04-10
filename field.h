@@ -2786,7 +2786,7 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
                                 //cefit[j] = 1024.0*1024.0*3.0*(sqrt(64.0*64.0*3.0*kt[i]*kt[i]*ce[i]-3.0*64.0*3.0*64.0*c[i]*c[i])/64.0/sqrt(64.0));
                                 //ktfit[j] = 1024.0*kt[i];
 
-                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), Nx*kt, 3.0*c, 3.0*sqrt(x*x*3.0*ce - 3.0*x*3.0*x*c*c)/x/sqrt(x));
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), Nx*kt, c/(1.0*Nx), sqrt(x*x*3.0*ce - 3.0*x*3.0*x*c*c)/x/sqrt(x)/(1.0*Nx));
 
                         }
 
