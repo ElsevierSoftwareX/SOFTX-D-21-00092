@@ -1826,41 +1826,58 @@ template<class T, int t> int gfield<T,t>::average_reduce_hatta(lfield<T,1>* sum,
 	int NNx = sum->getNxl();
 	int NNy = sum->getNyl();
 
-	int xr_local = xr%(sum->getNxl());
-	int yr_local = yr%(sum->getNyl());
+	int xr_local = xr%NNx;
+	int yr_local = yr%NNy;
 
 //average: we take all correlations at the separation given by xr and yr
 // this is the only correlation length which has the correct scale in the Hatta prescription
 
 	double trace = 0;
 
-	#pragma omp parallel for simd collapse(2) default(shared) reduction(+:trace)
-	for(int ix = 0; ix < Nxg; ix++){
-		for(int jy = 0; jy < Nyg; jy++){
+	//pragma omp parallel for simd collapse(2) default(shared) reduction(+:trace)
+	for(int ix = 0; ix < Nx; ix++){
+		for(int jy = 0; jy < Ny; jy++){
 			
-                                su3_matrix<double> A,B,C;
+                                su3_matrix<double> A,B,C,D;
 
-				int ixx = (ix+xr)%Nxg;
-				int iyy = (jy+yr)%Nyg;
+				int ixx = (ix+xr)%Nx;
+				int iyy = (jy+yr)%Ny;
 
                                 for(int k = 0; k < t; k++){
 
-                                        A.m[k] = this->u[(ix*Nyg+jy)*t+k];
-                                        B.m[k] = this->u[(ixx*Nyg+iyy)*t+k];
+                                        A.m[k] = this->u[(ix*Ny+jy)*t+k];
+                                        B.m[k] = this->u[(ixx*Ny+iyy)*t+k];
+					C.m[k] = 0.0;
                                 }
 
-                                C = A^B; //A^dagger times B
+				//D = A^dagger
+	                        D.m[0] = std::conj(A.m[0]);
+        	                D.m[1] = std::conj(A.m[3]);
+                	        D.m[2] = std::conj(A.m[6]);
+                        	D.m[3] = std::conj(A.m[1]);
+	                        D.m[4] = std::conj(A.m[4]);
+        	                D.m[5] = std::conj(A.m[7]);
+                	        D.m[6] = std::conj(A.m[2]);
+                        	D.m[7] = std::conj(A.m[5]);
+	                        D.m[8] = std::conj(A.m[8]);
+
+ 				//A^dagger times B
+                                C = D*B; 
 				
 				trace += C.m[0].real() + C.m[4].real() + C.m[8].real();
 		}
 	}
 
-//we only set it on the rank which contains this part of the global lattice
-if( mpi->getPosX() == xr/(sum->getNxl()) && mpi->getPosY() == yr/(sum->getNyl()) ){
+	//we only set it on the rank which contains this part of the global lattice
+	if( (mpi->getPosX() == xr/NNx) && (mpi->getPosY() == yr/NNy) ){
 
-	sum->u[(xr_local*NNy+yr_local)*t+0] += trace/(1.0*Nx*Ny);
-	err->u[(xr_local*NNy+yr_local)*t+0] += pow(trace/(1.0*Nx*Ny),2.0);
-}
+		printf("xr = %i, yr = %i, trace = %e\n", xr, yr, trace);
+
+		sum->u[(xr_local*NNy+yr_local)+0] += trace/(3.0*Nx*Ny);
+		err->u[(xr_local*NNy+yr_local)+0] += pow(trace/(3.0*Nx*Ny),2.0);
+
+		printf("xr_local = %i, yr_local = %i, site = %i, value = %e, err = %e\n", xr_local, yr_local, xr_local*NNy+yr_local, sum->u[(xr_local*NNy+yr_local)+0], err->u[(xr_local*NNy+yr_local)+0]);
+	}
 	
 return 1;
 }
@@ -2678,7 +2695,7 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 
 			double sqrt_coupling_constant;
 
-			if( p == SQRT_COUPLING_CONSTANT ){
+			if( p == SQRT_COUPLING_CONSTANT || p == HATTA_COUPLING_CONSTANT){
 				sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
 			}
 			if( p == NOISE_COUPLING_CONSTANT ){
@@ -2745,7 +2762,7 @@ return 1;
 /********************************************//**
  * Main output function. Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation and its standard deviation. Additional arguments are needed: momenta* to print the k_T. The statistics is passed through x argument.
  ***********************************************/
-template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double x, mpi_class* mpi, std::string const &fileroot){
+template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double stat, mpi_class* mpi, std::string const &fileroot){
 
 
         FILE* f;
@@ -2778,15 +2795,18 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
                         if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
 
-				double kt = sqrt(mom->phat2(i));
-				double c =  (sum->u[i*t+0].real())/x/3.0;
-				double ce = (err->u[i*t+0].real())/x/3.0;
+				//double kt = sqrt(mom->phat2(i));
+				double c =  (sum->u[i*t+0].real())/stat;
+				double ce = (err->u[i*t+0].real())/stat;
 
                                 //cfit[j] = 1024.0*1024.0*3.0*c[i];
                                 //cefit[j] = 1024.0*1024.0*3.0*(sqrt(64.0*64.0*3.0*kt[i]*kt[i]*ce[i]-3.0*64.0*3.0*64.0*c[i]*c[i])/64.0/sqrt(64.0));
                                 //ktfit[j] = 1024.0*kt[i];
 
-                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), Nx*kt, c/(1.0*Nx), sqrt(x*x*3.0*ce - 3.0*x*3.0*x*c*c)/x/sqrt(x)/(1.0*Nx));
+				int xglob = xx+(mpi->getPosX()*(sum->getNxl()));
+				int yglob = yy+(mpi->getPosY()*(sum->getNyl()));
+
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xglob, yglob, 1.0*sqrt(xglob*xglob+yglob*yglob), c, sqrt(stat*stat*ce - stat*stat*c*c)/stat/sqrt(stat));
 
                         }
 

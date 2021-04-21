@@ -221,7 +221,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		int upper_bound_x = 1;
 		if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
-			upper_bound_x = 48; //Nx;
+			upper_bound_x = 12; //Nx;
 		}
 		//hatta iteration over positions
 		//loop over possible distances squared
@@ -230,19 +230,19 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 			int upper_bound_y = 1;
 			int lower_bound_y = 0;
 			if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){ 
-				lower_bound_y = ix; //-1;
-				upper_bound_y = ix+1; //+2;
+				lower_bound_y = ix-1;
+				upper_bound_y = ix+2; 
 			}
 			for(int iy = lower_bound_y; iy < upper_bound_y; iy++){
 				if(iy >= 0 && iy < Ny){
 
-				        double dix = ix;
+				        int dix = ix;
 				        if( dix >= Nx/2 )
 				                dix = dix - Nx;
 				        if( dix < -Nx/2 )
 				                dix = dix + Nx;
 
-				        double diy = iy;
+				        int diy = iy;
 				        if( diy >= Ny/2 )
 				                diy = diy - Ny;
 				        if( diy < -Ny/2 )
@@ -266,7 +266,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 				                clock_gettime(CLOCK_MONOTONIC, &starte);
 
-				                printf("Performing evolution step no. %i for position %i %i out of %i %i\n", langevin, ix, iy, upper_bound_x, upper_bound_y);
+				                printf("Performing evolution step no. %i for position %i %i (rr_hatta = %i) out of %i %i\n", langevin, ix, iy, rr_hatta, upper_bound_x, upper_bound_y);
 
 						if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
 							generate_gaussian_with_noise_coupling_constant(&xi_local_x, &xi_local_y, momtable, mpi, cnfg);
@@ -355,7 +355,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 						//------CORRELATION FUNCTION-----------------------------
 						//-------------------------------------------------------
 
-						if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
+						if( (langevin+1) % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
 
 							int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
 
@@ -388,6 +388,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 							}
 							
 						}
+
+						MPI_Barrier(MPI_COMM_WORLD);
 
 					}//end evolution loop
 
