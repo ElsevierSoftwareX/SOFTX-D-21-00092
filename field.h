@@ -2517,10 +2517,10 @@ template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfie
 		  	 std::hash<std::thread::id> hasher;
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 	    }
-    	    std::normal_distribution<double> distribution{0.0, 1.0};
+    	    std::normal_distribution<double> distribution{0.0, sqrt(2.0)};
 
 
-	    double sqrt_coupling_constant = tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) );
+	    double sqrt_coupling_constant = 1.0; //tmp2 / log( pow( tmp + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) );
 
 	    //set to zero
 	    for(int j = 0; j < t; j++){
