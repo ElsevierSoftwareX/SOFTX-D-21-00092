@@ -1901,7 +1901,7 @@ return 1;
 template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(momenta* mom){
 
 	const double w = pow(15.0*15.0/6.0/6.0,1.0/0.2);
-	const double f = sqrt(2.0) * 4.0*M_PI/ (11.0-2.0*3.0/3.0);
+	const double f = 4.0*M_PI/ (11.0-2.0*3.0/3.0);
 
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int xx = 0; xx < Nxl; xx++){
