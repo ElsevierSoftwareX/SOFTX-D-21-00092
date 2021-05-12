@@ -150,21 +150,20 @@ int main(int argc, char *argv[]) {
 //
 //
 
-for(int ix = 0; ix < 1; ix++){
-for(int iy = ix+1; iy < 2; iy++){
+for(int scale_ix = 0; scale_ix < 1; scale_ix++){
+for(int scale_iy = scale_ix+0; scale_iy < 2; scale_iy++){
 //    int ix = 2;
 //    int iy = 2;
 
-    int initial_scale = ix*ix+iy*iy;
+    int initial_scale = scale_ix*scale_ix + scale_iy*scale_iy;
 
     int rr[1000];
     int rr_rap[1000];
 
     rr_rap[0] = 0;
-//
+
     int rapidities = kinematical_constraints(initial_scale, cnfg->langevin_steps, cnfg->step, rr, rr_rap);
 
-//
     printf("THIS SETUP HAS INITIAL SCALE SQUARED %i \n", initial_scale);
     printf("THIS SETUP REQUIRES %i SEPARATE RAPIDITIES TO BE SIMULATED!!!\n", rapidities);
     printf("THIS SETUP INVOLVES ADDITIONAL SCALES:\n");
@@ -178,12 +177,7 @@ for(int iy = ix+1; iy < 2; iy++){
 
     printf("STARTING SIMULATION\n");
 
-//
-
-//    rr = (int*)malloc(rapidities*sizeof(int));
-
     std::vector<gfield<double,9>> evolution(rapidities, uf_global_zero);
-
 
 //-------------------------------------------------------
 //------MAIN STAT LOOP-----------------------------------
@@ -226,9 +220,13 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 			uf *= f;
     		}
 
+		MPI_Barrier(MPI_COMM_WORLD);
+
 		uf_global.allgather(&uf, mpi);
 
-		evolution[rap] = uf_global;
+//		uf_global.average_reduce_hatta(&sum[0], &err[0], mpi, scale_ix, scale_iy);				
+
+		evolution[rap].set(uf_global);
 	}
 
         clock_gettime(CLOCK_MONOTONIC, &finishi);
@@ -237,6 +235,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         elapsedi += (finishi.tv_nsec - starti.tv_nsec) / 1000000000.0;
 
         std::cout<<"Initial condition time: " << elapsedi << std::endl;
+
+	if( cnfg->EvolutionChoice == POSITION_EVOLUTION ){
 
 		//----------------------------------------------------------------
 		//------------MAIN EVOLUTION LOOP---------------------------------
@@ -257,7 +257,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 					printf("running evolution step for scale %i\n", rr[rap]);
 
-					uf_global = evolution[rap];
+					uf_global.set(evolution[rap]);
 
 				 	uf_global.reduce_position(&uftmp, mpi);
 
@@ -300,7 +300,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 				        uf_global.allgather(&uftmp, mpi);
 
-					evolution[rap] = uf_global;
+					evolution[rap].set(uf_global);
 				
 				}//if evolve that scale
 
@@ -314,29 +314,22 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 					printf("time = %i\n", time);
 
-					evolution[0].average_reduce_hatta(&sum[time], &err[time], mpi, ix, iy);				
+					evolution[0].average_reduce_hatta(&sum[time], &err[time], mpi, scale_ix, scale_iy);				
 				}
 	
 			}//end for loop over the scales
 
 		}//end evolution loop
+	}
+
 
 	//if no evolution - compute correlation function directly from initial condition
 	if( cnfg->EvolutionChoice == NO_EVOLUTION ){
 
 		int time = 0;
 
-		uf_copy = uf;
-
-		fourier2->execute2D(&uf_copy,1);
-    
-		uf_copy.trace(corr);
-
-	    	corr_global->allgather(corr, mpi);	
-
-		corr_global->reduce(&sum[time], &err[time], mpi);
+		evolution[0].average_reduce_hatta(&sum[time], &err[time], mpi, scale_ix, scale_iy);				
 	}
-
 
         clock_gettime(CLOCK_MONOTONIC, &finish);
 
@@ -391,7 +384,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     for(int i = 0; i < cnfg->measurements; i++){
 	    printf("iterator = %i\n", i);
-            print(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
+            print_position_space(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
     }
 
 //-------------------------------------------------------

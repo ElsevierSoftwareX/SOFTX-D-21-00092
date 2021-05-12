@@ -157,6 +157,8 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		gfield<T,t>& operator= ( const gfield<T,t>& f );
 
+		void set(const gfield<T,t>& f);
+
 		gfield<T,t>* hermitian();
 
 		int setKernelXbarX(int x, int y, positions* postable, Kernel KernelChoice);
@@ -388,6 +390,18 @@ template<class T, int t> gfield<T,t>& gfield<T,t>::operator= ( const gfield<T,t>
 
 		return *this;
 		}
+
+template<class T, int t> void gfield<T,t>::set( const gfield<T,t>& f ){
+
+		#pragma omp parallel for simd default(shared)
+		for(int i = 0; i < f.getNxg()*f.getNyg(); i ++){
+			for(int k = 0; k < t; k++){
+				this->u[i*t+k] = f.u[i*t+k];
+			}
+		}
+}
+
+
 
 /********************************************//**
  * Overloaded multiplication and assignement operator. In the optimized version the exponentiation from the Lie algebra to the Lie group is included in order to minimize
@@ -1851,6 +1865,11 @@ template<class T, int t> int gfield<T,t>::average_reduce_hatta(lfield<T,1>* sum,
 	int xr_local = xr%(sum->getNxl());
 	int yr_local = yr%(sum->getNyl());
 
+	if(t != 9){
+		printf("Wrong gfield in average_reduce_hatta function. Aborting\n");
+		exit(1);
+	}
+
 //average: we take all correlations at the separation given by xr and yr
 // this is the only correlation length which has the correct scale in the Hatta prescription
 
@@ -1877,13 +1896,17 @@ template<class T, int t> int gfield<T,t>::average_reduce_hatta(lfield<T,1>* sum,
 		}
 	}
 
-	printf("trace = %f\n", trace);
-
 //we only set it on the rank which contains this part of the global lattice
 if( mpi->getPosX() == xr/(sum->getNxl()) && mpi->getPosY() == yr/(sum->getNyl()) ){
 
-	sum->u[(xr_local*NNy+yr_local)*t+0] += trace/(1.0*Nx*Ny);
-	err->u[(xr_local*NNy+yr_local)*t+0] += pow(trace/(1.0*Nx*Ny),2.0);
+	printf("(rank( %i, %i) : trace = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), trace/(1.0*Nx*Ny), xr_local, yr_local);
+
+	sum->u[(xr_local*NNy+yr_local)*1+0] += trace/(1.0*Nx*Ny);
+	err->u[(xr_local*NNy+yr_local)*1+0] += pow(trace/(1.0*Nx*Ny),2.0);
+
+	printf("(rank( %i, %i) : sum = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), sum->u[(xr_local*NNy+yr_local)*1+0].real(), xr_local, yr_local);
+	printf("(rank( %i, %i) : err = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), err->u[(xr_local*NNy+yr_local)*1+0].real(), xr_local, yr_local);
+
 }
 	
 return 1;
@@ -2820,7 +2843,14 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
                         if( dy < -Ny/2 )
                                 dy = dy + Ny;
 
-                        double rho = log( (dx*dx + dy*dy) / (1.0*rr_current) );
+                        double rho;
+		       
+			if(rr_current > 0){
+				rho = log( (dx*dx + dy*dy) / (1.0*rr_current) );
+			}else{
+				printf("Scale equal to 0; divergence in rho; aborting\n");
+				exit(1);
+			}
 
 			if( evolution_step * langevin_step > rho ){
 
@@ -3008,4 +3038,51 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
 return 1;
 }
+
+
+/********************************************//**
+ * Main output function. Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation and its standard deviation. Additional arguments are needed: momenta* to print the k_T. The statistics is passed through x argument.
+ ***********************************************/
+template<class T, int t> int print_position_space(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double stat, mpi_class* mpi, std::string const &fileroot){
+
+
+        FILE* f;
+        char filename[500];
+
+        sprintf(filename, "%s_%i_%i_mpi%i_r%i.dat", fileroot.c_str(), Nx, Ny, mpi->getSize(), mpi->getRank());
+
+        f = fopen(filename, "a+");
+
+        for(int xx = 0; xx < sum->getNxl(); xx++){
+                for(int yy = 0; yy < sum->getNyl(); yy++){
+
+                        int i = xx*(sum->getNyl())+yy;
+
+//			if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
+
+                                //double kt = sqrt(mom->phat2(i));
+                                double c =  (sum->u[i*t+0].real())/stat;
+				double ce = (err->u[i*t+0].real())/stat;
+
+                                //cfit[j] = 1024.0*1024.0*3.0*c[i];
+                                //cefit[j] = 1024.0*1024.0*3.0*(sqrt(64.0*64.0*3.0*kt[i]*kt[i]*ce[i]-3.0*64.0*3.0*64.0*c[i]*c[i])/64.0/sqrt(64.0));
+                                //ktfit[j] = 1024.0*kt[i];
+
+                                int xglob = xx+(mpi->getPosX()*(sum->getNxl()));
+                                int yglob = yy+(mpi->getPosY()*(sum->getNyl()));
+
+				if( fabs(c) > 1.0e-12 )
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xglob, yglob, 1.0*sqrt(xglob*xglob+yglob*yglob), c, sqrt(stat*stat*ce - stat*stat*c*c)/stat/sqrt(stat));
+
+//                      }
+
+                }
+        }
+
+        fclose(f);
+
+return 1;
+}
+
+
 #endif
