@@ -150,8 +150,8 @@ int main(int argc, char *argv[]) {
 //
 //
 
-for(int scale_ix = 0; scale_ix < 1; scale_ix++){
-for(int scale_iy = scale_ix+0; scale_iy < 2; scale_iy++){
+for(int scale_ix = 5; scale_ix < 6; scale_ix++){
+for(int scale_iy = scale_ix; scale_iy < 6; scale_iy++){
 //    int ix = 2;
 //    int iy = 2;
 
@@ -223,8 +223,27 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		uf_global.allgather(&uf, mpi);
+/*
+                for(int x = 0; x < cnfg->Nxl; x++){
+	                for(int y = 0; y < cnfg->Nyl; y++){
 
-//		uf_global.average_reduce_hatta(&sum[0], &err[0], mpi, scale_ix, scale_iy);				
+				su3_matrix<double> A,B,C;
+
+                                for(int k = 0; k < 9; k++){
+
+                                        A.m[k] = uf.u[(x*Ny+y)*9+k];
+                                        B.m[k] = uf.u[(x*Ny+y)*9+k];
+                                }
+
+                                C = A^B; //A^dagger times B
+
+                                double trace = C.m[0].real() + C.m[4].real() + C.m[8].real();
+
+				printf("trace = %f\n", trace);
+			}
+		}	
+*/
+		//uf_global.average_reduce_hatta(&sum[0], &err[0], mpi, scale_ix, scale_iy);				
 
 		evolution[rap].set(uf_global);
 	}

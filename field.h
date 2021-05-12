@@ -1899,13 +1899,13 @@ template<class T, int t> int gfield<T,t>::average_reduce_hatta(lfield<T,1>* sum,
 //we only set it on the rank which contains this part of the global lattice
 if( mpi->getPosX() == xr/(sum->getNxl()) && mpi->getPosY() == yr/(sum->getNyl()) ){
 
-	printf("(rank( %i, %i) : trace = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), trace/(1.0*Nx*Ny), xr_local, yr_local);
+	//printf("(rank( %i, %i) : trace = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), trace/(1.0*Nx*Ny), xr_local, yr_local);
 
 	sum->u[(xr_local*NNy+yr_local)*1+0] += trace/(1.0*Nx*Ny);
 	err->u[(xr_local*NNy+yr_local)*1+0] += pow(trace/(1.0*Nx*Ny),2.0);
 
-	printf("(rank( %i, %i) : sum = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), sum->u[(xr_local*NNy+yr_local)*1+0].real(), xr_local, yr_local);
-	printf("(rank( %i, %i) : err = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), err->u[(xr_local*NNy+yr_local)*1+0].real(), xr_local, yr_local);
+	//printf("(rank( %i, %i) : sum = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), sum->u[(xr_local*NNy+yr_local)*1+0].real(), xr_local, yr_local);
+	//printf("(rank( %i, %i) : err = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), err->u[(xr_local*NNy+yr_local)*1+0].real(), xr_local, yr_local);
 
 }
 	
@@ -2856,7 +2856,7 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 
 	                        double Delta = theta( sqrt( dx*dx + dy*dy ) - sqrt(rr_current), rho);
 
-        	                double R = max( sqrt( dx*dx + dy*dy ), sqrt(rr_current) );
+        	                int RRint = max( dx*dx + dy*dy, rr_current );
 
 				std::complex<double> A,B;
 			        su3_matrix<double> C,D,E,F,G,H,K;
@@ -2940,7 +2940,7 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 				//we look for scale (int)(R*R)
 				int rr_new_scale = 0;
 				for(int jj = 0; jj < rapidities; jj++)
-					if(rr[jj] == (int)(R*R))
+					if(rr[jj] == RRint)
 						rr_new_scale = jj;
 
 				//printf("scale = %i (RR = %i), index new scale = %i, value = %i\n", rr_current, (int)(R*R), rr_new_scale, rr[rr_new_scale]);
