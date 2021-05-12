@@ -60,6 +60,7 @@
 
 #include <numeric>
 
+#include "kinematical_constraints.h"
 
 int main(int argc, char *argv[]) {
 
@@ -130,6 +131,7 @@ int main(int argc, char *argv[]) {
 //-------------------------------------------------------
 
     lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
+    gfield<double,9> uf_global_zero(Nx, Ny);
 
     lfield<double,9> uf_copy(cnfg->Nxl, cnfg->Nyl);
 
@@ -141,27 +143,46 @@ int main(int argc, char *argv[]) {
     std::vector<lfield<double,1>> err(cnfg->measurements, zero);
 
 //-------------------------------------------------------
+//-------KEEPING U HISTORY-------------------------------
 //-------------------------------------------------------
 
-//create sigma correlation matrix for the noise vectors in position space
-//perform cholesky decomposition to get the square root of the correlation matrix
+//first we need to decide how many scale r we need and how many history steps for each of them we may need
+//
+//
 
-gmatrix<double>* cholesky;
+for(int ix = 0; ix < 1; ix++){
+for(int iy = ix+1; iy < 2; iy++){
+//    int ix = 2;
+//    int iy = 2;
 
-if(cnfg->EvolutionChoice == POSITION_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT){
+    int initial_scale = ix*ix+iy*iy;
 
-        corr->setCorrelationsForCouplingConstant(momtable);
-	
-        fourier2->execute2D(corr, 0);
+    int rr[1000];
+    int rr_rap[1000];
 
-        corr_global->allgather(corr, mpi);
+    rr_rap[0] = 0;
+//
+    int rapidities = kinematical_constraints(initial_scale, cnfg->langevin_steps, cnfg->step, rr, rr_rap);
 
-        cholesky = new gmatrix<double>(Nx*Ny,Nx*Ny);
+//
+    printf("THIS SETUP HAS INITIAL SCALE SQUARED %i \n", initial_scale);
+    printf("THIS SETUP REQUIRES %i SEPARATE RAPIDITIES TO BE SIMULATED!!!\n", rapidities);
+    printf("THIS SETUP INVOLVES ADDITIONAL SCALES:\n");
+    for(int ii = 0; ii < rapidities; ii++){
+	printf("%i\n", rr[ii]);
+    }
+    printf("THIS SETUP INVOLVES ADDITIONAL SCALES STARTING AT RAPIDITIES:\n");
+    for(int ii = 0; ii < rapidities; ii++){
+	printf("%i\n", rr_rap[ii]);
+    }
 
-        cholesky->decompose(corr_global);
-        printf("cholesky decomposition finished\n");
-}
+    printf("STARTING SIMULATION\n");
 
+//
+
+//    rr = (int*)malloc(rapidities*sizeof(int));
+
+    std::vector<gfield<double,9>> evolution(rapidities, uf_global_zero);
 
 
 //-------------------------------------------------------
@@ -188,20 +209,27 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         clock_gettime(CLOCK_MONOTONIC, &starti);
 
-	uf.setToUnit();
+	for(int rap = 0; rap < rapidities; rap++){
 
-    	for(int i = 0; i < MVmodel->NyGet(); i++){
+		uf.setToUnit();
+
+    		for(int i = 0; i < MVmodel->NyGet(); i++){
 	
-		f.setMVModel(MVmodel);
+			f.setMVModel(MVmodel);
 
-		fourier2->execute2D(&f,1);
+			fourier2->execute2D(&f,1);
 
-		f.solvePoisson(cnfg->mass * pow(MVmodel->gGet(),2.0) * MVmodel->muGet(), MVmodel->gGet(), momtable);
+			f.solvePoisson(cnfg->mass * pow(MVmodel->gGet(),2.0) * MVmodel->muGet(), MVmodel->gGet(), momtable);
 
-		fourier2->execute2D(&f,0);
+			fourier2->execute2D(&f,0);
 
-		uf *= f;
-    	}
+			uf *= f;
+    		}
+
+		uf_global.allgather(&uf, mpi);
+
+		evolution[rap] = uf_global;
+	}
 
         clock_gettime(CLOCK_MONOTONIC, &finishi);
 
@@ -210,190 +238,88 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
+		//----------------------------------------------------------------
+		//------------MAIN EVOLUTION LOOP---------------------------------
+	        //----------------------------------------------------------------
+	        for(int langevin = 0; langevin < cnfg->langevin_steps; langevin++){
 
-	//-------------------------------------------------------
-	//---------------IF EVOLUTION----------------------------
-	//------------------------------------------------------- 
-	
-	if( cnfg->EvolutionChoice != NO_EVOLUTION ){
+			printf("langevin step %i\n", langevin);
 
-		//-------SETUP FOR HATTA COUPLING CONSTANT-----------
+	                struct timespec starte, finishe;
+	                double elapsede;
 
-		int upper_bound_x = 1;
-		if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
-			upper_bound_x = 48; //Nx;
-		}
-		//hatta iteration over positions
-		//loop over possible distances squared
-		for(int ix = 0; ix < upper_bound_x; ix++){
+        	        clock_gettime(CLOCK_MONOTONIC, &starte);
 
-			int upper_bound_y = 1;
-			int lower_bound_y = 0;
-			if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){ 
-				lower_bound_y = ix; //-1;
-				upper_bound_y = ix+1; //+2;
-			}
-			for(int iy = lower_bound_y; iy < upper_bound_y; iy++){
-				if(iy >= 0 && iy < Ny){
+			for(int rap = 0; rap < rapidities; rap++){
 
-				        double dix = ix;
-				        if( dix >= Nx/2 )
-				                dix = dix - Nx;
-				        if( dix < -Nx/2 )
-				                dix = dix + Nx;
+				//if the evolution of that scale started, we do it
+				if(langevin >= rr_rap[rap]){
 
-				        double diy = iy;
-				        if( diy >= Ny/2 )
-				                diy = diy - Ny;
-				        if( diy < -Ny/2 )
-				                diy = diy + Ny;
+					printf("running evolution step for scale %i\n", rr[rap]);
 
-				        int rr_hatta = dix*dix + diy*diy;
+					uf_global = evolution[rap];
 
-					//----------------------------------------------------------------------------
-					//---------KEEP ORIGINAL INITIAL CONDITION AND ITERATE OVER DISTANCES rr_hatta
-					//----------------------------------------------------------------------------
+				 	uf_global.reduce_position(&uftmp, mpi);
 
-				        uftmp = uf;
-		
-					//----------------------------------------------------------------
-					//------------MAIN EVOLUTION LOOP---------------------------------
-				        //----------------------------------------------------------------
-				        for(int langevin = 0; langevin < cnfg->langevin_steps; langevin++){
-
-				                struct timespec starte, finishe;
-				                double elapsede;
-
-				                clock_gettime(CLOCK_MONOTONIC, &starte);
-
-				                printf("Performing evolution step no. %i for position %i %i out of %i %i\n", langevin, ix, iy, upper_bound_x, upper_bound_y);
-
-						if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
-							generate_gaussian_with_noise_coupling_constant(&xi_local_x, &xi_local_y, momtable, mpi, cnfg);
-						}else{
-							generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
-						}
-
-						//----------MOMENTUM SPACE EVOLUTION-------------
-
-						if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION ){
-
-							if( cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT || cnfg->CouplingChoice == NO_COUPLING_CONSTANT){
-						                fourier2->execute2D(&xi_local_x, 1);
-					        	        fourier2->execute2D(&xi_local_y, 1);
-							}
-
-							prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
-
-				                	fourier2->execute2D(&A_local, 0);
-					                fourier2->execute2D(&xi_local_x, 0);
-				        	        fourier2->execute2D(&xi_local_y, 0);
-
-							uxiulocal(&uxiulocal_x, &uxiulocal_y, &uftmp, &xi_local_x, &xi_local_y);
-
-					                fourier2->execute2D(&uxiulocal_x, 1);
-				        	        fourier2->execute2D(&uxiulocal_y, 1);
-
-				       			prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
-
-				                	fourier2->execute2D(&B_local, 0);
-
-							MPI_Barrier(MPI_COMM_WORLD);
-	        
-						}//end if momentum evolution	
-		
-						//----------POSITION SPACE EVOLUTION-------------
+					generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
+						
+					//----------POSITION SPACE EVOLUTION-------------
 				
-						if( cnfg->EvolutionChoice == POSITION_EVOLUTION ){
+					xi_global_x.allgather(&xi_local_x, mpi);
+					xi_global_y.allgather(&xi_local_y, mpi);
 
-				                	printf("gathering local xi to global\n");
-					                xi_global_x.allgather(&xi_local_x, mpi);
-				        	        xi_global_y.allgather(&xi_local_y, mpi);
+		        	        //uf_global.allgather(&uftmp, mpi);
 
-							if( cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT ){
+					A_local.setToZero();
+					B_local.setToZero();
 
-		                				xi_global_x.multiplyByCholesky(cholesky);
-				                		xi_global_y.multiplyByCholesky(cholesky);
+			                for(int x = 0; x < cnfg->Nxl; x++){
+       						for(int y = 0; y < cnfg->Nyl; y++){
 
-							}
+	       				                int x_global = x + mpi->getPosX()*cnfg->Nxl;
+      				        		int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
-					                printf("gathering local uf to global\n");
-				        	        uf_global.allgather(&uftmp, mpi);
+							prepare_A_and_B_local_with_history(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, 
+								&B_local, &uf_global, &postable, rr, rap, rapidities, cnfg->CouplingChoice, cnfg->KernelChoice, evolution, langevin, cnfg->step);
 
-							A_local.setToZero();
-							B_local.setToZero();
+       						}
+               				}
 
-				        	        printf("starting iteration over global lattice\n");
-					                for(int x = 0; x < cnfg->Nxl; x++){
-	        	        				for(int y = 0; y < cnfg->Nyl; y++){
+					MPI_Barrier(MPI_COMM_WORLD);
+	
+					//-----------UPDATE WILSON LINES-----------------
 
-				        		                int x_global = x + mpi->getPosX()*cnfg->Nxl;
-                	        				        int y_global = y + mpi->getPosY()*cnfg->Nyl;
-
-									prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, 
-											&B_local, &uf_global, &postable, rr_hatta, cnfg->CouplingChoice, cnfg->KernelChoice);
-
-                        					}
-                					}
-
-							MPI_Barrier(MPI_COMM_WORLD);
-
-						}//end if position space evolution
-
-						//-----------UPDATE WILSON LINES-----------------
-
-						update_uf(&uftmp, &B_local, &A_local, cnfg->step);
+					update_uf(&uftmp, &B_local, &A_local, cnfg->step);
 		
-					        clock_gettime(CLOCK_MONOTONIC, &finishe);
+				        clock_gettime(CLOCK_MONOTONIC, &finishe);
 
-				        	elapsede = (finishe.tv_sec - starte.tv_sec);
-					        elapsede += (finishe.tv_nsec - starte.tv_nsec) / 1000000000.0;
+				       	elapsede = (finishe.tv_sec - starte.tv_sec);
+				        elapsede += (finishe.tv_nsec - starte.tv_nsec) / 1000000000.0;
 
-				        	std::cout<<"Evolution time: " << elapsede << std::endl;
+				       	std::cout<<"Evolution time: " << elapsede << std::endl;
 
-					    	//-------------------------------------------------------
-						//------CORRELATION FUNCTION-----------------------------
-						//-------------------------------------------------------
+				        uf_global.allgather(&uftmp, mpi);
 
-						if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
+					evolution[rap] = uf_global;
+				
+				}//if evolve that scale
 
-							int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
+			    	//-------------------------------------------------------
+				//------CORRELATION FUNCTION-----------------------------
+				//-------------------------------------------------------
 
-							uf_copy = uftmp;
+				if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
 
-							if( cnfg->CouplingChoice != HATTA_COUPLING_CONSTANT ){
+					int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
 
-								fourier2->execute2D(&uf_copy,1);
-    	
-								uf_copy.trace(corr);
+					printf("time = %i\n", time);
 
-							    	corr_global->allgather(corr, mpi);	
+					evolution[0].average_reduce_hatta(&sum[time], &err[time], mpi, ix, iy);				
+				}
+	
+			}//end for loop over the scales
 
-					   			corr_global->average_and_symmetrize();
-
-								//corr_global->reduce_position(corr, mpi);
-
-								//fourier2->execute2D(corr,0);
-
-							    	//corr_global->allgather(corr, mpi);	
-
-								corr_global->reduce(&sum[time], &err[time], mpi);
-		
-							}else{
-
-					        	        uf_copy_global.allgather(&uf_copy, mpi);
-
-								uf_copy_global.average_reduce_hatta(&sum[time], &err[time], mpi, ix, iy);
-							}
-							
-						}
-
-					}//end evolution loop
-
-		//end of hatta iteration over positions
-		}}}
-
-    	}//if evolution
+		}//end evolution loop
 
 	//if no evolution - compute correlation function directly from initial condition
 	if( cnfg->EvolutionChoice == NO_EVOLUTION ){
@@ -420,6 +346,9 @@ for(int stat = 0; stat < cnfg->stat; stat++){
        	std::cout<<"Statistics time: " << elapsed << std::endl;
 
 }//end of stat loop
+
+}
+}
 
 //------------------------------------------------------
 //----------WRITE DOWN CORRELATION FNUCTION TO FILE-----
@@ -484,8 +413,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
     delete corr_global;
 
     MPI_Finalize();
-
-
+ 
 return 1;
 }
 

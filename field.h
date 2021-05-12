@@ -52,6 +52,7 @@
 #include <time.h>
 #include <thread>
 
+#include "kinematical_constraints.h"
 
 /********************************************//**
  * Definition of the main class of type field. Contains pointer to the data array and Nx and Ny sizes.
@@ -169,6 +170,7 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		int reduce(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi);
 		int reduce_position(lfield<T,t>* sum, mpi_class* mpi);
+		int add_to_history(gfield<T,t>* evolution, mpi_class* mpi);
 		int reduce_hatta(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi, int xr, int yr);
 		int average_reduce_hatta(lfield<T,1>* sum, lfield<T,1>* err, mpi_class* mpi, int xr, int yr);
 
@@ -1775,7 +1777,27 @@ template<class T, int t> int gfield<T,t>::reduce_position(lfield<T,t>* sum, mpi_
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < NNx; i++){
 		for(int j = 0; j < NNy; j++){
-			sum->u[(i*NNy+j)*t+0] = this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+0];
+			for(int k = 0; k < t; k++){
+				sum->u[(i*NNy+j)*t+k] = this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+k];
+			}
+		}
+	}
+
+return 1;
+}
+
+/********************************************//**
+ * The method reduces the global gfield object into local lfield sum and lfield err objects: each MPI rank takes the appropriate part of the global object. Auxiliary method
+ * to write out the final correlation function in position space.
+*************************************************/
+template<class T, int t> int gfield<T,t>::add_to_history(gfield<T,t>* evolution, mpi_class* mpi){
+
+	#pragma omp parallel for simd collapse(3) default(shared)
+	for(int i = 0; i < Nx; i++){
+		for(int j = 0; j < Ny; j++){
+			for(int k = 0; k < t; k++){
+				evolution->u[(i*Ny+j)*t+k] = this->u[(i*Ny+j)*t+k];
+			}
 		}
 	}
 
@@ -1854,6 +1876,8 @@ template<class T, int t> int gfield<T,t>::average_reduce_hatta(lfield<T,1>* sum,
 				trace += C.m[0].real() + C.m[4].real() + C.m[8].real();
 		}
 	}
+
+	printf("trace = %f\n", trace);
 
 //we only set it on the rank which contains this part of the global lattice
 if( mpi->getPosX() == xr/(sum->getNxl()) && mpi->getPosY() == yr/(sum->getNyl()) ){
@@ -2267,6 +2291,7 @@ template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lf
 
                 for(int k = 0; k < t; k++){
                         uf->u[i*t+k] = E.m[k];
+			//printf("E.m[%i] = %f %f\n", k, E.m[k].real(), E.m[k].imag());
                 }
         }
 
@@ -2740,6 +2765,209 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 
 return 1;
 }
+
+/********************************************//**
+ * Optimized method for the evaluation of the A and B matrices. Operates on the seven and eight arguments, takes the xi_x, xi_y, positions and the actual Wilson line field uf_global. Construction of the JIMWLK kernel is performed here due to optimization reasons. Used in the position space construction. Implementation of Eqs. 34 ad 38 of arxiv XXXXXX in position space, without Fourier transforms
+*************************************************/
+template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, int x_global, int y_global, gfield<T,t>* xi_global_x, gfield<T,t>* xi_global_y, 
+				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable, int *rr, int current, int rapidities, Coupling p, Kernel kk, std::vector<gfield<double,9>> &evolution, int evolution_step, double langevin_step){
+
+	double sumAlocalRe[9];
+	double sumAlocalIm[9];
+	double sumBlocalRe[9];
+	double sumBlocalIm[9];
+
+        for(int k = 0; k < t; k++){
+
+		sumAlocalRe[k] = 0.0;
+		sumAlocalIm[k] = 0.0;
+		sumBlocalRe[k] = 0.0;
+		sumBlocalIm[k] = 0.0;
+
+	}
+
+	int rr_current = rr[current];
+
+	//rho_xz^r = log( (x-z)^2 / r^2 )
+	//
+	//x = (x_global, y_global)
+	//z = (xx, yy)
+
+//        for(int xx = 0; xx < Nx; xx++){
+//                for(int yy = 0; yy < Ny; yy++){
+
+
+
+        //we calculate the kernel by integrating over z
+
+//        #pragma omp parallel for simd collapse(2) default(shared) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
+//      for(int xx = x_global; xx < x_global+sqrt(rr_current*exp(evolution_step*langevin_step)); xx++){
+//	      for(int yy = y_global; yy < y_global+sqrt(rr_current*exp(evolution_step*langevin_step)); yy++){
+
+        #pragma omp parallel for simd collapse(2) default(shared) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
+      	for(int xx = 0; xx < Nx; xx++){
+	      for(int yy = 0; yy < Ny; yy++){
+
+        	        double dx = x_global - xx;
+                	if( dx >= Nx/2 )
+                        	dx = dx - Nx;
+                        if( dx < -Nx/2 )
+                                dx = dx + Nx;
+
+                        double dy = y_global - yy;
+                        if( dy >= Ny/2 )
+                        	dy = dy - Ny;
+                        if( dy < -Ny/2 )
+                                dy = dy + Ny;
+
+                        double rho = log( (dx*dx + dy*dy) / (1.0*rr_current) );
+
+			if( evolution_step * langevin_step > rho ){
+
+	                        double Delta = theta( sqrt( dx*dx + dy*dy ) - sqrt(rr_current), rho);
+
+        	                double R = max( sqrt( dx*dx + dy*dy ), sqrt(rr_current) );
+
+				std::complex<double> A,B;
+			        su3_matrix<double> C,D,E,F,G,H,K;
+
+                        	int i = xx*Ny+yy;
+
+				double dx;
+				double dy;
+				double rrr;
+
+				if( kk == SIN_KERNEL ){
+
+					int ii = 0;
+					if( x_global >= xx)
+						ii += (x_global - xx)*Ny;
+					else
+						ii += (x_global - xx + Nx)*Ny;
+	
+					if( y_global >= yy)
+						ii += (y_global - yy);
+					else
+						ii += (y_global - yy + Ny);
+
+	                        	dx = postable->xhatX(ii); 
+        	                	dy = postable->xhatY(ii); 
+                        
+                	        	rrr = postable->xbar2(ii);
+				}
+	
+				if( kk == LINEAR_KERNEL ){
+				
+                	        	dx = x_global - xx;
+	                	        if( dx >= Nx/2 )
+        	                	      dx = dx - Nx;
+	                	        if( dx < -Nx/2 )
+        	          		      dx = dx + Nx;
+
+                	        	dy = y_global - yy;
+	                	        if( dy >= Ny/2 )
+        	                	        dy = dy - Ny;
+	                	        if( dy < -Ny/2 )
+        	                		dy = dy + Ny;
+						
+                	        	rrr = 1.0*(dx*dx+dy*dy);
+				}
+				
+	                        double rrrmin = rrr;
+
+				if( p == HATTA_COUPLING_CONSTANT ){
+	                	        //hatta condition!!!            
+	        	                if( rrr <= rr_current ){
+	                        	        rrrmin = rrr;
+		                        }else{
+        	                        	rrrmin = rr_current;
+                	        	}
+				}
+	
+				const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
+
+				double sqrt_coupling_constant;
+	
+				if( p == SQRT_COUPLING_CONSTANT || p == HATTA_COUPLING_CONSTANT){
+					sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+				}
+				if( p == NOISE_COUPLING_CONSTANT ){
+					sqrt_coupling_constant = 1.0;
+				}
+				if( p == NO_COUPLING_CONSTANT ){
+					sqrt_coupling_constant = 1.0;
+				}
+
+                        	if( rrr	 > 10e-9 ){
+
+                                	A.real(sqrt_coupling_constant*dx/rrr);
+					A.imag(0.0);
+	
+        	                        B.real(sqrt_coupling_constant*dy/rrr);
+					B.imag(0.0);
+                        	}
+
+				//we look for scale (int)(R*R)
+				int rr_new_scale = 0;
+				for(int jj = 0; jj < rapidities; jj++)
+					if(rr[jj] == (int)(R*R))
+						rr_new_scale = jj;
+
+				//printf("scale = %i (RR = %i), index new scale = %i, value = %i\n", rr_current, (int)(R*R), rr_new_scale, rr[rr_new_scale]);
+
+		                for(int k = 0; k < t; k++){
+	
+			                C.m[k] = A*xi_global_x->u[i*t+k];
+        			        D.m[k] = B*xi_global_y->u[i*t+k];
+	
+					//here we need to get U from the same or another scale!!
+					//check the adjoint formulation
+
+
+					//G.m[k] = uf_global->u[i*t+k];
+					G.m[k] = evolution[rr_new_scale].u[i*t+k];
+					//printf("G.m[%i] = %f %f\n", k, G.m[k].real(), G.m[k].imag());
+					
+				}
+
+	                	H.m[0] = std::conj(G.m[0]);
+	               		H.m[1] = std::conj(G.m[3]);
+		                H.m[2] = std::conj(G.m[6]);
+	        	        H.m[3] = std::conj(G.m[1]);
+	                	H.m[4] = std::conj(G.m[4]);
+		                H.m[5] = std::conj(G.m[7]);
+		                H.m[6] = std::conj(G.m[2]);
+	        	        H.m[7] = std::conj(G.m[5]);
+	                	H.m[8] = std::conj(G.m[8]);
+
+				E = C + D;
+
+				K = G * E * H;
+
+	        	        for(int k = 0; k < t; k++){
+
+		        	        sumAlocalRe[k] += E.m[k].real();
+        		        	sumAlocalIm[k] += E.m[k].imag();
+
+			                sumBlocalRe[k] += K.m[k].real();
+	        		        sumBlocalIm[k] += K.m[k].imag();
+				}
+
+			}//kinematical constraint heaviside theta
+
+		}//loop over yy
+	}//loop over xx
+
+        for(int k = 0; k < t; k++){
+              	A_local->u[(x*A_local->getNyl()+y)*t+k].real(sumAlocalRe[k]);
+              	B_local->u[(x*A_local->getNyl()+y)*t+k].real(sumBlocalRe[k]);
+              	A_local->u[(x*A_local->getNyl()+y)*t+k].imag(sumAlocalIm[k]);
+              	B_local->u[(x*A_local->getNyl()+y)*t+k].imag(sumBlocalIm[k]);
+	}
+
+return 1;
+}
+
 
 
 /********************************************//**
