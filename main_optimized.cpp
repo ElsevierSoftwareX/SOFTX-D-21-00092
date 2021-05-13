@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
 //
 //
 
-for(int scale_ix = 5; scale_ix < 6; scale_ix++){
+for(int scale_ix = 0; scale_ix < 6; scale_ix++){
 for(int scale_iy = scale_ix; scale_iy < 6; scale_iy++){
 //    int ix = 2;
 //    int iy = 2;
@@ -178,6 +178,7 @@ for(int scale_iy = scale_ix; scale_iy < 6; scale_iy++){
     printf("STARTING SIMULATION\n");
 
     std::vector<gfield<double,9>> evolution(rapidities, uf_global_zero);
+    std::vector<gfield<double,9>> evolution_tmp(rapidities, uf_global_zero);
 
 //-------------------------------------------------------
 //------MAIN STAT LOOP-----------------------------------
@@ -319,24 +320,28 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 				        uf_global.allgather(&uftmp, mpi);
 
-					evolution[rap].set(uf_global);
+					evolution_tmp[rap].set(uf_global);
 				
 				}//if evolve that scale
-
-			    	//-------------------------------------------------------
-				//------CORRELATION FUNCTION-----------------------------
-				//-------------------------------------------------------
-
-				if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
-
-					int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
-
-					printf("time = %i\n", time);
-
-					evolution[0].average_reduce_hatta(&sum[time], &err[time], mpi, scale_ix, scale_iy);				
-				}
 	
 			}//end for loop over the scales
+
+			//copying the latest step to evolution
+			for(int kk = 0; kk < rapidities; kk++)
+				evolution[kk].set(evolution_tmp[kk]);
+
+		    	//-------------------------------------------------------
+			//------CORRELATION FUNCTION-----------------------------
+			//-------------------------------------------------------
+
+			if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
+
+				int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
+
+				printf("time = %i\n", time);
+
+				evolution[0].average_reduce_hatta(&sum[time], &err[time], mpi, scale_ix, scale_iy);				
+			}
 
 		}//end evolution loop
 	}
