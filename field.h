@@ -1871,12 +1871,12 @@ template<class T, int t> int gfield<T,t>::average_reduce_hatta(lfield<T,1>* sum,
 	//we only set it on the rank which contains this part of the global lattice
 	if( (mpi->getPosX() == xr/NNx) && (mpi->getPosY() == yr/NNy) ){
 
-		printf("xr = %i, yr = %i, trace = %e\n", xr, yr, trace);
+		//printf("xr = %i, yr = %i, trace = %e\n", xr, yr, trace);
 
 		sum->u[(xr_local*NNy+yr_local)+0] += trace/(3.0*Nx*Ny);
 		err->u[(xr_local*NNy+yr_local)+0] += pow(trace/(3.0*Nx*Ny),2.0);
 
-		printf("xr_local = %i, yr_local = %i, site = %i, value = %e, err = %e\n", xr_local, yr_local, xr_local*NNy+yr_local, sum->u[(xr_local*NNy+yr_local)+0], err->u[(xr_local*NNy+yr_local)+0]);
+		//printf("xr_local = %i, yr_local = %i, site = %i, value = %e, err = %e\n", xr_local, yr_local, xr_local*NNy+yr_local, sum->u[(xr_local*NNy+yr_local)+0], err->u[(xr_local*NNy+yr_local)+0]);
 	}
 	
 return 1;
