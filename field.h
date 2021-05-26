@@ -2819,13 +2819,13 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
       	for(int xx = 0; xx < Nx; xx++){
 	      for(int yy = 0; yy < Ny; yy++){
 
-        	        double dx = x_global - xx;
+        	        int dx = x_global - xx;
                 	if( dx >= Nx/2 )
                         	dx = dx - Nx;
                         if( dx < -Nx/2 )
                                 dx = dx + Nx;
 
-                        double dy = y_global - yy;
+                        int dy = y_global - yy;
                         if( dy >= Ny/2 )
                         	dy = dy - Ny;
                         if( dy < -Ny/2 )
@@ -2837,7 +2837,7 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 				if( dx == 0 && dy == 0 )
 					rho = -1.0;
 				else
-					rho = log( (dx*dx + dy*dy) / (1.0*rr_current) );
+					rho = log( (1.0*dx*dx + 1.0*dy*dy) / (1.0*rr_current) );
 			}else{
 				printf("Scale equal to 0; divergence in rho; aborting\n");
 				exit(1);
@@ -2849,7 +2849,9 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 
 			//if( xx == x_global && yy == y_global ){
 			//if( fabs(dx) < 2 && fabs(dy) < 2){
-			if( evolution_step * langevin_step >= rho ){
+			//if( fabs(dx) + fabs(dy) <= 3 ){
+			//if( evolution_step * langevin_step >= rho ){
+			if( 1.0*dx*dx+1.0*dy*dy < 1.0*rr_current*exp(evolution_step*langevin_step) ){
 
 				std::complex<double> A,B;
 			        su3_matrix<double> C,D,E,F,G,H,K;
