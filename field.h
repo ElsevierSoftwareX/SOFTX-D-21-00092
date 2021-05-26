@@ -1780,8 +1780,7 @@ return 1;
 }
 
 /********************************************//**
- * The method reduces the global gfield object into local lfield sum and lfield err objects: each MPI rank takes the appropriate part of the global object. Auxiliary method
- * to write out the final correlation function in position space.
+ * The method reduces the global gfield object into local lfield sum and lfield err objects: each MPI rank takes the appropriate part of the global object.
 *************************************************/
 template<class T, int t> int gfield<T,t>::reduce_position(lfield<T,t>* sum, mpi_class* mpi){
 
@@ -2816,17 +2815,6 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 	//x = (x_global, y_global)
 	//z = (xx, yy)
 
-//        for(int xx = 0; xx < Nx; xx++){
-//                for(int yy = 0; yy < Ny; yy++){
-
-
-
-        //we calculate the kernel by integrating over z
-
-//        #pragma omp parallel for simd collapse(2) default(shared) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
-//      for(int xx = x_global; xx < x_global+sqrt(rr_current*exp(evolution_step*langevin_step)); xx++){
-//	      for(int yy = y_global; yy < y_global+sqrt(rr_current*exp(evolution_step*langevin_step)); yy++){
-
         #pragma omp parallel for simd collapse(2) default(shared) reduction(+:sumAlocalRe[:9]), reduction(+:sumAlocalIm[:9]) reduction(+:sumBlocalRe[:9]), reduction(+:sumBlocalIm[:9]) 
       	for(int xx = 0; xx < Nx; xx++){
 	      for(int yy = 0; yy < Ny; yy++){
@@ -2846,25 +2834,30 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
                         double rho;
 		       
 			if(rr_current > 0){
-				rho = log( (dx*dx + dy*dy) / (1.0*rr_current) );
+				if( dx == 0 && dy == 0 )
+					rho = -1.0;
+				else
+					rho = log( (dx*dx + dy*dy) / (1.0*rr_current) );
 			}else{
 				printf("Scale equal to 0; divergence in rho; aborting\n");
 				exit(1);
 			}
 
-			if( evolution_step * langevin_step > rho ){
+                        double Delta = theta( sqrt( dx*dx + dy*dy ) - sqrt(rr_current), rho);
 
-	                        double Delta = theta( sqrt( dx*dx + dy*dy ) - sqrt(rr_current), rho);
+       	                int RRint = max( dx*dx + dy*dy, rr_current );
 
-        	                int RRint = max( dx*dx + dy*dy, rr_current );
+			//if( xx == x_global && yy == y_global ){
+			//if( fabs(dx) < 2 && fabs(dy) < 2){
+			if( evolution_step * langevin_step >= rho ){
 
 				std::complex<double> A,B;
 			        su3_matrix<double> C,D,E,F,G,H,K;
 
                         	int i = xx*Ny+yy;
 
-				double dx;
-				double dy;
+				double dxl;
+				double dyl;
 				double rrr;
 
 				if( kk == SIN_KERNEL ){
@@ -2880,27 +2873,27 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 					else
 						ii += (y_global - yy + Ny);
 
-	                        	dx = postable->xhatX(ii); 
-        	                	dy = postable->xhatY(ii); 
+	                        	dxl = postable->xhatX(ii); 
+        	                	dyl = postable->xhatY(ii); 
                         
                 	        	rrr = postable->xbar2(ii);
 				}
 	
 				if( kk == LINEAR_KERNEL ){
 				
-                	        	dx = x_global - xx;
-	                	        if( dx >= Nx/2 )
-        	                	      dx = dx - Nx;
-	                	        if( dx < -Nx/2 )
-        	          		      dx = dx + Nx;
+                	        	dxl = x_global - xx;
+	                	        if( dxl >= Nx/2 )
+        	                	      dxl = dxl - Nx;
+	                	        if( dxl < -Nx/2 )
+        	          		      dxl = dxl + Nx;
 
-                	        	dy = y_global - yy;
-	                	        if( dy >= Ny/2 )
-        	                	        dy = dy - Ny;
-	                	        if( dy < -Ny/2 )
-        	                		dy = dy + Ny;
+                	        	dyl = y_global - yy;
+	                	        if( dyl >= Ny/2 )
+        	                	        dyl = dyl - Ny;
+	                	        if( dyl < -Ny/2 )
+        	                		dyl = dyl + Ny;
 						
-                	        	rrr = 1.0*(dx*dx+dy*dy);
+                	        	rrr = 1.0*(dxl*dxl+dyl*dyl);
 				}
 				
 	                        double rrrmin = rrr;
@@ -2927,15 +2920,25 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 				if( p == NO_COUPLING_CONSTANT ){
 					sqrt_coupling_constant = 1.0;
 				}
+	
+				A.real(0.0);
+				A.imag(0.0);
+				B.real(0.0);
+				B.imag(0.0);
 
-                        	if( rrr	 > 10e-9 ){
-
-                                	A.real(sqrt_coupling_constant*dx/rrr);
+				if( dxl == 0 && dyl == 0 ){
+                                	A.real(sqrt_coupling_constant);
 					A.imag(0.0);
 	
-        	                        B.real(sqrt_coupling_constant*dy/rrr);
+        	                        B.real(sqrt_coupling_constant);
 					B.imag(0.0);
-                        	}
+				}else{
+                                	A.real(sqrt_coupling_constant*dxl/rrr);
+					A.imag(0.0);
+	
+        	                        B.real(sqrt_coupling_constant*dyl/rrr);
+					B.imag(0.0);
+	                       	}
 
 				//we look for scale (int)(R*R)
 				int rr_new_scale = 0;

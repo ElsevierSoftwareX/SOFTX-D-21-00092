@@ -150,8 +150,8 @@ int main(int argc, char *argv[]) {
 //
 //
 
-for(int scale_ix = 5; scale_ix < 6; scale_ix++){
-for(int scale_iy = scale_ix; scale_iy < 6; scale_iy++){
+for(int scale_ix = 0; scale_ix < 6; scale_ix++){
+for(int scale_iy = scale_ix+1; scale_iy < 6; scale_iy++){
 //    int ix = 2;
 //    int iy = 2;
 
@@ -178,6 +178,7 @@ for(int scale_iy = scale_ix; scale_iy < 6; scale_iy++){
     printf("STARTING SIMULATION\n");
 
     std::vector<gfield<double,9>> evolution(rapidities, uf_global_zero);
+    std::vector<gfield<double,9>> evolution_tmp(rapidities, uf_global_zero);
 
 //-------------------------------------------------------
 //------MAIN STAT LOOP-----------------------------------
@@ -270,24 +271,24 @@ for(int stat = 0; stat < cnfg->stat; stat++){
         	        clock_gettime(CLOCK_MONOTONIC, &starte);
 
 			for(int rap = 0; rap < rapidities; rap++){
+				evolution_tmp[rap].set(evolution[rap]);
+			}
+
+			for(int rap = 0; rap < rapidities; rap++){
 
 				//if the evolution of that scale started, we do it
 				if(langevin >= rr_rap[rap]){
 
+					//----------POSITION SPACE EVOLUTION-------------
+
 					printf("running evolution step for scale %i\n", rr[rap]);
 
-					uf_global.set(evolution[rap]);
-
-				 	uf_global.reduce_position(&uftmp, mpi);
-
 					generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
-						
-					//----------POSITION SPACE EVOLUTION-------------
-				
+										
 					xi_global_x.allgather(&xi_local_x, mpi);
 					xi_global_y.allgather(&xi_local_y, mpi);
 
-		        	        //uf_global.allgather(&uftmp, mpi);
+					uf_global.set(evolution[rap]);
 
 					A_local.setToZero();
 					B_local.setToZero();
@@ -308,8 +309,16 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	
 					//-----------UPDATE WILSON LINES-----------------
 
+				 	uf_global.reduce_position(&uftmp, mpi);
+
 					update_uf(&uftmp, &B_local, &A_local, cnfg->step);
 		
+				        uf_global.allgather(&uftmp, mpi);
+
+					evolution_tmp[rap].set(uf_global);
+				
+					//-----------EVOLUTION TIME MEASUREMENT--------------------
+
 				        clock_gettime(CLOCK_MONOTONIC, &finishe);
 
 				       	elapsede = (finishe.tv_sec - starte.tv_sec);
@@ -317,26 +326,26 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 				       	std::cout<<"Evolution time: " << elapsede << std::endl;
 
-				        uf_global.allgather(&uftmp, mpi);
-
-					evolution[rap].set(uf_global);
-				
 				}//if evolve that scale
 
-			    	//-------------------------------------------------------
-				//------CORRELATION FUNCTION-----------------------------
-				//-------------------------------------------------------
-
-				if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
-
-					int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
-
-					printf("time = %i\n", time);
-
-					evolution[0].average_reduce_hatta(&sum[time], &err[time], mpi, scale_ix, scale_iy);				
-				}
-	
 			}//end for loop over the scales
+
+			for(int rap = 0; rap < rapidities; rap++){
+				evolution[rap].set(evolution_tmp[rap]);
+			}
+
+		    	//-------------------------------------------------------
+			//------CORRELATION FUNCTION-----------------------------
+			//-------------------------------------------------------
+
+			if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
+
+				int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
+
+				printf("time = %i\n", time);
+
+				evolution[0].average_reduce_hatta(&sum[time], &err[time], mpi, scale_ix, scale_iy);				
+			}
 
 		}//end evolution loop
 	}
