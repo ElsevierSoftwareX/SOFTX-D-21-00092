@@ -2914,7 +2914,7 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 				double sqrt_coupling_constant;
 	
 				if( p == SQRT_COUPLING_CONSTANT || p == HATTA_COUPLING_CONSTANT){
-					sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+					sqrt_coupling_constant = 1.0; //sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
 				}
 				if( p == NOISE_COUPLING_CONSTANT ){
 					sqrt_coupling_constant = 1.0;

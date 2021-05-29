@@ -150,8 +150,8 @@ int main(int argc, char *argv[]) {
 //
 //
 
-for(int scale_ix = 0; scale_ix < 12; scale_ix+=2){
-for(int scale_iy = scale_ix+1; scale_iy < 12; scale_iy+=2){
+for(int scale_ix = 2; scale_ix < 5; scale_ix+=1){
+for(int scale_iy = scale_ix+1; scale_iy < 5; scale_iy+=1){
 //    int ix = 2;
 //    int iy = 2;
 
