@@ -1875,8 +1875,8 @@ template<class T, int t> int gfield<T,t>::average_reduce_hatta(lfield<T,1>* sum,
 	double trace = 0;
 
 	#pragma omp parallel for simd collapse(2) default(shared) reduction(+:trace)
-	for(int ix = 0; ix < Nxg; ix++){
-		for(int jy = 0; jy < Nyg; jy++){
+	for(int ix = 0; ix < Nxg; ix+=4){
+		for(int jy = 0; jy < Nyg; jy+=4){
 			
                                 su3_matrix<double> A,B,C;
 
@@ -2914,7 +2914,7 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 				double sqrt_coupling_constant;
 	
 				if( p == SQRT_COUPLING_CONSTANT || p == HATTA_COUPLING_CONSTANT){
-					sqrt_coupling_constant = 1.0; //sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+					sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
 				}
 				if( p == NOISE_COUPLING_CONSTANT ){
 					sqrt_coupling_constant = 1.0;
