@@ -150,9 +150,9 @@ int main(int argc, char *argv[]) {
 //
 //
 
-for(int scale_ix = 16; scale_ix <= 16; scale_ix+=1){
-int scale_iy = 0;
-//for(int scale_iy = 0; scale_iy < 3; scale_iy+=1){
+for(int scale_ix = 1; scale_ix <= 1; scale_ix+=1){
+//int scale_iy = 0;
+for(int scale_iy = 0; scale_iy < 1; scale_iy+=1){
 //for(int scale_iy = scale_ix+1; scale_iy < 4; scale_iy+=1){
 //    int ix = 2;
 //    int iy = 2;
@@ -370,7 +370,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 }//end of stat loop
 
-//}
+}
 }
 
 //------------------------------------------------------
