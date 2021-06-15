@@ -351,6 +351,20 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 				        	std::cout<<"Evolution time: " << elapsede << std::endl;
 
+
+						if( (langevin == 100) || (langevin == 200) || (langevin == 500) ){
+
+							printf("RESOLUTION REDUCTION!!!!\n");
+							printf("fine-graining at langevin step = %i\n", langevin);
+
+						        uf_global.allgather(&uftmp, mpi);
+	
+						        uf_global.fine_grain(uf_copy_global);
+
+						        uf_copy_global.reduce_position(&uftmp, mpi);
+
+						}
+
 					    	//-------------------------------------------------------
 						//------CORRELATION FUNCTION-----------------------------
 						//-------------------------------------------------------
