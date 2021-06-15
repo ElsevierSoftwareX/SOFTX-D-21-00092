@@ -181,6 +181,7 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		int printDebug(void);
 
+		void fine_grain(gfield<T,t> &out);
 };
 
 /********************************************//**
@@ -1558,6 +1559,82 @@ template<class T, int t> int gfield<T,t>::setKernelXbarYWithCouplingConstant(int
 return 1;
 }
 
+/********************************************//**
+ * Interpolation of gfield
+ ************************************************/
+
+template<class T, int t> void gfield<T, t>::fine_grain(gfield<T, t> &out){
+
+        for(int ix = 0; ix < Nx/2; ix++){
+                for(int iy = 0; iy < Ny/2; iy++){
+
+                        int i = ix*Ny + iy;
+                        int ii = 2*ix*Ny + 2*iy;
+
+                        for(int k = 0; k < t; k++){
+                                out.u[ii*t+k] = this->u[i*t+k];
+                        }
+                }
+        }
+
+        su3_matrix<T> tmp,tmppr;
+
+        for(int ix = 1; ix < Nx-1; ix+=2){
+                for(int iy = 0; iy < Ny; iy++){
+
+                        for(int k = 0; k < t; k++){
+                                tmp.m[k] = 0.5*(out.u[((ix-1)*Ny+iy)*t+k] + out.u[((ix+1)*Ny+iy)*t+k]);
+                        }
+
+                        tmppr = tmp.su3_projection();
+
+                        for(int k = 0; k < t; k++){
+                                out.u[(ix*Ny+iy)*t+k] = tmppr.m[k];
+                        }
+                }
+        }
+        for(int iy = 0; iy < Ny; iy++){
+
+                for(int k = 0; k < t; k++){
+                        tmp.m[k] = 0.5*(out.u[((Nx-2)*Ny+iy)*t+k] + out.u[(0*Ny+iy)*t+k]);
+                }
+
+                tmppr = tmp.su3_projection();
+
+                for(int k = 0; k < t; k++){
+                        out.u[((Nx-1)*Ny+iy)*t+k] = tmppr.m[k];
+                }
+        }
+
+        for(int ix = 0; ix < Nx; ix++){
+                for(int iy = 1; iy < Ny-1; iy+=2){
+
+                        for(int k = 0; k < t; k++){
+                                tmp.m[k] = 0.5*(out.u[(ix*Ny+iy-1)*t+k] + out.u[(ix*Ny+iy+1)*t+k]);
+                        }
+
+                        tmppr = tmp.su3_projection();
+
+                        for(int k = 0; k < t; k++){
+                                out.u[(ix*Ny+iy)*t+k] = tmppr.m[k];
+                        }
+                }
+        }
+        for(int ix = 0; ix < Nx; ix++){
+
+                for(int k = 0; k < t; k++){
+                        tmp.m[k] = 0.5*(out.u[(ix*Ny+Ny-2)*t+k] + out.u[(ix*Ny+0)*t+k]);
+                }
+
+                tmppr = tmp.su3_projection();
+
+                for(int k = 0; k < t; k++){
+                        out.u[(ix*Ny+Ny-1)*t+k] = tmppr.m[k];
+                }
+        }
+}
+
+
 
 /********************************************//**
  * Returns a lfield with the matrices on all sites hermitian conjugated. In the optimized version this operation is merged with other steps.
@@ -1775,7 +1852,9 @@ template<class T, int t> int gfield<T,t>::reduce_position(lfield<T,t>* sum, mpi_
 	#pragma omp parallel for simd collapse(2) default(shared)
 	for(int i = 0; i < NNx; i++){
 		for(int j = 0; j < NNy; j++){
-			sum->u[(i*NNy+j)*t+0] = this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+0];
+			for(int k = 0; k < t; k++){
+				sum->u[(i*NNy+j)*t+k] = this->u[((i+mpi->getPosX()*NNx)*Ny+j+mpi->getPosY()*NNy)*t+k];
+			}
 		}
 	}
 

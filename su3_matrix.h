@@ -72,6 +72,12 @@ class su3_matrix {
 		}
 
 		int exponentiate(double sign);
+		int square_root(void);
+		int inverse(void);
+
+		std::complex<T> trace(su3_matrix<T> a);
+		std::complex<T> determinant(su3_matrix<T> a);
+		su3_matrix<T> su3_projection(void);
 
 		int zheevh3(double *w){
 
@@ -226,6 +232,168 @@ template<class T> int su3_matrix<T>::exponentiate(double sign){
 			return st;
 
 }
+
+template<class T> int su3_matrix<T>::square_root(void){
+
+			std::complex<T> A[3][3];
+			std::complex<T> Q[3][3];
+			double ww[3];
+			std::complex<T> eig[3];
+
+			A[0][0] = m[0];
+			A[0][1] = m[1];
+			A[0][2] = m[2];
+			A[1][0] = m[3];
+			A[1][1] = m[4]; 
+			A[1][2] = m[5];
+			A[2][0] = m[6];
+			A[2][1] = m[7];
+			A[2][2] = m[8];
+
+
+			int st;
+			st = function_zheevh3(A, Q, ww);
+
+			eig[0] = sqrt(fabs(ww[0]));
+			eig[1] = sqrt(fabs(ww[1]));
+			eig[2] = sqrt(fabs(ww[2]));
+
+			for(int i = 0; i < 3; i++){
+				for(int j = 0; j < 3; j++){
+					
+					m[i*3+j] = 0.0;
+					
+					for(int k = 0; k < 3; k++){
+
+						m[i*3+j] += Q[i][k] * eig[k] * std::conj(Q[j][k]); 
+
+					}
+				}
+			}
+
+			return st;
+
+}
+
+template<class T> inline std::complex<T> su3_matrix<T>::trace(su3_matrix<T> a){
+  std::complex<T> res;
+  //a (a0 a1 a2                                                                                                                           
+  //   a3 a4 a5                                                                                                                           
+  //   a6 a7 a8)                                                                                                                          
+  res=a.m[0] + a.m[4] + a.m[8];
+  return res;
+}
+
+template<class T> inline std::complex<T> su3_matrix<T>::determinant(su3_matrix<T> a){
+  std::complex<T> res;
+  //a (a0 a1 a2                                                                                                                           
+  //   a3 a4 a5                                                                                                                           
+  //   a6 a7 a8)                                                                                                                          
+  res = a.m[0]*a.m[4]*a.m[8] + a.m[3]*a.m[7]*a.m[2] + a.m[1]*a.m[5]*a.m[6] - a.m[2]*a.m[4]*a.m[6] - a.m[5]*a.m[7]*a.m[0] - a.m[1]*a.m[3]*a.m[8];
+  return res;
+}
+
+
+template<class T> inline su3_matrix<T> su3_matrix<T>::su3_projection(void){
+  //iterative method of arXiv: hep-lat/0506008v1, eqs. 2.24 and 2.2
+  su3_matrix<T> res, X;
+  double tmp;
+
+  tmp=0.0;
+
+  for (int i = 0; i < 9; i++){
+    tmp += this->m[i].real()*this->m[i].real() + this->m[i].imag()*this->m[i].imag();    //trace(WW^dagger)=sum_i(a_i*a_i^star)                                                 
+  }
+  tmp = 1.0/sqrt(tmp/3.0);
+
+  for(int i = 0; i < 9; i++){
+  	res.m[i] = tmp*this->m[i];
+  }
+
+  //4 iterations                                                                                                                          
+  for (int i = 0; i < 4; i++){
+    X=res^res; //Wdaggerr*W
+
+    for(int k = 0; k < 9; k++){
+  	X.m[k] = -0.5*X.m[k];
+    }
+
+    //--------------------------------------(3/2)*Id - -0.5*Wdagger*W                                                                     
+  
+    std::complex<T> ttmpa(X.m[0].real() + 1.5, X.m[0].imag());
+    X.m[0] = ttmpa;
+    std::complex<T> ttmpb(X.m[4].real() + 1.5, X.m[4].imag());
+    X.m[4] = ttmpb;
+    std::complex<T> ttmpc(X.m[8].real() + 1.5, X.m[8].imag());
+    X.m[8] = ttmpc;
+
+    //---------------------------------------
+    //X=add_two(three_over_two,X);          
+    X=res*X;                 //W*((3/2)*Id - -0.5*Wdagger*W)                                                                
+    std::complex<T> tmp_complex(1.0, -0.33333*determinant(X).imag());
+  
+    for(int i = 0; i < 9; i++){
+  	res.m[i] = X.m[i]*tmp_complex;
+    }
+
+//	cout << "projection res iteration = " << i << "\n";
+//	cout << res.m[0].r << " " << res.m[1].r << " " << res.m[2].r << "\n" ;
+//	cout << res.m[3].r << " " << res.m[4].r << " " << res.m[5].r << "\n" ;
+//	cout << res.m[6].r << " " << res.m[7].r << " " << res.m[8].r << "\n" ;
+
+
+
+  }
+
+  return res;
+}
+
+
+
+template<class T> int su3_matrix<T>::inverse(void){
+
+			std::complex<T> A[3][3];
+			std::complex<T> Q[3][3];
+			double ww[3];
+			std::complex<T> eig[3];
+
+			A[0][0] = m[0];
+			A[0][1] = m[1];
+			A[0][2] = m[2];
+			A[1][0] = m[3];
+			A[1][1] = m[4]; 
+			A[1][2] = m[5];
+			A[2][0] = m[6];
+			A[2][1] = m[7];
+			A[2][2] = m[8];
+
+
+			int st;
+			st = function_zheevh3(A, Q, ww);
+
+			eig[0] = 1.0/(ww[0]);
+			eig[1] = 1.0/(ww[1]);
+			eig[2] = 1.0/(ww[2]);
+
+			for(int i = 0; i < 3; i++){
+				for(int j = 0; j < 3; j++){
+					
+					m[i*3+j] = 0.0;
+					
+					for(int k = 0; k < 3; k++){
+
+						m[i*3+j] += Q[i][k] * eig[k] * std::conj(Q[j][k]); 
+
+					}
+				}
+			}
+
+			return st;
+
+}
+
+
+
 
 // ----------------------------------------------------------------------------
 template<class T> int function_zheevh3(std::complex<T> A[3][3], std::complex<T> Q[3][3], T w[3])
