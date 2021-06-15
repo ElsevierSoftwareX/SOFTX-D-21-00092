@@ -167,6 +167,8 @@ template<class T, int t> class gfield: public field<T,t> {
 
 		int multiplyByCholesky(gmatrix<T>* mm);
 
+		int compute_derivative(gfield<T,t> &output, int i);
+
 		int reduce(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi);
 		int reduce_position(lfield<T,t>* sum, mpi_class* mpi);
 		int reduce_hatta(lfield<T,t>* sum, lfield<T,t>* err, mpi_class* mpi, int xr, int yr);
@@ -1713,6 +1715,102 @@ return result;
 /********************************************//**
  * For all sites of the local lfield, the method computes the trace and stores it in the one element lfield object provided by the pointer in the argument.
  *************************************************/
+template<class T, int t> int gfield<T,t>::compute_derivative(gfield<T,t> &output, int direction){
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+	if(t == 9 ){
+
+	//#pragma omp parallel for simd default(shared)
+	for(int ix = 0; ix < Nx; ix++){
+		for(int iy = 0; iy < Ny; iy++){
+
+	                su3_matrix<double> A;
+        	        su3_matrix<double> B;
+                	su3_matrix<double> C;
+        	        su3_matrix<double> D;
+                	su3_matrix<double> E;
+
+			int left, right;
+			int ileft, iright;
+
+			if(direction == 1){
+
+				if( ix < Nx - 1 )
+					right = ix + 1;
+				else 
+					right = 0;
+
+				if( ix > 0 )
+					left = ix - 1;
+				else
+					left = 0;
+
+				iright = right*Ny+iy;
+				ileft = left*Ny+iy;
+			}
+
+			if(direction == 2){
+
+				if( iy < Ny - 1 )
+					right = iy + 1;
+				else 
+					right = 0;
+
+				if( iy > 0 )
+					left = iy - 1;
+				else
+					left = 0;
+
+				iright = ix*Ny+right;
+				ileft = ix*Ny+left;
+			}
+
+	                for(int k = 0; k < t; k++){
+  		                A.m[k] = this->u[iright*t+k];
+	 	                B.m[k] = this->u[ileft*t+k];
+			}
+		
+			C = A - B;
+
+			int i = ix*Ny+iy;
+
+	                D.m[0] = std::conj(this->u[i*t+0]);
+        	        D.m[1] = std::conj(this->u[i*t+3]);
+                	D.m[2] = std::conj(this->u[i*t+6]);
+	                D.m[3] = std::conj(this->u[i*t+1]);
+        	        D.m[4] = std::conj(this->u[i*t+4]);
+                	D.m[5] = std::conj(this->u[i*t+7]);
+	                D.m[6] = std::conj(this->u[i*t+2]);
+        	        D.m[7] = std::conj(this->u[i*t+5]);
+                	D.m[8] = std::conj(this->u[i*t+8]);
+
+
+			E = D*C;
+
+			for(int k = 0; k < t; k++){
+  		                output.u[i*t+k] = 0.5*E.m[k];
+			}
+		}	
+       	}
+
+	}else{
+
+		printf("Invalid lfield classes for trace function\n");
+
+	}
+
+
+return 1;
+}
+
+
+
+/********************************************//**
+ * For all sites of the local lfield, the method computes the trace and stores it in the one element lfield object provided by the pointer in the argument.
+ *************************************************/
 template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 
 	// 0 1 2
@@ -1756,6 +1854,7 @@ template<class T, int t> int lfield<T,t>::trace(lfield<double,1>* cc){
 
 return 1;
 }
+
 
 /********************************************//**
  * For all sites of the local lfield, the method takes the first element and stores it in the one element lfield object provided by the pointer in the argument. For testing purposes only, not used in physical application.

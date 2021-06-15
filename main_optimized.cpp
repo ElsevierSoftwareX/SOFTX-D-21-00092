@@ -120,6 +120,12 @@ int main(int argc, char *argv[]) {
 
     lfield<double,9> uftmp(cnfg->Nxl, cnfg->Nyl);
 
+    gfield<double,9> uf_global_der1(Nx, Ny);
+    gfield<double,9> uf_global_der2(Nx, Ny);
+
+    lfield<double,9> uftmp_der1(cnfg->Nxl, cnfg->Nyl);
+    lfield<double,9> uftmp_der2(cnfg->Nxl, cnfg->Nyl);
+
 //-------------------------------------------------------
 
     lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
@@ -136,6 +142,15 @@ int main(int argc, char *argv[]) {
     //correlation function
     lfield<double,1>* corr = new lfield<double,1>(cnfg->Nxl, cnfg->Nyl);
     gfield<double,1>* corr_global = new gfield<double,1>(Nx, Ny);
+
+    //correlation function
+    lfield<double,1>* corr_der1 = new lfield<double,1>(cnfg->Nxl, cnfg->Nyl);
+    gfield<double,1>* corr_global_der1 = new gfield<double,1>(Nx, Ny);
+
+    //correlation function
+    lfield<double,1>* corr_der2 = new lfield<double,1>(cnfg->Nxl, cnfg->Nyl);
+    gfield<double,1>* corr_global_der2 = new gfield<double,1>(Nx, Ny);
+
 
     std::vector<lfield<double,1>> sum(cnfg->measurements, zero);
     std::vector<lfield<double,1>> err(cnfg->measurements, zero);
@@ -352,18 +367,18 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 				        	std::cout<<"Evolution time: " << elapsede << std::endl;
 
 
-						if( (langevin == 100) || (langevin == 200) || (langevin == 500) ){
-
-							printf("RESOLUTION REDUCTION!!!!\n");
-							printf("fine-graining at langevin step = %i\n", langevin);
-
-						        uf_global.allgather(&uftmp, mpi);
-	
-						        uf_global.fine_grain(uf_copy_global);
-
-						        uf_copy_global.reduce_position(&uftmp, mpi);
-
-						}
+//						if( (langevin == 100) || (langevin == 200) || (langevin == 500) ){
+//
+//							printf("RESOLUTION REDUCTION!!!!\n");
+//							printf("fine-graining at langevin step = %i\n", langevin);
+//
+//						        uf_global.allgather(&uftmp, mpi);
+//	
+//						        uf_global.fine_grain(uf_copy_global);
+//
+//						        uf_copy_global.reduce_position(&uftmp, mpi);
+//
+//						}
 
 					    	//-------------------------------------------------------
 						//------CORRELATION FUNCTION-----------------------------
@@ -375,24 +390,54 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 							uf_copy = uftmp;
 
-							if( cnfg->CouplingChoice != HATTA_COUPLING_CONSTANT ){
+				        	        uf_global.allgather(&uftmp, mpi);
 
-								fourier2->execute2D(&uf_copy,1);
-    	
-								uf_copy.trace(corr);
+							uf_global.compute_derivative(uf_global_der1, 1);
+
+							uf_global.compute_derivative(uf_global_der2, 2);
+
+						        uf_global_der1.reduce_position(&uftmp_der1, mpi);
+
+						        uf_global_der2.reduce_position(&uftmp_der2, mpi);
+
+							if( cnfg->CouplingChoice != HATTA_COUPLING_CONSTANT ){
+								/*							
+								//Tr ( U_y U*_x )
+
+								fourier2->execute2D(&uftmp,1);
+
+								uftmp.trace(corr);
 
 							    	corr_global->allgather(corr, mpi);	
 
 					   			corr_global->average_and_symmetrize();
+								*/
 
-								//corr_global->reduce_position(corr, mpi);
+								//Tr ( U*_y (D_1 U_y) U*_x (D_1 U_) )
 
-								//fourier2->execute2D(corr,0);
+ 								fourier2->execute2D(&uftmp_der1,1);
 
-							    	//corr_global->allgather(corr, mpi);	
+								uftmp_der1.trace(corr_der1);
 
-								corr_global->reduce(&sum[time], &err[time], mpi);
-		
+							    	corr_global_der1->allgather(corr_der1, mpi);	
+
+					   			corr_global_der1->average_and_symmetrize();
+
+								corr_global_der1->reduce(&sum[time], &err[time], mpi);
+
+
+								//Tr ( U*_y (D_2 U_y) U*_x (D_2 U_) )
+
+								fourier2->execute2D(&uftmp_der2,1);
+
+								uftmp_der2.trace(corr_der2);
+
+							    	corr_global_der2->allgather(corr_der2, mpi);	
+
+					   			corr_global_der2->average_and_symmetrize();
+
+								corr_global_der2->reduce(&sum[time], &err[time], mpi);
+
 							}else{
 
 					        	        uf_copy_global.allgather(&uf_copy, mpi);
