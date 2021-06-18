@@ -1578,15 +1578,22 @@ template<class T, int t> void gfield<T, t>::fine_grain(gfield<T, t> &out){
         }
 
         su3_matrix<T> tmp,tmppr;
+	su3_matrix<T> tmpl, tmpr;
 
         for(int ix = 1; ix < Nx-1; ix+=2){
                 for(int iy = 0; iy < Ny; iy++){
 
                         for(int k = 0; k < t; k++){
                                 tmp.m[k] = 0.5*(out.u[((ix-1)*Ny+iy)*t+k] + out.u[((ix+1)*Ny+iy)*t+k]);
-                        }
+                                tmpl.m[k] = out.u[((ix-1)*Ny+iy)*t+k]; 
+                                tmpr.m[k] = out.u[((ix+1)*Ny+iy)*t+k];
+			}
 
-                        tmppr = tmp.su3_projection();
+			//diagonalize_unitary(tmp);
+
+			//interpolate(tmpl, tmpr, &tmp);	
+
+			tmppr = tmp; //l*tmp; //.su3_projection();
 
                         for(int k = 0; k < t; k++){
                                 out.u[(ix*Ny+iy)*t+k] = tmppr.m[k];
@@ -1597,9 +1604,13 @@ template<class T, int t> void gfield<T, t>::fine_grain(gfield<T, t> &out){
 
                 for(int k = 0; k < t; k++){
                         tmp.m[k] = 0.5*(out.u[((Nx-2)*Ny+iy)*t+k] + out.u[(0*Ny+iy)*t+k]);
-                }
+                        tmpl.m[k] = out.u[((Nx-2)*Ny+iy)*t+k];
+                        tmpr.m[k] = out.u[(0*Ny+iy)*t+k];
+		}
 
-                tmppr = tmp.su3_projection();
+		//interpolate(tmpl, tmpr, &tmp);	
+
+                tmppr = tmp; //l*tmp; //.su3_projection();
 
                 for(int k = 0; k < t; k++){
                         out.u[((Nx-1)*Ny+iy)*t+k] = tmppr.m[k];
@@ -1611,9 +1622,13 @@ template<class T, int t> void gfield<T, t>::fine_grain(gfield<T, t> &out){
 
                         for(int k = 0; k < t; k++){
                                 tmp.m[k] = 0.5*(out.u[(ix*Ny+iy-1)*t+k] + out.u[(ix*Ny+iy+1)*t+k]);
-                        }
+                                tmpl.m[k] = out.u[(ix*Ny+iy-1)*t+k];
+                                tmpr.m[k] = out.u[(ix*Ny+iy+1)*t+k];
+			}
 
-                        tmppr = tmp.su3_projection();
+			//interpolate(tmpl, tmpr, &tmp);
+
+			tmppr = tmp; //l*tmp; //.su3_projection();
 
                         for(int k = 0; k < t; k++){
                                 out.u[(ix*Ny+iy)*t+k] = tmppr.m[k];
@@ -1624,9 +1639,13 @@ template<class T, int t> void gfield<T, t>::fine_grain(gfield<T, t> &out){
 
                 for(int k = 0; k < t; k++){
                         tmp.m[k] = 0.5*(out.u[(ix*Ny+Ny-2)*t+k] + out.u[(ix*Ny+0)*t+k]);
-                }
+                        tmpl.m[k] = out.u[(ix*Ny+Ny-2)*t+k];
+                        tmpr.m[k] = out.u[(ix*Ny+0)*t+k];
+		}
 
-                tmppr = tmp.su3_projection();
+		//interpolate(tmpl, tmpr, &tmp);
+
+                tmppr = tmp; //l*tmp; //.su3_projection();
 
                 for(int k = 0; k < t; k++){
                         out.u[(ix*Ny+Ny-1)*t+k] = tmppr.m[k];
@@ -2824,7 +2843,7 @@ return 1;
 /********************************************//**
  * Main output function. Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation and its standard deviation. Additional arguments are needed: momenta* to print the k_T. The statistics is passed through x argument.
  ***********************************************/
-template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double x, mpi_class* mpi, std::string const &fileroot){
+template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double stat, mpi_class* mpi, std::string const &fileroot){
 
 
         FILE* f;
@@ -2841,16 +2860,13 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
                         if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
 
-				double kt = sqrt(mom->phat2(i));
-				double c =  (mom->phat2(i))*(sum->u[i*t+0].real())/x/3.0;
-				double ce = (mom->phat2(i))*(err->u[i*t+0].real())/x/3.0;
+                                double c =  (sum->u[i*t+0].real())/stat;
+                                double ce = (err->u[i*t+0].real())/stat;
 
-                                //cfit[j] = 1024.0*1024.0*3.0*c[i];
-                                //cefit[j] = 1024.0*1024.0*3.0*(sqrt(64.0*64.0*3.0*kt[i]*kt[i]*ce[i]-3.0*64.0*3.0*64.0*c[i]*c[i])/64.0/sqrt(64.0));
-                                //ktfit[j] = 1024.0*kt[i];
+                                int xglob = xx+(mpi->getPosX()*(sum->getNxl()));
+                                int yglob = yy+(mpi->getPosY()*(sum->getNyl()));
 
-                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), Nx*kt, Nx*Nx*3.0*c, Nx*Nx*3.0*sqrt(x*x*3.0*kt*kt*ce - 3.0*x*3.0*x*c*c)/x/sqrt(x));
-
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xglob, yglob, 1.0*sqrt(xglob*xglob+yglob*yglob), c, sqrt(stat*stat*ce - stat*stat*c*c)/stat/sqrt(stat));
                         }
                 }
         }

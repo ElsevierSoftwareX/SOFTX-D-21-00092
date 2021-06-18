@@ -5,10 +5,13 @@ INC=-I../zheevh3-C-1.1/ -I$(FFTW)/include
 CXXFLAGS=-g -O3 -std=gnu++11 -fopenmp $(INC)
 LIBS=$(FFTW)/lib/libfftw3_mpi.a $(FFTW)/lib/libfftw3.a $(FFTW)/lib/libfftw3_omp.a 
 #LIBS=/net/people/plgpkorcyl/fftw/install_gcc3/lib/libfftw3_mpi.a /net/people/plgpkorcyl/fftw/install_gcc3/lib/libfftw3.a /net/people/plgpkorcyl/fftw/install_gcc3/lib/libfftw3_omp.a
-LDFLAGS=$(LIBS) -lm 
+LDFLAGS=$(LIBS) -lm -llapack
 
-all: test_noise_vectors test_hermitian test_multiplication test_exponentiate test_cholesky test_accumulation test_symmetrize_average test_symmetrize_average2 test_generator test_position_evolution test_momentum_evolution test_position_evolution_coupling test_initial_condition test_momentum_evolution_coupling_lambda test_momentum_evolution_coupling_lambda_noise test_momentum_evolution_coupling test_noise_vectors test_noise_vectors_and_cholesky_decomposition test_position_evolution_hatta_coupling test_position_evolution_coupling_noise test_momentum_evolution_coupling2 test_momentum_coupling_fft
+all: test_fine_grain test_noise_vectors test_hermitian test_multiplication test_exponentiate test_cholesky test_accumulation test_symmetrize_average test_symmetrize_average2 test_generator test_position_evolution test_momentum_evolution test_position_evolution_coupling test_initial_condition test_momentum_evolution_coupling_lambda test_momentum_evolution_coupling_lambda_noise test_momentum_evolution_coupling test_noise_vectors test_noise_vectors_and_cholesky_decomposition test_position_evolution_hatta_coupling test_position_evolution_coupling_noise test_momentum_evolution_coupling2 test_momentum_coupling_fft
 
+
+test_fine_grain: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_fine_grain.cpp
+	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@
 
 test_symmetrize_average: ../zheevh3-C-1.1/zheevh3.cpp ../zheevh3-C-1.1/zheevc3.cpp ../zheevh3-C-1.1/zheevq3.cpp ../zheevh3-C-1.1/zhetrd3.cpp ../mpi_init.cpp ../mpi_exchange_grid.cpp test_symmetrize_average.cpp
 	$(CXX) $^ $(CXXFLAGS) $(LDFLAGS) -o $@

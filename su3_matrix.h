@@ -34,6 +34,26 @@
 #include <stdlib.h>
 #include <iostream>
 
+#include <fstream>
+
+
+using namespace std;
+
+/* Complex datatype */
+struct _dcomplex { double re, im; };
+typedef struct _dcomplex dcomplex;
+
+    // zgeev_ is a symbol in the LAPACK library files
+extern "C" {
+//    extern int zgeev_(char*,char*,int*,double*,int*,double*, double*, double*, int*, double*, int*, double*, int*, int*);
+//      extern int zgeev_(char*,char*,int*,double*,int*,double*,double*,int*,double*,int*,double*,int*,double*,int*);
+      extern int zgeev_(char* jobvl, char* jobvr, int* n, dcomplex* a,
+                int* lda, dcomplex* w, dcomplex* vl, int* ldvl, dcomplex* vr, int* ldvr,
+                dcomplex* work, int* lwork, double* rwork, int* info );
+
+}
+
+
 //#include "zheevh3.h"
 
 #include <stdio.h>
@@ -291,6 +311,584 @@ template<class T> inline std::complex<T> su3_matrix<T>::determinant(su3_matrix<T
   //   a6 a7 a8)                                                                                                                          
   res = a.m[0]*a.m[4]*a.m[8] + a.m[3]*a.m[7]*a.m[2] + a.m[1]*a.m[5]*a.m[6] - a.m[2]*a.m[4]*a.m[6] - a.m[5]*a.m[7]*a.m[0] - a.m[1]*a.m[3]*a.m[8];
   return res;
+}
+
+
+template<class T> int diagonalize_unitary(su3_matrix<T> a){
+
+      int n = 3;
+      int m = 3;
+      dcomplex *data;
+      dcomplex *data_tmp;
+
+	printf("Diagonalizing an unitary matrix\n");
+
+	printf("Wypisujemy a.m[]\n");
+
+	for(int i = 0; i < 3; i++){
+		for(int j = 0; j < 3; j++){
+			printf("( %1.4e %1.4e )", a.m[i*3+j].real(), a.m[i*3+j].imag());
+		}
+		printf("\n");
+	}
+	printf("\n");
+
+	su3_matrix<T> b;
+
+	b = a^a;
+
+	printf("Wypisujemy a*a\n");
+
+	for(int i = 0; i < 3; i++){
+		for(int j = 0; j < 3; j++){
+			printf("( %1.4e %1.4e )", b.m[i*3+j].real(), b.m[i*3+j].imag());
+		}
+		printf("\n");
+	}
+	printf("\n");
+
+	printf("Wypisujemy data\n");
+
+      data = new dcomplex[9];
+      data_tmp = new dcomplex[9];
+
+      for (int j=0;j<n;j++){
+        for (int i=0;i<n;i++){
+          data[j*n+i].re = a.m[i*n+j].real();
+          data[j*n+i].im = a.m[i*n+j].imag();
+	}
+      }
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", data[j*n+i].re, data[j*n+i].im);
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+
+      double *output = new double[18];
+
+       for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		
+		      	double re = 0;
+			double im = 0;
+
+			for(int k = 0; k < 3; k++){
+
+				re += data[j*n+k].re * data[i*n+k].re + data[j*n+k].im * data[i*n+k].im;
+				im += data[j*n+k].im * data[i*n+k].re - data[j*n+k].re * data[i*n+k].im;
+			}
+
+			output[(j*n+i)*2+0] = re;
+			output[(j*n+i)*2+1] = im;
+	      }
+      }
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", output[(j*n+i)*2+0], output[(j*n+i)*2+1]);
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+     // allocate data
+      char Nchar='N';
+      char Vchar='V';
+
+      dcomplex *eig=new dcomplex[n];
+      dcomplex *vl = new dcomplex[n*n];
+      dcomplex *vr = new dcomplex[n*n];
+      int one=1;
+      int three=3;
+      int lwork=2*6*n;
+      dcomplex *work=new dcomplex[lwork];
+      double *rwork=new double[2*lwork];
+
+      int info;
+
+      int nn = 2*n;
+
+      //zgeev (jobvl, jobvr, n, a, lda, w, vl, ldvl, vr, ldvr, work, lwork, rwork, info);
+//      extern int zgeev_(char* jobvl, char* jobvr, int* n, dcomplex* a,
+//                int* lda, dcomplex* w, dcomplex* vl, int* ldvl, dcomplex* vr, int* ldvr,
+ //               dcomplex* work, int* lwork, double* rwork, int* info );
+
+      // calculate eigenvalues using the DGEEV subroutine
+      zgeev_(&Vchar,&Vchar,&n,data,&n,eig,vl,&three,vr,&three,work,&lwork,rwork,&info);
+
+
+      // check for errors
+      if (info!=0){
+        cout << "Error: dgeev returned error code " << info << endl;
+        return -1;
+      }
+
+      // output eigenvalues to stdout
+      cout << "--- Eigenvalues ---" << endl;
+      for (int i=0;i<n;i++){
+        cout << "( " << eig[i].re << " , " << eig[i].im << " )\n";
+      }
+      cout << endl;
+
+      	// output eigenvectors to stdout
+      	for(int jj = 0; jj < 3; jj++){
+		
+	        cout << "--- Right eigenvector " << jj << " ---" << endl;
+	        for (int i=0;i<n;i++){
+        
+		      cout << "( " << vr[jj*n+i].re << " , " << vr[jj*n+i].im << " )\n";
+      		}
+
+      		cout << endl;
+	}
+
+      	// output eigenvectors to stdout
+      	for(int jj = 0; jj < 3; jj++){
+		
+	        cout << "--- Left eigenvector " << jj << " ---" << endl;
+	        for (int i=0;i<n;i++){
+        
+		      cout << "( " << vl[jj*n+i].re << " , " << vl[jj*n+i].im << " )\n";
+      		}
+
+      		cout << endl;
+	}
+
+	for(int j = 0; j < 3; j++){
+		for(int i = 0; i < 3; i++){
+		
+		      	double re = 0;
+			double im = 0;
+
+			for(int k = 0; k < 3; k++){
+
+				re += data[i*n+k].re * vr[j*n+k].re - data[i*n+k].im * vr[j*n+k].im;
+				im += data[i*n+k].im * vr[j*n+k].re + data[i*n+k].re * vr[j*n+k].im;
+			}
+
+			printf(" re = %1.4e, im = %1.4e\n", (re*eig[i].re + im*eig[i].im) / (eig[i].re*eig[i].re + eig[i].im*eig[i].im), (-re*eig[i].im+im*eig[i].re) / (eig[i].re*eig[i].re+eig[i].im*eig[i].im) );
+	      }
+	}
+
+	//calculate inverse
+	//
+			dcomplex feig[3];
+			for(int kk = 0; kk < 3; kk++){
+				//feig[kk].re = eig[kk].re; //eig[kk].re/(eig[kk].re*eig[kk].re + eig[kk].im*eig[kk].im);
+				//feig[kk].im = eig[kk].im; //-eig[kk].im/(eig[kk].re*eig[kk].re + eig[kk].im*eig[kk].im);
+				feig[kk].re = eig[kk].re/(eig[kk].re*eig[kk].re + eig[kk].im*eig[kk].im);
+				feig[kk].im = -eig[kk].im/(eig[kk].re*eig[kk].re + eig[kk].im*eig[kk].im);
+
+			}
+
+
+                       for(int i = 0; i < 3; i++){
+                                for(int j = 0; j < 3; j++){
+
+                                        data_tmp[i*3+j].re = 0.0;
+                                        data_tmp[i*3+j].im = 0.0;
+
+                                        for(int k = 0; k < 3; k++){
+
+						//Q[i][k] * eig[k] * std::conj(Q[j][k]);
+
+						double tmp_re = vr[k*n+i].re * feig[k].re - vr[k*n+i].im * feig[k].im;
+						double tmp_im = vr[k*n+i].im * feig[k].re + vr[k*n+i].re * feig[k].im;
+
+						data_tmp[i*3+j].re += tmp_re * vr[k*n+j].re + tmp_im * vr[k*n+j].im;
+						data_tmp[i*3+j].im += -tmp_re * vr[k*n+j].im + tmp_im * vr[k*n+j].re;
+
+                                        }
+                                }
+                        }
+
+	printf("1/A = \n");
+
+       for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", data_tmp[j*n+i].re, data_tmp[j*n+i].im);
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+	printf("A for comparison\n");
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", a.m[j*n+i].real(), a.m[j*n+i].imag());
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		
+		      	double re = 0;
+			double im = 0;
+
+			for(int k = 0; k < 3; k++){
+
+				re += a.m[j*n+k].real() * data_tmp[k*n+i].re - a.m[j*n+k].imag() * data_tmp[k*n+i].im;
+				im += a.m[j*n+k].imag() * data_tmp[k*n+i].re + a.m[j*n+k].real() * data_tmp[k*n+i].im;
+			}
+
+			output[(j*n+i)*2+0] = re;
+			output[(j*n+i)*2+1] = im;
+	      }
+      }
+
+	printf(" A * 1/A = \n");
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", output[(j*n+i)*2+0], output[(j*n+i)*2+1]);
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+
+
+
+      // deallocate
+      delete [] data;
+      delete [] eig;
+      delete [] work;
+      delete [] vl;
+      delete [] vr;
+      delete [] rwork;
+
+
+      return 0;
+}
+
+template<class T> int interpolate(su3_matrix<T> left, su3_matrix<T> right, su3_matrix<T> *output){
+
+      	int n = 3;
+      	int m = 3;
+      	dcomplex *data;
+	dcomplex *data_tmp;
+	dcomplex *data_tmp2;
+	dcomplex *data_tmp3;
+	dcomplex *data_tmp4;
+	dcomplex *data_tmp5;
+
+	su3_matrix<T> left_inv;
+
+        left_inv.m[0] = std::conj(left.m[0]);
+        left_inv.m[1] = std::conj(left.m[3]);
+        left_inv.m[2] = std::conj(left.m[6]);
+        left_inv.m[3] = std::conj(left.m[1]);
+        left_inv.m[4] = std::conj(left.m[4]);
+        left_inv.m[5] = std::conj(left.m[7]);
+        left_inv.m[6] = std::conj(left.m[2]);
+        left_inv.m[7] = std::conj(left.m[5]);
+        left_inv.m[8] = std::conj(left.m[8]);
+
+        data = new dcomplex[9];
+        data_tmp = new dcomplex[9];
+        data_tmp2 = new dcomplex[9];
+        data_tmp3 = new dcomplex[9];
+        data_tmp4 = new dcomplex[9];
+        data_tmp5 = new dcomplex[9];
+
+	//B/A
+        for(int j = 0; j < 3; j++){
+	      	for(int i = 0; i < 3; i++){
+		
+		      	double re = 0;
+			double im = 0;
+
+			for(int k = 0; k < 3; k++){
+
+				//re += right.m[j*n+k].real() * left_inv.m[k*n+i].real() - right.m[j*n+k].imag() * left_inv.m[k*n+i].imag();
+				//im += right.m[j*n+k].imag() * left_inv.m[k*n+i].real() + right.m[j*n+k].real() * left_inv.m[k*n+i].imag();
+
+				re += left_inv.m[j*n+k].real() * right.m[k*n+i].real() - left_inv.m[j*n+k].imag() * right.m[k*n+i].imag();
+				im += left_inv.m[j*n+k].imag() * right.m[k*n+i].real() + left_inv.m[j*n+k].real() * right.m[k*n+i].imag();
+
+			}
+
+			data[j*n+i].re = re;
+			data[j*n+i].im = im;
+//			data_tmp4[j*n+i].re = re;
+//			data_tmp4[j*n+i].im = im;
+
+  		}
+      }
+/*
+	printf("B/A =\n");
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", data[j*n+i].re, data[j*n+i].im);
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+*/
+
+      // allocate data
+      char Nchar='N';
+      char Vchar='V';
+
+      dcomplex *eig=new dcomplex[n];
+      dcomplex *vl = new dcomplex[n*n];
+      dcomplex *vr = new dcomplex[n*n];
+      int one=1;
+      int three=3;
+      int lwork=2*6*n;
+      dcomplex *work=new dcomplex[lwork];
+      double *rwork=new double[2*lwork];
+
+      int info;
+
+      int nn = 2*n;
+
+      //zgeev (jobvl, jobvr, n, a, lda, w, vl, ldvl, vr, ldvr, work, lwork, rwork, info);
+//      extern int zgeev_(char* jobvl, char* jobvr, int* n, dcomplex* a,
+//                int* lda, dcomplex* w, dcomplex* vl, int* ldvl, dcomplex* vr, int* ldvr,
+ //               dcomplex* work, int* lwork, double* rwork, int* info );
+
+      // calculate eigenvalues using the DGEEV subroutine
+      zgeev_(&Vchar,&Vchar,&n,data,&n,eig,vl,&three,vr,&three,work,&lwork,rwork,&info);
+
+
+      // check for errors
+      if (info!=0){
+        cout << "Error: dgeev returned error code " << info << endl;
+        return -1;
+      }
+
+      //calculate square root
+
+			dcomplex feig[3];
+			for(int kk = 0; kk < 3; kk++){
+				//feig[kk].re = eig[kk].re; //eig[kk].re/(eig[kk].re*eig[kk].re + eig[kk].im*eig[kk].im);
+				//feig[kk].im = eig[kk].im; //-eig[kk].im/(eig[kk].re*eig[kk].re + eig[kk].im*eig[kk].im);
+				//feig[kk].re = eig[kk].re/(eig[kk].re*eig[kk].re + eig[kk].im*eig[kk].im);
+				//feig[kk].im = -eig[kk].im/(eig[kk].re*eig[kk].re + eig[kk].im*eig[kk].im);
+				
+				double x = eig[kk].re;
+				double y = eig[kk].im;
+
+				double norm = x*x+y*y;
+				double phi = atan(y/x);
+
+				//feig[kk].re = 0.5*(x + sqrt(x*x+y*y));
+				//feig[kk].im = 0.5*(-x + sqrt(x*x+y*y));
+
+				feig[kk].re = sqrt(norm)*cos(0.5*phi);
+				feig[kk].im = sqrt(norm)*sin(0.5*phi);
+
+				double xx = feig[kk].re;
+				double yy = feig[kk].im;	
+
+				double square_re = xx*xx-yy*yy;
+				double square_im = 2*xx*yy;
+
+				if(square_re/x < 0){
+					feig[kk].re = -yy;
+					feig[kk].im = xx;
+				}
+
+				xx = feig[kk].re;
+				yy = feig[kk].im;	
+
+//				printf("eig.re = %e, eig.im = %e,     square_re = %e, square_im = %e\n", eig[kk].re, eig[kk].im, xx*xx-yy*yy, 2*xx*yy);
+			}
+
+
+                       for(int i = 0; i < 3; i++){
+                                for(int j = 0; j < 3; j++){
+
+                                        data_tmp[j*3+i].re = 0.0;
+                                        data_tmp[j*3+i].im = 0.0;
+
+                                        for(int k = 0; k < 3; k++){
+
+						//Q[i][k] * eig[k] * std::conj(Q[j][k]);
+
+						double tmp_re = vr[k*n+i].re * feig[k].re - vr[k*n+i].im * feig[k].im;
+						double tmp_im = vr[k*n+i].im * feig[k].re + vr[k*n+i].re * feig[k].im;
+
+						data_tmp[j*3+i].re += tmp_re * vr[k*n+j].re + tmp_im * vr[k*n+j].im;
+						data_tmp[j*3+i].im += -tmp_re * vr[k*n+j].im + tmp_im * vr[k*n+j].re;
+
+                                        }
+                                }
+                        }
+
+                       for(int i = 0; i < 3; i++){
+                                for(int j = 0; j < 3; j++){
+
+                                        output->m[i*3+j] = std::complex<double>(data_tmp[i*3+j].re, data_tmp[i*3+j].im);
+
+                                }
+                        }
+/*
+      printf("B/A from diagonalization\n");
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", data_tmp[j*n+i].re, data_tmp[j*n+i].im);
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+
+
+        //sqrt(B/A) * sqrt(B/A)
+        for(int j = 0; j < 3; j++){
+	      	for(int i = 0; i < 3; i++){
+		
+		      	double re = 0;
+			double im = 0;
+
+			for(int k = 0; k < 3; k++){
+
+				//re += right.m[j*n+k].real() * left_inv.m[k*n+i].real() - right.m[j*n+k].imag() * left_inv.m[k*n+i].imag();
+				//im += right.m[j*n+k].imag() * left_inv.m[k*n+i].real() + right.m[j*n+k].real() * left_inv.m[k*n+i].imag();
+
+				re += data_tmp[j*n+k].re * data_tmp[k*n+i].re - data_tmp[j*n+k].im * data_tmp[k*n+i].im;
+				im += data_tmp[j*n+k].im * data_tmp[k*n+i].re + data_tmp[j*n+k].re * data_tmp[k*n+i].im;
+
+			}
+
+			data_tmp5[j*n+i].re = re;
+			data_tmp5[j*n+i].im = im;
+	      }
+      }
+
+      printf("sqrt(B/A) * sqrt(B/A) = B/A\n");
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", data_tmp5[j*n+i].re, data_tmp5[j*n+i].im);
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+
+
+	//A * sqrt(B/A)
+        for(int j = 0; j < 3; j++){
+	      	for(int i = 0; i < 3; i++){
+		
+		      	double re = 0;
+			double im = 0;
+
+			for(int k = 0; k < 3; k++){
+
+				//re += right.m[j*n+k].real() * left_inv.m[k*n+i].real() - right.m[j*n+k].imag() * left_inv.m[k*n+i].imag();
+				//im += right.m[j*n+k].imag() * left_inv.m[k*n+i].real() + right.m[j*n+k].real() * left_inv.m[k*n+i].imag();
+
+				re += left.m[j*n+k].real() * data_tmp[k*n+i].re - left.m[j*n+k].imag() * data_tmp[k*n+i].im;
+				im += left.m[j*n+k].imag() * data_tmp[k*n+i].re + left.m[j*n+k].real() * data_tmp[k*n+i].im;
+
+			}
+
+			data_tmp2[j*n+i].re = re;
+			data_tmp2[j*n+i].im = im;
+	      }
+      }
+
+        //A * sqrt(B/A) * sqrt(B/A)
+        for(int j = 0; j < 3; j++){
+	      	for(int i = 0; i < 3; i++){
+		
+		      	double re = 0;
+			double im = 0;
+
+			for(int k = 0; k < 3; k++){
+
+				//re += right.m[j*n+k].real() * left_inv.m[k*n+i].real() - right.m[j*n+k].imag() * left_inv.m[k*n+i].imag();
+				//im += right.m[j*n+k].imag() * left_inv.m[k*n+i].real() + right.m[j*n+k].real() * left_inv.m[k*n+i].imag();
+
+				re += data_tmp2[j*n+k].re * data_tmp[k*n+i].re - data_tmp2[j*n+k].im * data_tmp[k*n+i].im;
+				im += data_tmp2[j*n+k].im * data_tmp[k*n+i].re + data_tmp2[j*n+k].re * data_tmp[k*n+i].im;
+
+			}
+
+			data_tmp3[j*n+i].re = re;
+			data_tmp3[j*n+i].im = im;
+	      }
+      }
+
+      printf("A * sqrt(B/A) * sqrt(B/A) = B\n");
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", data_tmp3[j*n+i].re, data_tmp3[j*n+i].im);
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+
+      printf("B again for comparison\n");
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", right.m[j*n+i].real(), right.m[j*n+i].imag());
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+
+	//A * B/A
+        for(int j = 0; j < 3; j++){
+	      	for(int i = 0; i < 3; i++){
+		
+		      	double re = 0;
+			double im = 0;
+
+			for(int k = 0; k < 3; k++){
+
+				//re += right.m[j*n+k].real() * left_inv.m[k*n+i].real() - right.m[j*n+k].imag() * left_inv.m[k*n+i].imag();
+				//im += right.m[j*n+k].imag() * left_inv.m[k*n+i].real() + right.m[j*n+k].real() * left_inv.m[k*n+i].imag();
+
+				re += left.m[j*n+k].real() * data_tmp4[k*n+i].re - left.m[j*n+k].imag() * data_tmp4[k*n+i].im;
+				im += left.m[j*n+k].imag() * data_tmp4[k*n+i].re + left.m[j*n+k].real() * data_tmp4[k*n+i].im;
+
+			}
+
+			data_tmp2[j*n+i].re = re;
+			data_tmp2[j*n+i].im = im;
+	      }
+      }
+
+      printf("A * B/A = B\n");
+
+      for(int j = 0; j < 3; j++){
+	      for(int i = 0; i < 3; i++){
+		      printf("( %1.4e, %1.4e )", data_tmp2[j*n+i].re, data_tmp2[j*n+i].im);
+	      }
+     	      printf("\n");
+      }
+      printf("\n");
+*/
+
+      // deallocate
+      delete [] data;
+      delete [] eig;
+      delete [] work;
+      delete [] vl;
+      delete [] vr;
+      delete [] rwork;
+
+
+      return 0;
 }
 
 
