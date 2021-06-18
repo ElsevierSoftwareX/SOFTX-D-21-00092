@@ -1,5 +1,5 @@
 /* 
- * This file is part of the JIMWLK numerical solution package (https://github.com/piotrkorcyl/jimwlk).
+ * This file is part of the JIMWLK numerical solution package (https://bitbucket.org/piotrekkorcyl/jimwlk.git).
  * Copyright (c) 2020 P. Korcyl
  * 
  * This program is free software: you can redistribute it and/or modify  
@@ -18,7 +18,7 @@
  * Authors: P. Korcyl
  * Contact: piotr.korcyl@uj.edu.pl
  * 
- * Version: 1.0
+ * Version: 2.0
  * 
  * Description:
  * Class containing parameters and setup
@@ -40,6 +40,8 @@ enum Evolution { POSITION_EVOLUTION, MOMENTUM_EVOLUTION, NO_EVOLUTION };
 enum Coupling { SQRT_COUPLING_CONSTANT, NOISE_COUPLING_CONSTANT, HATTA_COUPLING_CONSTANT, NO_COUPLING_CONSTANT };
 
 enum Kernel { LINEAR_KERNEL, SIN_KERNEL};
+
+enum Output { POSITION, MOMENTUM};
 
 class config{
 
@@ -71,7 +73,8 @@ public:
 	Coupling CouplingChoice = NOISE_COUPLING_CONSTANT;
 
 	Kernel KernelChoice = SIN_KERNEL;
-
+	
+	Output OutputChoice = POSITION;
 
 	int read_config_from_file(std::string file_name_cnfg){
 
@@ -110,10 +113,12 @@ public:
 		char evolution[100];
 		char coupling[100];
 		char kernel[100];
+		char output[100];
 
 		fscanf(f, "EvolutionChoice = %s\n", &evolution[0]);
 		fscanf(f, "CouplingChoice = %s\n", &coupling[0]);
 		fscanf(f, "KernelChoice = %s\n", &kernel[0]);
+		fscanf(f, "OutputChoice = %s\n", &output[0]);
 
 		if(strcmp(evolution, "MOMENTUM_EVOLUTION") == 0){
 			EvolutionChoice = MOMENTUM_EVOLUTION;
@@ -162,6 +167,18 @@ public:
 			printf("SETUP: SIN_KERNEL\n");
 		}else{
 			printf("SETUP: KERNEL UNRECOGNIZED\n");
+			exit(0);
+		}
+
+		if(strcmp(output, "POSITION") == 0){
+			OutputChoice = POSITION;
+			printf("SETUP: POSITION OUTPUT\n");
+		}
+		else if(strcmp(output, "MOMENTUM") == 0){
+			OutputChoice = MOMENTUM;
+			printf("SETUP: MOMENTUM OUTPUT\n");
+		}else{
+			printf("SETUP: OUTPUT UNRECOGNIZED\n");
 			exit(0);
 		}
 

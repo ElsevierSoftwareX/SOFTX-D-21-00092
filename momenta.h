@@ -1,5 +1,5 @@
 /* 
- * This file is part of the JIMWLK numerical solution package (https://github.com/piotrkorcyl/jimwlk).
+ * This file is part of the JIMWLK numerical solution package (https://bitbucket.org/piotrekkorcyl/jimwlk.git).
  * Copyright (c) 2020 P. Korcyl
  * 
  * This program is free software: you can redistribute it and/or modify  
@@ -18,7 +18,7 @@
  * Authors: P. Korcyl
  * Contact: piotr.korcyl@uj.edu.pl
  * 
- * Version: 1.0
+ * Version: 2.0
  * 
  * Description:
  * Precalculating linear and sin based lattice momenta

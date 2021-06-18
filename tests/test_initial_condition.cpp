@@ -83,12 +83,13 @@ int main(int argc, char *argv[]) {
 //------ACCUMULATE STATISTICS----------------------------
 //-------------------------------------------------------
 
-//    std::vector<lfield<double,1>*> accumulator;
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
 
-    sum.setToZero();
+    lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
 
-//-------------------------------------------------------
+    std::vector<lfield<double,1>> sum(1, zero);
+    std::vector<lfield<double,1>> err(1, zero);
+
+    //-------------------------------------------------------
 //-------------------------------------------------------
 
 for(int stat = 0; stat < cnfg->stat; stat++){
@@ -129,11 +130,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 	//------CORRELATION FUNCTION-----------------------------
 	//-------------------------------------------------------
 
-
-	//compute correlation function
-	//should be X2K
-
-//   	fourier->execute1D(&uf, 0);
 	fourier2->execute2D(&uf,1);
     
 	uf.trace(corr);
@@ -142,25 +138,17 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
    	corr_global->average_and_symmetrize();
 
-       //store stat in the accumulator
-        lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
-
-        sum += *corr_ptr;
-
-        delete corr_ptr;
-
-        clock_gettime(CLOCK_MONOTONIC, &finish);
-
-        elapsed = (finish.tv_sec - start.tv_sec);
-        elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
-
-        std::cout<<"Statistics time: " << elapsed << std::endl;
+        corr_global->reduce(&sum[0], &err[0], mpi);
 
     }
 
-    sum.print(momtable, 1.0/3.0/cnfg->stat, mpi);
+    for(int i = 0; i < 1; i++){
+            printf("iterator = %i\n", i);
+            print(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, "test_initial_condition_output");
+    }
 
-//-------------------------------------------------------
+
+    //-------------------------------------------------------
 //------DEALLOCATE AND CLEAN UP--------------------------
 //-------------------------------------------------------
 

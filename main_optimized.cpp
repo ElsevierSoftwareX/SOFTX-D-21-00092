@@ -1,5 +1,5 @@
 /* 
- * This file is part of the JIMWLK numerical solution package (https://github.com/piotrkorcyl/jimwlk).
+ * This file is part of the JIMWLK numerical solution package (https://bitbucket.org/piotrekkorcyl/jimwlk.git).
  * Copyright (c) 2020 P. Korcyl
  * 
  * This program is free software: you can redistribute it and/or modify  
@@ -18,7 +18,7 @@
  * Authors: P. Korcyl
  * Contact: piotr.korcyl@uj.edu.pl
  * 
- * Version: 1.0
+ * Version: 2.0
  * 
  * Description:
  * Main function, contains all functionality, optimized with respect to threading
@@ -221,7 +221,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		int upper_bound_x = 1;
 		if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){
-			upper_bound_x = 48; //Nx;
+			upper_bound_x = Nx;
 		}
 		//hatta iteration over positions
 		//loop over possible distances squared
@@ -230,8 +230,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 			int upper_bound_y = 1;
 			int lower_bound_y = 0;
 			if( cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT ){ 
-				lower_bound_y = ix; //-1;
-				upper_bound_y = ix+1; //+2;
+				lower_bound_y = ix-1;
+				upper_bound_y = ix+2;
 			}
 			for(int iy = lower_bound_y; iy < upper_bound_y; iy++){
 				if(iy >= 0 && iy < Ny){
@@ -385,11 +385,14 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 					   			corr_global->average_and_symmetrize();
 
-								//corr_global->reduce_position(corr, mpi);
+								if(cnfg->OutputChoice == POSITION ){
+                                                                        //additional steps to get the final correlator in position space
+                                                                        corr_global->reduce_position(corr, mpi);
 
-								//fourier2->execute2D(corr,0);
+                                                                        fourier2->execute2D(corr,0);
 
-							    	//corr_global->allgather(corr, mpi);	
+                                                                        corr_global->allgather(corr, mpi);
+								}
 
 								corr_global->reduce(&sum[time], &err[time], mpi);
 		
@@ -476,7 +479,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     for(int i = 0; i < cnfg->measurements; i++){
 	    printf("iterator = %i\n", i);
-            print(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
+	    if( cnfg->OutputChoice == POSITION )
+	            print_position(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
+	    if( cnfg->OutputChoice == MOMENTUM )
+	            print(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
     }
 
 //-------------------------------------------------------

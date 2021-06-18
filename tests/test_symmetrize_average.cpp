@@ -78,7 +78,11 @@ int main(int argc, char *argv[]) {
 //------ACCUMULATE STATISTICS----------------------------
 //-------------------------------------------------------
 
-    std::vector<lfield<double,1>*> accumulator;
+    lfield<double,1> zero(cnfg->Nxl, cnfg->Nyl);
+
+    std::vector<lfield<double,1>> sum(1, zero);
+    std::vector<lfield<double,1>> err(1, zero);
+
 
 //-------------------------------------------------------
 //-------------------------------------------------------
@@ -115,29 +119,18 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	corr_global->average_and_symmetrize();
 
-	//store stat in the accumulator
-	lfield<double,1>* corr_ptr = corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi);
-
-	//accumulator.push_back(corr_global->reduce(cnfg->Nxl, cnfg->Nyl, mpi));
-	accumulator.push_back(corr_ptr);
+        corr_global->reduce(&sum[0], &err[0], mpi);
 
     }
 
-    printf("accumulator size = %li\n", accumulator.size());
+    for(int i = 0; i < 1; i++){
+            printf("iterator = %i\n", i);
+            print_position(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, "test_average_symmetrize_output");
+    }
 
-    lfield<double,1> sum(cnfg->Nxl, cnfg->Nyl);
+    printf("Expected result: should be %e on each site\n", (pow(3.0,4.0)*pow(3.0,4.0)*3.0)*3.0);
 
-    sum.setToZero();
-
-    for (std::vector<lfield<double,1>*>::iterator it = accumulator.begin() ; it != accumulator.end(); ++it)
-	sum += **it;
-
-    sum.printDebug(Nx*Nx*Ny*Ny/(pow(3.0,4.0)*pow(3.0,4.0)*3.0)/3.0/accumulator.size(), mpi);
-
-
-    printf("Expected result: 1 on each site\n");
-
-//-------------------------------------------------------
+    //-------------------------------------------------------
 //------DEALLOCATE AND CLEAN UP--------------------------
 //-------------------------------------------------------
 

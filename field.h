@@ -1,5 +1,5 @@
 /* 
- * This file is part of the JIMWLK numerical solution package (https://github.com/piotrkorcyl/jimwlk).
+ * This file is part of the JIMWLK numerical solution package (https://bitbucket.org/piotrekkorcyl/jimwlk.git).
  * Copyright (c) 2020 P. Korcyl
  * 
  * This program is free software: you can redistribute it and/or modify  
@@ -18,7 +18,7 @@
  * Authors: P. Korcyl
  * Contact: piotr.korcyl@uj.edu.pl
  * 
- * Version: 1.0
+ * Version: 2.0
  * 
  * Description:
  * Classes representing lfield and gfield objects, basic ingredients of the implementation
@@ -964,7 +964,7 @@ return 1;
 }
 
 /********************************************//**
- * Implements the solution of the Poisson equation in momentum space, Eq. 4 of arxiv XXXXXX
+ * Implements the solution of the Poisson equation in momentum space, Eq. 4 of arxiv 2104.14254 [hep-ph]
  ***********************************************/
 template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, momenta* mom){
 
@@ -2337,7 +2337,7 @@ return 1;
 }
 
 /********************************************//**
- * Main method for the advance of the Wilson lines in rapidity according to the Langevin equation. Operates on the first argument, takes the A and B matrices and the Langevin discretization step. Implementation of Eq. 22 of arxiv XXXXXX
+ * Main method for the advance of the Wilson lines in rapidity according to the Langevin equation. Operates on the first argument, takes the A and B matrices and the Langevin discretization step. Implementation of Eq. 22 of arxiv 2104.14254 [hep-ph]
 *************************************************/
 template<class T, int t> int update_uf(lfield<T,t>* uf, lfield<T,t>* B_local, lfield<T,t>* A_local, double step){
 
@@ -2372,7 +2372,7 @@ return 1;
 }
 
 /********************************************//**
- * Optimized method for the evaluation of the A and B matrices. Operates on the first argument, takes the xi_x, xi_y and momenta. Construction of the JIMWLK kernel is performed here due to optimization reasons. Implementation of Eqs. 35 ad 38 of arxiv XXXXXX
+ * Optimized method for the evaluation of the A and B matrices. Operates on the first argument, takes the xi_x, xi_y and momenta. Construction of the JIMWLK kernel is performed here due to optimization reasons. Implementation of Eqs. 35 ad 38 of arxiv 2104.14254 [hep-ph]
 *************************************************/
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom, mpi_class* mpi, Coupling p, Kernel kk){
 
@@ -2460,7 +2460,7 @@ return 1;
 }
 
 /********************************************//**
- * Unoptimized method for the evaluation of the A and B matrices. Operates on the first argument, takes the xi_x, xi_y and the precomputed kernel objects. Implementation of Eqs. 35 ad 38 of arxiv XXXXXX
+ * Unoptimized method for the evaluation of the A and B matrices. Operates on the first argument, takes the xi_x, xi_y and the precomputed kernel objects. Implementation of Eqs. 35 ad 38 of arxiv 2104.14254 [hep-ph]
 *************************************************/
 template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, lfield<T,t>* kernel_pbarx, lfield<T,t>* kernel_pbary){
 
@@ -2498,7 +2498,7 @@ return 1;
 }
 
 /********************************************//**
- * Method for generation of the noise vectors with a gaussian distribution in the Lie algebra. Implementation of Eqs. 24 ad 25 of arxiv XXXXXX
+ * Method for generation of the noise vectors with a gaussian distribution in the Lie algebra. Implementation of Eqs. 24 ad 25 of arxiv 2104.14254 [hep-ph]
 *************************************************/
 template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, mpi_class* mpi, config* cnfg){
 
@@ -2592,7 +2592,7 @@ return 1;
 }
 
 /********************************************//**
- * Method for generation of the noise vectors with a gaussian distribution rescaled by the coupling constant in the Lie algebra. Implementation of Eq. 47 of arxiv XXXXXX
+ * Method for generation of the noise vectors with a gaussian distribution rescaled by the coupling constant in the Lie algebra. Implementation of Eq. 47 of arxiv 2104.14254 [hep-ph]
 *************************************************/
 template<class T, int t> int generate_gaussian_with_noise_coupling_constant(lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom, mpi_class* mpi, config* cnfg){
 
@@ -2692,7 +2692,7 @@ return 1;
 }
 
 /********************************************//**
- * Optimized method for the evaluation of the A and B matrices. Operates on the seven and eight arguments, takes the xi_x, xi_y, positions and the actual Wilson line field uf_global. Construction of the JIMWLK kernel is performed here due to optimization reasons. Used in the position space construction. Implementation of Eqs. 34 ad 38 of arxiv XXXXXX in position space, without Fourier transforms
+ * Optimized method for the evaluation of the A and B matrices. Operates on the seven and eight arguments, takes the xi_x, xi_y, positions and the actual Wilson line field uf_global. Construction of the JIMWLK kernel is performed here due to optimization reasons. Used in the position space construction. Implementation of Eqs. 34 ad 38 of arxiv 2104.14254 [hep-ph] in position space, without Fourier transforms
 *************************************************/
 template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, int y_global, gfield<T,t>* xi_global_x, gfield<T,t>* xi_global_y, 
 				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable, int rr, Coupling p, Kernel kk){
@@ -2839,11 +2839,10 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 return 1;
 }
 
-
 /********************************************//**
- * Main output function. Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation and its standard deviation. Additional arguments are needed: momenta* to print the k_T. The statistics is passed through x argument.
+ * Main output function. Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation in position space and its standard deviation. The statistics is passed through stat argument.
  ***********************************************/
-template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double stat, mpi_class* mpi, std::string const &fileroot){
+template<class T, int t> int print_position(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double stat, mpi_class* mpi, std::string const &fileroot){
 
 
         FILE* f;
@@ -2875,4 +2874,46 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
 return 1;
 }
+
+
+/********************************************//**
+ * Main output function. Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation in momentum space multiplied by k_T and its standard deviation. The statistics is passed through stat argument.
+ ***********************************************/
+template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double x, mpi_class* mpi, std::string const &fileroot){
+
+
+        FILE* f;
+        char filename[500];
+
+        sprintf(filename, "%s_%i_%i_mpi%i_r%i.dat", fileroot.c_str(), Nx, Ny, mpi->getSize(), mpi->getRank());
+
+        f = fopen(filename, "a+");
+
+        for(int xx = 0; xx < sum->getNxl(); xx++){
+                for(int yy = 0; yy < sum->getNyl(); yy++){
+
+                        int i = xx*(sum->getNyl())+yy;
+
+                        if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
+
+                                double kt = sqrt(mom->phat2(i));
+                                double c =  (mom->phat2(i))*(sum->u[i*t+0].real())/x/3.0;
+                                double ce = (mom->phat2(i))*(err->u[i*t+0].real())/x/3.0;
+
+                                //cfit[j] = 1024.0*1024.0*3.0*c[i];
+                                //cefit[j] = 1024.0*1024.0*3.0*(sqrt(64.0*64.0*3.0*kt[i]*kt[i]*ce[i]-3.0*64.0*3.0*64.0*c[i]*c[i])/64.0/sqrt(64.0));
+                                //ktfit[j] = 1024.0*kt[i];
+
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xx+(mpi->getPosX()*(sum->getNxl())), yy+(mpi->getPosY()*(sum->getNyl())), Nx*kt, Nx*Nx*3.0*c, Nx*Nx*3.0*sqrt(x*x*3.0*kt*kt*ce - 3.0*x*3.0*x*c*c)/x/sqrt(x));
+
+                        }
+                }
+        }
+
+        fclose(f);
+
+return 1;
+}
+
+
 #endif
