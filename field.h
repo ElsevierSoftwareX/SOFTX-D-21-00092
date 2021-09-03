@@ -137,6 +137,8 @@ template<class T, int t> class gfield: public field<T,t> {
 	public:
 
 		int allgather(lfield<T,t>* ulocal, mpi_class* mpi);
+		int allreduce(gfield<T,t>* uglobal, mpi_class* mpi);
+
 
 		gfield(int NNx, int NNy) : field<T,t>{NNx, NNy} { Nxg = NNx; Nyg = NNy;};
 
@@ -157,6 +159,8 @@ template<class T, int t> class gfield: public field<T,t> {
 		gfield<T,t>& operator= ( const gfield<T,t>& f );
 
 		gfield<T,t>* hermitian();
+
+		int setMVModel(MV_class* MVconfig);
 
 		int setKernelXbarX(int x, int y, positions* postable, Kernel KernelChoice);
 		int setKernelXbarY(int x, int y, positions* postable, Kernel KernelChoice);
@@ -296,6 +300,8 @@ template<class T, int t> class lfield: public field<T,t> {
 
 
 		int setMVModel(MV_class* MVconfig);
+		int setMVModel(MV_class* MVconfig, int* source_pos, double* source_val, mpi_class* mpi);
+
 		int setUnitModel(rand_class* rr);
 		int setGaussian(void);
 
@@ -660,6 +666,62 @@ template<class T, int t> int gfield<T,t>::allgather(lfield<T,t>* ulocal, mpi_cla
 	return 1;
 }
 
+
+/********************************************//**
+ * Specialization of the MPI Allreduce function to the gfield class. Takes data from gfield objects, averages and sends back to every process. Works only with parallelization in a single direction: x-direction is assumed to be parallelized.
+ ***********************************************/
+template<class T, int t> int gfield<T,t>::allreduce(gfield<T,t>* uglobal, mpi_class* mpi){
+
+	T* data_local_re = (T*)malloc(t*Nx*Ny*sizeof(T));
+	T* data_local_im = (T*)malloc(t*Nx*Ny*sizeof(T));
+
+	if(data_local_re == NULL || data_local_im == NULL){
+		printf("allgather: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	}
+
+	T* data_global_re = (T*)malloc(t*Nx*Ny*sizeof(T));
+	T* data_global_im = (T*)malloc(t*Nx*Ny*sizeof(T));
+
+	if(data_global_re == NULL || data_global_im == NULL){
+		printf("allgather: malloc unsuccessful. Aborting.\n");
+		exit(0);
+	}
+
+	int i;
+
+	#pragma omp parallel for simd default(shared)
+	for(i = 0; i < t*Nx*Ny; i++){
+
+		data_local_re[i] = uglobal->u[i].real();
+		data_local_im[i] = uglobal->u[i].imag();
+
+	}
+
+	MPI_Allreduce(data_local_re, data_global_re, Nx*Ny*t, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD); 
+   	MPI_Allreduce(data_local_im, data_global_im, Nx*Ny*t, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD); 
+
+	int size = mpi->getSize();
+
+	#pragma omp parallel for simd default(shared)
+	for(i = 0; i < t*Nx*Ny; i++){
+
+		this->u[i] = std::complex<double>(data_global_re[i]/(1.0*size), data_global_im[i]/(1.0*size));
+
+	}
+
+
+	free(data_local_re);
+	free(data_local_im);
+
+	free(data_global_re);
+	free(data_global_im);
+
+	return 1;
+}
+
+
+
 /********************************************//**
  * Function exchanging boundary values through MPI Send and Recv functions. Not used at the moment. May be useful for the parallel calculation of correlation functions with Wilson line derivatives.
  ***********************************************/
@@ -776,11 +838,303 @@ return 1;
 /********************************************//**
  * Method to set the values of lfield object according to the McLerran-Venugopalan model. Model parameters are transferred though the MV_class object.
  ***********************************************/
+template<class T, int t> int gfield<T,t>::setMVModel(MV_class* MVconfig){
+
+	if(t == 9){
+
+	const double EPS = 10e-12;
+
+	const double disp = pow(MVconfig->gGet(),2.0) * MVconfig->muGet() / sqrt(MVconfig->NyGet());
+
+	#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < Nx*Ny; i++){
+	        //set to zero
+                for(int j = 0; j < t; j++)
+                    this->u[i*t+j] = 0.0;
+	}
+
+
+	//#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < Nx*Ny; i++){
+
+                static __thread std::ranlux24* generator = nullptr;
+                if (!generator){
+                         std::hash<std::thread::id> hasher;
+                         generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+                }
+                std::normal_distribution<double> distribution{  0.0, disp };
+
+                std::uniform_int_distribution<> uniform_distribution_x(0, Nx-1);
+                std::uniform_int_distribution<> uniform_distribution_y(0, Ny-1);
+
+         	//int negative = i;
+		//while (negative == i){
+		//	negative = uniform_distribution(*generator);
+		//}
+		
+		int negative_x = uniform_distribution_x(*generator);
+		int negative_y = uniform_distribution_y(*generator);
+
+		int positive_x = uniform_distribution_x(*generator);
+		int positive_y = uniform_distribution_y(*generator);
+
+ 		int negative = negative_x*Ny+negative_y;
+        	int positive = positive_x*Ny+positive_y;
+   
+	        double n[8];
+
+		for(int k = 0; k < 8; k++){
+	         	n[k] = distribution(*generator); 
+		}
+
+	//these are the LAMBDAs and not the generators t^a = lambda/2.
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+		this->u[positive*t+1] += std::complex<double>(n[0],0.0);
+		this->u[positive*t+3] += std::complex<double>(n[0],0.0);
+
+
+       		this->u[positive*t+1] += std::complex<double>(0.0,n[1]);
+		this->u[positive*t+3] -= std::complex<double>(0.0,n[1]);
+
+
+       		this->u[positive*t+0] += std::complex<double>(n[2],0.0);
+		this->u[positive*t+4] -= std::complex<double>(n[2],0.0);
+
+
+       		this->u[positive*t+2] += std::complex<double>(n[3],0.0);
+		this->u[positive*t+6] += std::complex<double>(n[3],0.0);
+
+
+       		this->u[positive*t+2] += std::complex<double>(0.0,n[4]);
+		this->u[positive*t+6] -= std::complex<double>(0.0,n[4]);
+
+
+       		this->u[positive*t+5] += std::complex<double>(n[5],0.0);
+		this->u[positive*t+7] += std::complex<double>(n[5],0.0);
+
+
+       		this->u[positive*t+5] += std::complex<double>(0.0,n[6]);
+		this->u[positive*t+7] -= std::complex<double>(0.0,n[6]);
+
+
+      		this->u[positive*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[positive*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[positive*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+
+
+		this->u[negative*t+1] -= std::complex<double>(n[0],0.0);
+		this->u[negative*t+3] -= std::complex<double>(n[0],0.0);
+
+
+       		this->u[negative*t+1] -= std::complex<double>(0.0,n[1]);
+		this->u[negative*t+3] += std::complex<double>(0.0,n[1]);
+
+
+       		this->u[negative*t+0] -= std::complex<double>(n[2],0.0);
+		this->u[negative*t+4] += std::complex<double>(n[2],0.0);
+
+
+       		this->u[negative*t+2] -= std::complex<double>(n[3],0.0);
+		this->u[negative*t+6] -= std::complex<double>(n[3],0.0);
+
+
+       		this->u[negative*t+2] -= std::complex<double>(0.0,n[4]);
+		this->u[negative*t+6] += std::complex<double>(0.0,n[4]);
+
+
+       		this->u[negative*t+5] -= std::complex<double>(n[5],0.0);
+		this->u[negative*t+7] -= std::complex<double>(n[5],0.0);
+
+
+       		this->u[negative*t+5] -= std::complex<double>(0.0,n[6]);
+		this->u[negative*t+7] += std::complex<double>(0.0,n[6]);
+
+
+      		this->u[negative*t+0] -= std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[negative*t+4] -= std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[negative*t+8] -= std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setMVModel function\n");
+
+	}
+
+
+return 1;
+}
+
+/********************************************//**
+ * Method to set the values of lfield object according to the McLerran-Venugopalan model. Model parameters are transferred though the MV_class object.
+ ***********************************************/
+template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig, int* source_pos, double* source_val, mpi_class* mpi){
+
+	if(t == 9){
+
+	const double EPS = 10e-12;
+
+	const double disp = pow(MVconfig->gGet(),2.0) * MVconfig->muGet() / sqrt(MVconfig->NyGet());
+
+	#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < Nxl*Nyl; i++){
+	        //set to zero
+                for(int j = 0; j < t; j++)
+                    this->u[i*t+j] = 0.0;
+	}
+
+
+//	#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < Nx*Ny; i++){
+
+                //static __thread std::ranlux24* generator = nullptr;
+                //if (!generator){
+                //         std::hash<std::thread::id> hasher;
+                //         generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+                //}
+                //std::normal_distribution<double> distribution{  0.0, disp };
+
+ 		int negative = source_pos[2*i+0];
+        	int positive = source_pos[2*i+1];
+   
+	        double n[8];
+
+		for(int k = 0; k < 8; k++){
+	         	//n[k] = distribution(*generator); 
+	         	n[k] = source_val[8*i+k];
+		}
+
+	//these are the LAMBDAs and not the generators t^a = lambda/2.
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+		int xglobal = positive/Ny;
+		int yglobal = positive - xglobal*Ny;
+
+		int xlocal = xglobal%Nxl;
+		int ylocal = yglobal%Nyl;
+
+		int s_pos = xlocal*Nyl + ylocal;
+
+		if( (xglobal/Nxl == mpi->getPosX()) && (yglobal/Nyl == mpi->getPosY()) ){
+
+
+			this->u[s_pos*t+1] += std::complex<double>(n[0],0.0);
+			this->u[s_pos*t+3] += std::complex<double>(n[0],0.0);
+
+
+	       		this->u[s_pos*t+1] += std::complex<double>(0.0,n[1]);
+			this->u[s_pos*t+3] -= std::complex<double>(0.0,n[1]);
+
+
+	       		this->u[s_pos*t+0] += std::complex<double>(n[2],0.0);
+			this->u[s_pos*t+4] -= std::complex<double>(n[2],0.0);
+
+
+       			this->u[s_pos*t+2] += std::complex<double>(n[3],0.0);
+			this->u[s_pos*t+6] += std::complex<double>(n[3],0.0);
+
+
+       			this->u[s_pos*t+2] += std::complex<double>(0.0,n[4]);
+			this->u[s_pos*t+6] -= std::complex<double>(0.0,n[4]);
+
+
+	       		this->u[s_pos*t+5] += std::complex<double>(n[5],0.0);
+			this->u[s_pos*t+7] += std::complex<double>(n[5],0.0);
+
+
+       			this->u[s_pos*t+5] += std::complex<double>(0.0,n[6]);
+			this->u[s_pos*t+7] -= std::complex<double>(0.0,n[6]);
+	
+
+      			this->u[s_pos*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+			this->u[s_pos*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+			this->u[s_pos*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+		}
+
+		xglobal = negative/Ny;
+		yglobal = negative - xglobal*Ny;
+
+		xlocal = xglobal%Nxl;
+		ylocal = yglobal%Nyl;
+
+		s_pos = xlocal*Nyl + ylocal;
+
+		if( (xglobal/Nxl == mpi->getPosX()) && (yglobal/Nyl == mpi->getPosY()) ){
+
+			this->u[s_pos*t+1] -= std::complex<double>(n[0],0.0);
+			this->u[s_pos*t+3] -= std::complex<double>(n[0],0.0);
+
+
+       			this->u[s_pos*t+1] -= std::complex<double>(0.0,n[1]);
+			this->u[s_pos*t+3] += std::complex<double>(0.0,n[1]);
+
+
+       			this->u[s_pos*t+0] -= std::complex<double>(n[2],0.0);
+			this->u[s_pos*t+4] += std::complex<double>(n[2],0.0);
+
+
+	       		this->u[s_pos*t+2] -= std::complex<double>(n[3],0.0);
+			this->u[s_pos*t+6] -= std::complex<double>(n[3],0.0);
+
+
+       			this->u[s_pos*t+2] -= std::complex<double>(0.0,n[4]);
+			this->u[s_pos*t+6] += std::complex<double>(0.0,n[4]);
+
+
+       			this->u[s_pos*t+5] -= std::complex<double>(n[5],0.0);
+			this->u[s_pos*t+7] -= std::complex<double>(n[5],0.0);
+
+
+	       		this->u[s_pos*t+5] -= std::complex<double>(0.0,n[6]);
+			this->u[s_pos*t+7] += std::complex<double>(0.0,n[6]);
+
+
+      			this->u[s_pos*t+0] -= std::complex<double>(n[7]/sqrt(3.0),0.0);
+			this->u[s_pos*t+4] -= std::complex<double>(n[7]/sqrt(3.0),0.0);
+			this->u[s_pos*t+8] -= std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+		}
+
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setMVModel function\n");
+
+	}
+
+
+return 1;
+}
+
+
+
+
+/********************************************//**
+ * Method to set the values of lfield object according to the McLerran-Venugopalan model. Model parameters are transferred though the MV_class object.
+ ***********************************************/
 template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig){
 
 	if(t == 9){
 
 	const double EPS = 10e-12;
+
+	const double disp = pow(MVconfig->gGet(),2.0) * MVconfig->muGet() / sqrt(MVconfig->NyGet());
+
+	#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < Nxl*Nyl; i++){
+	        //set to zero
+                for(int j = 0; j < t; j++)
+                    this->u[i*t+j] = 0.0;
+	}
+
 
 	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
@@ -790,12 +1144,7 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig){
                          std::hash<std::thread::id> hasher;
                          generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
                 }
-                std::normal_distribution<double> distribution{0.0, MVconfig->gGet() * MVconfig->muGet() / sqrt(MVconfig->NyGet()) };
-
-
-	    //set to zero
-            for(int j = 0; j < t; j++)
-                this->u[i*t+j] = 0.0;
+                std::normal_distribution<double> distribution{  0.0, disp };
 
 	        double n[8];
 
@@ -808,6 +1157,7 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig){
 	// 0 1 2
 	// 3 4 5
 	// 6 7 8
+
 
 		this->u[i*t+1] += std::complex<double>(n[0],0.0);
 		this->u[i*t+3] += std::complex<double>(n[0],0.0);
@@ -840,6 +1190,7 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig){
       		this->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
 		this->u[i*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
 		this->u[i*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+
 	}
 
 	}else{
@@ -851,6 +1202,8 @@ template<class T, int t> int lfield<T,t>::setMVModel(MV_class* MVconfig){
 
 return 1;
 }
+
+
 
 /********************************************//**
  * Method to set the values of lfield object with gaussian distribution for all matrix elements. Receives a pointer to the wrapper of the C++ random generator. Not parallelized with threads. Not used in physical application.
@@ -971,7 +1324,7 @@ template<class T, int t> int lfield<T, t>::solvePoisson(double mass, double g, m
 	#pragma omp parallel for simd default(shared)
 	for(int i = 0; i < Nxl*Nyl; i++){
 		for(int k = 0; k < t; k++){
-			this->u[i*t+k] *= std::complex<double>(-1.0*g/(-mom->phat2(i) + mass*mass), 0.0);
+			this->u[i*t+k] *= std::complex<double>(-1.0*g/( - mom->phat2(i) - mass*mass), 0.0);
 		}
 	}
 
@@ -2859,4 +3212,41 @@ template<class T, int t> int print(int measurement, lfield<T,t>* sum, lfield<T,t
 
 return 1;
 }
+
+/********************************************//**
+ * Main output function. Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation in position space and its standard deviation. The statistics is passed through stat argument.
+ *  ***********************************************/
+template<class T, int t> int print_position(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double stat, mpi_class* mpi, std::string const &fileroot){
+
+
+        FILE* f;
+        char filename[500];
+
+        sprintf(filename, "%s_%i_%i_mpi%i_r%i.dat", fileroot.c_str(), Nx, Ny, mpi->getSize(), mpi->getRank());
+
+        f = fopen(filename, "a+");
+
+        for(int xx = 0; xx < sum->getNxl(); xx++){
+                for(int yy = 0; yy < sum->getNyl(); yy++){
+
+                        int i = xx*(sum->getNyl())+yy;
+
+                        if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
+
+                                double c =  (sum->u[i*t+0].real())/stat;
+                                double ce = (err->u[i*t+0].real())/stat;
+
+                                int xglob = xx+(mpi->getPosX()*(sum->getNxl()));
+                                int yglob = yy+(mpi->getPosY()*(sum->getNyl()));
+
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xglob, yglob, 1.0*sqrt(xglob*xglob+yglob*yglob), c, sqrt(stat*stat*ce - stat*stat*c*c)/stat/sqrt(stat));
+                        }
+                }
+        }
+
+        fclose(f);
+
+return 1;
+}
+
 #endif

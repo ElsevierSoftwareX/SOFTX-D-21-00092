@@ -103,27 +103,29 @@ int main(int argc, char *argv[]) {
 //-------------------------------------------------------
     //construct initial state
     lfield<double,9> f(cnfg->Nxl, cnfg->Nyl);
+//    gfield<double,9> fglobal(Nx, Ny);
+//    gfield<double,9> fglobal_average(Nx, Ny);
     lfield<double,9> uf(cnfg->Nxl, cnfg->Nyl);
 
-    gfield<double,9> uf_global(Nx, Ny);
-    gfield<double,9> uf_copy_global(Nx, Ny);
+//    gfield<double,9> uf_global(Nx, Ny);
+//    gfield<double,9> uf_copy_global(Nx, Ny);
 
     //evolution
-    lfield<double,9> xi_local_x(cnfg->Nxl, cnfg->Nyl);
-    lfield<double,9> xi_local_y(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> xi_local_x(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> xi_local_y(cnfg->Nxl, cnfg->Nyl);
 
-    gfield<double,9> xi_global_x(Nx, Ny);
-    gfield<double,9> xi_global_y(Nx, Ny);
+//    gfield<double,9> xi_global_x(Nx, Ny);
+//    gfield<double,9> xi_global_y(Nx, Ny);
 
-    lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
-    lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
 
-    lfield<double,9> uftmp(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> uftmp(cnfg->Nxl, cnfg->Nyl);
 
 //-------------------------------------------------------
 
-    lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
-    lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> uxiulocal_x(cnfg->Nxl, cnfg->Nyl);
+//    lfield<double,9> uxiulocal_y(cnfg->Nxl, cnfg->Nyl);
 
 //-------------------------------------------------------
 //------ACCUMULATE STATISTICS----------------------------
@@ -190,18 +192,69 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	uf.setToUnit();
 
+//	int* source_positions = (int*)malloc(2*Nx*Ny*sizeof(int));
+//	double* source_values = (double*)malloc(8*Nx*Ny*sizeof(double));
+
     	for(int i = 0; i < MVmodel->NyGet(); i++){
 	
 		f.setMVModel(MVmodel);
+/*
+		const double disp = pow(MVmodel->gGet(),2.0) * MVmodel->muGet() / sqrt(MVmodel->NyGet());
+     
+		if( mpi->getRank() == 0 ){
 
+
+
+		        #pragma omp parallel for simd default(shared)
+			for(int is = 0; is < Nx*Ny; is++){
+
+		                static __thread std::ranlux24* generator = nullptr;
+                		if (!generator){
+		                         std::hash<std::thread::id> hasher;
+                		         generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+		                }
+                		std::uniform_int_distribution<> uniform_distribution_x(0, Nx-1);
+		                std::uniform_int_distribution<> uniform_distribution_y(0, Ny-1);
+				std::normal_distribution<double> distribution{  0.0, disp };
+
+	                	int negative_x = uniform_distribution_x(*generator);
+	        	        int negative_y = uniform_distribution_y(*generator);
+        	        	int positive_x = uniform_distribution_x(*generator);
+	        	        int positive_y = uniform_distribution_y(*generator);
+				int negative = negative_x*Ny+negative_y;
+	                	int positive = positive_x*Ny+positive_y;
+
+				source_positions[2*is+0] = positive;
+				source_positions[2*is+1] = negative;
+
+                		for(int k = 0; k < 8; k++){
+		                        source_values[is*8+k] = distribution(*generator);
+                		}
+
+			}
+		}	
+
+		MPI_Bcast(source_positions, 2*Nx*Ny, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(source_values, 8*Nx*Ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+		f.setMVModel(MVmodel, source_positions, source_values, mpi);
+
+		//fglobal_average.allreduce(&fglobal, mpi);
+
+                //fglobal_average.reduce_position(&f, mpi);
+*/
 		fourier2->execute2D(&f,1);
 
-		f.solvePoisson(cnfg->mass * pow(MVmodel->gGet(),2.0) * MVmodel->muGet(), MVmodel->gGet(), momtable);
+//		f.solvePoisson(cnfg->mass * pow(MVmodel->gGet(),2.0) * MVmodel->muGet(), MVmodel->gGet(), momtable);
+		f.solvePoisson(cnfg->mass, MVmodel->gGet(), momtable);
 
 		fourier2->execute2D(&f,0);
 
 		uf *= f;
     	}
+
+//	free(source_positions);
+//	free(source_values);
 
         clock_gettime(CLOCK_MONOTONIC, &finishi);
 
@@ -210,7 +263,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
-
+/*
 	//-------------------------------------------------------
 	//---------------IF EVOLUTION----------------------------
 	//------------------------------------------------------- 
@@ -385,11 +438,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 					   			corr_global->average_and_symmetrize();
 
-								//corr_global->reduce_position(corr, mpi);
+								corr_global->reduce_position(corr, mpi);
 
-								//fourier2->execute2D(corr,0);
+								fourier2->execute2D(corr,0);
 
-							    	//corr_global->allgather(corr, mpi);	
+							    	corr_global->allgather(corr, mpi);	
 
 								corr_global->reduce(&sum[time], &err[time], mpi);
 		
@@ -408,6 +461,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		}}}
 
     	}//if evolution
+*/
 
 	//if no evolution - compute correlation function directly from initial condition
 	if( cnfg->EvolutionChoice == NO_EVOLUTION ){
@@ -416,13 +470,21 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 		uf_copy = uf;
 
-		fourier2->execute2D(&uf_copy,1);
-    
-		uf_copy.trace(corr);
+                fourier2->execute2D(&uf_copy,1);
+        
+                uf_copy.trace(corr);
 
-	    	corr_global->allgather(corr, mpi);	
+                corr_global->allgather(corr, mpi);      
 
-		corr_global->reduce(&sum[time], &err[time], mpi);
+                corr_global->average_and_symmetrize();
+
+                corr_global->reduce_position(corr, mpi);
+
+                fourier2->execute2D(corr,0);
+
+                corr_global->allgather(corr, mpi);      
+
+                corr_global->reduce(&sum[time], &err[time], mpi);
 	}
 
 
@@ -476,7 +538,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     for(int i = 0; i < cnfg->measurements; i++){
 	    printf("iterator = %i\n", i);
-            print(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
+            print_position(i, &sum[i], &err[i], momtable, cnfg->stat, mpi, file_name);
     }
 
 //-------------------------------------------------------
