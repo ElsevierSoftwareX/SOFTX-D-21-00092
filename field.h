@@ -304,6 +304,8 @@ template<class T, int t> class lfield: public field<T,t> {
 
 		int setUnitModel(rand_class* rr);
 		int setGaussian(void);
+		int setGaussianModel(momenta* mom, double rr);
+		int setGaussianModel(lfield<T,1>* corr, MV_class* MVconfig);
 
 		int solvePoisson(double mass, double g, momenta* momtable);
 
@@ -317,6 +319,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setKernelPbarYWithCouplingConstant(momenta* mom, mpi_class* mpi, Kernel KernelChoice);
 
 		int setCorrelationsForCouplingConstant(momenta* mom);
+		int setCorrelationsGaussian(momenta* mom, double rr, mpi_class* mpi);
 
 		lfield<T,t>* hermitian();
 
@@ -1239,6 +1242,276 @@ template<class T, int t> int lfield<T,t>::setUnitModel(rand_class* rr){
 return 1;
 }
 
+/********************************************//**
+ * Method to set the values of lfield object with gaussian distribution in the SU(3) group. Thread parallelized. Not used in physical application.
+ ***********************************************/
+template<class T, int t> int lfield<T,t>::setGaussianModel(lfield<T,1>* corr, MV_class* MVconfig){
+
+	if(t == 9){
+
+	const double EPS = 10e-12;
+
+	const double disp = 1.0 / sqrt(MVconfig->NyGet());
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+	#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+		static __thread std::ranlux24* generator = nullptr;
+	        if (!generator){
+		  	 std::hash<std::thread::id> hasher;
+			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+		}
+
+    		std::normal_distribution<double> distribution{0.0, 4.0*sqrt(Nyl)};
+
+	    	//set to zero
+	    	for(int j = 0; j < t; j++)
+			this->u[i*t+j] = 0.0;
+
+	    	std::complex<double> n[8];
+
+		//corr->u[i] complex = a+i*b what is its square root?
+		//(x+i*y)(x+i*y) = a+i*b
+		//x^2 - y^2 = a
+		//2xy = b
+		//
+		//assume y not = 0
+		//x = b/(2y)
+		//b^2/(4y^2) - y^2 = a
+		//b^2 - 4 y^4 = 4 a y^2
+		//4 y^4 + 4 a y^2 - b^2 = 0
+		//
+		//delta = b^2 - 4 a c = 16 a^2 + 16 b^2 = 16(a^2+b^2) 
+		//y_1^2 = (- 4a - 4sqrt(a^2+b^2)) / 8 = (1/2) ( - a - sqrt(a^2+b^2) )
+		//y_2^2 = (- 4a + 4sqrt(a^2+b^2)) / 8 = (1/2) ( - a + sqrt(a^2+b^2) )
+		//
+		//y_1 = +- sqrt( (1/2) ( - a - sqrt(a^2+b^2) ) )
+		//y_2 = +- sqrt( (1/2) ( - a + sqrt(a^2+b^2) ) )
+		//
+		//x_1 = +- b / sqrt( 2 ( - a - sqrt(a^2+b^2) ) )
+		//x_2 = +- b / sqrt( 2 ( - a + sqrt(a^2+b^2) ) )
+
+		double re = 0; // = corr->u[i].imag() / sqrt( 2.0 * ( - corr->u[i].real() + sqrt(corr->u[i].real()*corr->u[i].real() + corr->u[i].imag()*corr->u[i].imag() )));
+		double im = 0; // = sqrt( 0.5 * ( - corr->u[i].real() + sqrt(corr->u[i].real()*corr->u[i].real() + corr->u[i].imag()*corr->u[i].imag() )));
+
+		//re = corr->u[i].real();
+		//im = corr->u[i].imag();
+
+
+		if( fabs(corr->u[i].imag()) < 10e-12 ){
+
+			if( corr->u[i].real() > 0 ){
+
+				re = sqrt(corr->u[i].real());
+				im = 0.0;
+			}
+
+			if( corr->u[i].real() < 0 ){
+			
+				re = 0.0;
+				im = sqrt(-corr->u[i].real());
+			}
+		}
+
+		if( fabs(corr->u[i].imag()) > 10e-12 ){
+
+			re = corr->u[i].imag() / sqrt( 2.0 * ( - corr->u[i].real() + sqrt(corr->u[i].real()*corr->u[i].real() + corr->u[i].imag()*corr->u[i].imag() )));
+			im = sqrt( 0.5 * ( - corr->u[i].real() + sqrt(corr->u[i].real()*corr->u[i].real() + corr->u[i].imag()*corr->u[i].imag() )));
+		}
+
+			const std::complex<double> ii(0.0,1.0);
+
+//			if( corr->u[i].real() > 0 ){ 
+
+//			double coef = sqrt( fabs(corr->u[i].real()) );
+
+			for(int k = 0; k < 8; k++){
+				double rand = distribution(*generator);
+                		n[k] = std::complex<double>( re*rand*disp, im*rand*disp ); 
+			}
+
+			this->u[i*t+1] += n[0]; //std::complex<double>(n[0],0.0);
+			this->u[i*t+3] += n[0]; //std::complex<double>(n[0],0.0);
+
+	
+			this->u[i*t+1] += ii*n[1]; //std::complex<double>(0.0,n[1]);
+			this->u[i*t+3] -= ii*n[1]; //std::complex<double>(0.0,n[1]);
+
+
+			this->u[i*t+0] += n[2]; //std::complex<double>(n[2],0.0);
+			this->u[i*t+4] -= n[2]; //std::complex<double>(n[2],0.0);
+
+
+       			this->u[i*t+2] += n[3]; //std::complex<double>(n[3],0.0);
+			this->u[i*t+6] += n[3]; //std::complex<double>(n[3],0.0);
+
+
+       			this->u[i*t+2] += ii*n[4]; //std::complex<double>(0.0,n[4]);
+			this->u[i*t+6] -= ii*n[4]; //std::complex<double>(0.0,n[4]);
+
+
+	       		this->u[i*t+5] += n[5]; //std::complex<double>(n[5],0.0);
+			this->u[i*t+7] += n[5]; //std::complex<double>(n[5],0.0);
+
+
+       			this->u[i*t+5] += ii*n[6]; //std::complex<double>(0.0,n[6]);
+			this->u[i*t+7] -= ii*n[6]; //std::complex<double>(0.0,n[6]);
+
+
+       			this->u[i*t+0] += n[7]/sqrt(3.0); //std::complex<double>(n[7]/sqrt(3.0),0.0);
+			this->u[i*t+4] += n[7]/sqrt(3.0); //std::complex<double>(n[7]/sqrt(3.0),0.0);
+			this->u[i*t+8] += -2.0*n[7]/sqrt(3.0); //std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+
+		
+
+/*
+		}
+
+		if( corr->u[i].real() < 0 ){ 
+
+			double coef = sqrt( fabs(corr->u[i].real()) );
+
+			for(int k = 0; k < 8; k++)
+                		n[k] = coef * distribution(*generator); 
+
+			this->u[i*t+1] += std::complex<double>(0.0, n[0]);
+			this->u[i*t+3] += std::complex<double>(0.0, n[0]);
+
+	
+			this->u[i*t+1] -= std::complex<double>(n[1], 0.0);
+			this->u[i*t+3] += std::complex<double>(n[1], 0.0);
+
+
+			this->u[i*t+0] += std::complex<double>(0.0, n[2]);
+			this->u[i*t+4] -= std::complex<double>(0.0, n[2]);
+
+
+       			this->u[i*t+2] += std::complex<double>(0.0, n[3]);
+			this->u[i*t+6] += std::complex<double>(0.0, n[3]);
+
+
+       			this->u[i*t+2] -= std::complex<double>(n[4], 0.0);
+			this->u[i*t+6] += std::complex<double>(n[4], 0.0);
+
+
+	       		this->u[i*t+5] += std::complex<double>(0.0, n[5]);
+			this->u[i*t+7] += std::complex<double>(0.0, n[5]);
+
+
+       			this->u[i*t+5] -= std::complex<double>(n[6], 0.0);
+			this->u[i*t+7] += std::complex<double>(n[6], 0.0);
+
+
+       			this->u[i*t+0] += std::complex<double>(0.0, n[7]/sqrt(3.0));
+			this->u[i*t+4] += std::complex<double>(0.0, n[7]/sqrt(3.0));
+			this->u[i*t+8] += std::complex<double>(0.0, -2.0*n[7]/sqrt(3.0));
+
+		}
+*/
+
+		}
+
+	}else{
+
+		printf("Invalid lfield classes for setGaussian function\n");
+
+	}
+
+
+return 1;
+}
+
+
+
+/********************************************//**
+ * Method to set the values of lfield object with gaussian distribution in the SU(3) group. Thread parallelized. Not used in physical application.
+ ***********************************************/
+template<class T, int t> int lfield<T,t>::setGaussianModel(momenta* mom, double rr){
+
+	if(t == 9){
+
+	const double EPS = 10e-12;
+
+	// 0 1 2
+	// 3 4 5
+	// 6 7 8
+
+
+        const double coef = - rr * rr * M_PI * M_PI;
+        const double coef2 = rr/sqrt(2.0);
+
+        //F[ exp(-x^2/b^2) ] = sqrt( b^2/2 ) exp( - b^2 pi^2 k^2 )
+        //
+        //	this->u[i*t+0] = coef2 * exp( coef * mom->phat2(i);
+        //
+
+	#pragma omp parallel for simd default(shared)
+	for(int i = 0; i < Nxl*Nyl; i++){
+
+		static __thread std::ranlux24* generator = nullptr;
+	        if (!generator){
+		  	 std::hash<std::thread::id> hasher;
+			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+		}
+    		std::normal_distribution<double> distribution{0.0,1.0};
+
+	    	//set to zero
+	    	for(int j = 0; j < t; j++)
+			this->u[i*t+j] = 0.0;
+
+	    	double n[8];
+
+		for(int k = 0; k < 8; k++)
+                	n[k] = sqrt( coef2 * exp( coef * mom->phat2(i) ) ) * distribution(*generator); 
+
+		this->u[i*t+1] += std::complex<double>(n[0],0.0);
+		this->u[i*t+3] += std::complex<double>(n[0],0.0);
+
+
+		this->u[i*t+1] += std::complex<double>(0.0,n[1]);
+		this->u[i*t+3] -= std::complex<double>(0.0,n[1]);
+
+
+		this->u[i*t+0] += std::complex<double>(n[2],0.0);
+		this->u[i*t+4] -= std::complex<double>(n[2],0.0);
+
+
+       		this->u[i*t+2] += std::complex<double>(n[3],0.0);
+		this->u[i*t+6] += std::complex<double>(n[3],0.0);
+
+
+       		this->u[i*t+2] += std::complex<double>(0.0,n[4]);
+		this->u[i*t+6] -= std::complex<double>(0.0,n[4]);
+
+
+       		this->u[i*t+5] += std::complex<double>(n[5],0.0);
+		this->u[i*t+7] += std::complex<double>(n[5],0.0);
+
+
+       		this->u[i*t+5] += std::complex<double>(0.0,n[6]);
+		this->u[i*t+7] -= std::complex<double>(0.0,n[6]);
+
+
+       		this->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[i*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
+		this->u[i*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
+	}
+
+	}else{
+
+		printf("Invalid lfield classes for setGaussian function\n");
+
+	}
+
+
+return 1;
+}
+
+
 
 /********************************************//**
  * Method to set the values of lfield object with gaussian distribution in the SU(3) group. Thread parallelized. Not used in physical application.
@@ -1315,6 +1588,8 @@ template<class T, int t> int lfield<T,t>::setGaussian(){
 
 return 1;
 }
+
+
 
 /********************************************//**
  * Implements the solution of the Poisson equation in momentum space, Eq. 4 of arxiv XXXXXX
@@ -2349,6 +2624,44 @@ template<class T, int t> int lfield<T,t>::setCorrelationsForCouplingConstant(mom
 
 return 1;
 }
+
+/********************************************//**
+ * The method creates a one-element lfield object with the value of the gaussian evaluated for each distance.
+*************************************************/
+template<class T, int t> int lfield<T,t>::setCorrelationsGaussian(momenta* mom, double rr, mpi_class* mpi){
+
+	//const double coef = - rr * rr * M_PI * M_PI;
+	//const double coef2 = rr/sqrt(2.0);
+
+	#pragma omp parallel for simd collapse(2) default(shared)
+	for(int xx = 0; xx < Nxl; xx++){
+		for(int yy = 0; yy < Nyl; yy++){
+
+			int i = xx*Nyl+yy;
+
+			//F[ exp(-x^2/b^2) ] = sqrt( b^2/2 ) exp( - b^2 pi^2 k^2 )
+   
+			//this->u[i*t+0] = coef2 * exp( coef * mom->phat2(i) );
+			
+			int x_global = xx + mpi->getPosX()*Nxl;
+			int y_global = yy + mpi->getPosY()*Nyl;
+
+			if( x_global > Nx/2 )
+				x_global -= Nx;
+
+			if( y_global > Ny/2 )
+				y_global -= Ny;
+
+			this->u[i*t+0] = exp(-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr));
+//			this->u[i*t+0] = (-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr));
+
+		}
+	}
+
+return 1;
+}
+
+
 
 /********************************************//**
  * The method multiplies the global gfield object by the Cholesky decomposition of the correation matrix.

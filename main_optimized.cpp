@@ -139,6 +139,9 @@ int main(int argc, char *argv[]) {
     lfield<double,1>* corr = new lfield<double,1>(cnfg->Nxl, cnfg->Nyl);
     gfield<double,1>* corr_global = new gfield<double,1>(Nx, Ny);
 
+    lfield<double,1>* initial_corr = new lfield<double,1>(cnfg->Nxl, cnfg->Nyl);
+
+
     std::vector<lfield<double,1>> sum(cnfg->measurements, zero);
     std::vector<lfield<double,1>> err(cnfg->measurements, zero);
 
@@ -149,7 +152,7 @@ int main(int argc, char *argv[]) {
 //perform cholesky decomposition to get the square root of the correlation matrix
 
 gmatrix<double>* cholesky;
-
+/*
 if(cnfg->EvolutionChoice == POSITION_EVOLUTION && cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT){
 
         corr->setCorrelationsForCouplingConstant(momtable);
@@ -163,7 +166,11 @@ if(cnfg->EvolutionChoice == POSITION_EVOLUTION && cnfg->CouplingChoice == NOISE_
         cholesky->decompose(corr_global);
         printf("cholesky decomposition finished\n");
 }
+*/
 
+initial_corr->setCorrelationsGaussian(momtable, 32.0, mpi);
+
+fourier2->execute2D(initial_corr,1);
 
 
 //-------------------------------------------------------
@@ -197,7 +204,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     	for(int i = 0; i < MVmodel->NyGet(); i++){
 	
-		f.setMVModel(MVmodel);
+		//f.setMVModel(MVmodel);
+		//f.setGaussianModel(momtable, 1.0);
+		f.setGaussianModel(initial_corr, MVmodel);
+
 /*
 		const double disp = pow(MVmodel->gGet(),2.0) * MVmodel->muGet() / sqrt(MVmodel->NyGet());
      
@@ -243,10 +253,10 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
                 //fglobal_average.reduce_position(&f, mpi);
 */
-		fourier2->execute2D(&f,1);
+//		fourier2->execute2D(&f,1);
 
 //		f.solvePoisson(cnfg->mass * pow(MVmodel->gGet(),2.0) * MVmodel->muGet(), MVmodel->gGet(), momtable);
-		f.solvePoisson(cnfg->mass, MVmodel->gGet(), momtable);
+//		f.solvePoisson(cnfg->mass, MVmodel->gGet(), momtable);
 
 		fourier2->execute2D(&f,0);
 
