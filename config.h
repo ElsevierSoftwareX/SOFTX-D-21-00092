@@ -39,7 +39,9 @@ enum Evolution { POSITION_EVOLUTION, MOMENTUM_EVOLUTION, NO_EVOLUTION };
 
 enum Coupling { SQRT_COUPLING_CONSTANT, NOISE_COUPLING_CONSTANT, HATTA_COUPLING_CONSTANT, NO_COUPLING_CONSTANT };
 
-enum Kernel { LINEAR_KERNEL, SIN_KERNEL};
+enum Kernel { LINEAR_KERNEL, SIN_KERNEL };
+
+enum InitialCondition { GAUSSIAN_CONDITION, MV_CONDITION };
 
 class config{
 
@@ -58,6 +60,8 @@ public:
 	int seed;
 
 	int stat = 4;
+	double R = 16.0;
+	double C = 4.0;
 	double mu = 30.72;
 	double mass = 0.0001;
 	int elementaryWilsonLines = 50;
@@ -71,7 +75,8 @@ public:
 	Coupling CouplingChoice = NOISE_COUPLING_CONSTANT;
 
 	Kernel KernelChoice = SIN_KERNEL;
-
+	
+	InitialCondition InitialConditionChoice = GAUSSIAN_CONDITION;
 
 	int read_config_from_file(std::string file_name_cnfg){
 
@@ -79,18 +84,33 @@ public:
 		float tmp;
 		
 		char str_file_name[200];
-
+		char str_condition[200];
 
 		f = fopen(file_name_cnfg.c_str(), "r+");		
 	
 		fscanf(f, "stat = %i\n", &stat);
 		printf("SETUP: stat = %i\n", stat); 
-		fscanf(f, "mu = %f\n", &tmp);
-		mu = tmp;
-		printf("SETUP: mu = %f\n", mu); 
-		fscanf(f, "mass = %f\n", &tmp);
-		mass = tmp;
-		printf("SETUP: mass = %f\n", mass); 
+		fscanf(f, "initial condition = %s\n", &str_condition[0]);
+		printf("SETUP: initial condition = %s\n", str_condition);
+		if(strcmp(str_condition, "GAUSSIAN_CONDITION") == 0){
+			InitialConditionChoice = GAUSSIAN_CONDITION;
+			fscanf(f, "R = %f\n", &tmp);
+			R = tmp;
+			printf("SETUP: R = %f\n", R); 
+			fscanf(f, "C = %f\n", &tmp);
+			C = tmp;
+			printf("SETUP: C = %f\n", C); 
+		}
+		if(strcmp(str_condition, "MV_CONDITION") == 0){
+			InitialConditionChoice = MV_CONDITION;
+
+			fscanf(f, "mu = %f\n", &tmp);
+			mu = tmp;
+			printf("SETUP: mu = %f\n", mu); 
+			fscanf(f, "mass = %f\n", &tmp);
+			mass = tmp;
+			printf("SETUP: mass = %f\n", mass); 
+		}
 		fscanf(f, "elementaryWilsonLines = %i\n", &elementaryWilsonLines);
 		printf("SETUP: elementaryWilsonLines = %i\n", elementaryWilsonLines); 
 		fscanf(f, "file_name = %s\n", &str_file_name[0]);

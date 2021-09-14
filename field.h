@@ -43,6 +43,8 @@
 #include "mpi_class.h"
 
 #include "MV_class.h"
+#include "gaussian_class.h"
+
 #include "rand_class.h"
 
 #include "momenta.h"
@@ -305,7 +307,7 @@ template<class T, int t> class lfield: public field<T,t> {
 		int setUnitModel(rand_class* rr);
 		int setGaussian(void);
 		int setGaussianModel(momenta* mom, double rr);
-		int setGaussianModel(lfield<T,1>* corr, MV_class* MVconfig);
+		int setGaussianModel(lfield<T,1>* corr, gaussian_class* Gaussian_config);
 
 		int solvePoisson(double mass, double g, momenta* momtable);
 
@@ -1245,13 +1247,13 @@ return 1;
 /********************************************//**
  * Method to set the values of lfield object with gaussian distribution in the SU(3) group. Thread parallelized. Not used in physical application.
  ***********************************************/
-template<class T, int t> int lfield<T,t>::setGaussianModel(lfield<T,1>* corr, MV_class* MVconfig){
+template<class T, int t> int lfield<T,t>::setGaussianModel(lfield<T,1>* corr, gaussian_class* gaussian_config){
 
 	if(t == 9){
 
 	const double EPS = 10e-12;
 
-	const double disp = 1.0 / sqrt(MVconfig->NyGet());
+	const double disp = 1.0 / sqrt(gaussian_config->NyGet());
 
 	// 0 1 2
 	// 3 4 5
@@ -1266,7 +1268,7 @@ template<class T, int t> int lfield<T,t>::setGaussianModel(lfield<T,1>* corr, MV
 			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
 		}
 
-    		std::normal_distribution<double> distribution{0.0, 4.0*sqrt(Nyl)};
+    		std::normal_distribution<double> distribution{0.0, gaussian_config->CGet()*sqrt(Nyl)};
 
 	    	//set to zero
 	    	for(int j = 0; j < t; j++)
