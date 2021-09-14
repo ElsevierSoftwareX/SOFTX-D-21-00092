@@ -306,7 +306,6 @@ template<class T, int t> class lfield: public field<T,t> {
 
 		int setUnitModel(rand_class* rr);
 		int setGaussian(void);
-		int setGaussianModel(momenta* mom, double rr);
 		int setGaussianModel(lfield<T,1>* corr, gaussian_class* Gaussian_config);
 
 		int solvePoisson(double mass, double g, momenta* momtable);
@@ -1297,11 +1296,8 @@ template<class T, int t> int lfield<T,t>::setGaussianModel(lfield<T,1>* corr, ga
 		//x_1 = +- b / sqrt( 2 ( - a - sqrt(a^2+b^2) ) )
 		//x_2 = +- b / sqrt( 2 ( - a + sqrt(a^2+b^2) ) )
 
-		double re = 0; // = corr->u[i].imag() / sqrt( 2.0 * ( - corr->u[i].real() + sqrt(corr->u[i].real()*corr->u[i].real() + corr->u[i].imag()*corr->u[i].imag() )));
-		double im = 0; // = sqrt( 0.5 * ( - corr->u[i].real() + sqrt(corr->u[i].real()*corr->u[i].real() + corr->u[i].imag()*corr->u[i].imag() )));
-
-		//re = corr->u[i].real();
-		//im = corr->u[i].imag();
+		double re = 0;
+		double im = 0;
 
 
 		if( fabs(corr->u[i].imag()) < 10e-12 ){
@@ -1327,9 +1323,6 @@ template<class T, int t> int lfield<T,t>::setGaussianModel(lfield<T,1>* corr, ga
 
 			const std::complex<double> ii(0.0,1.0);
 
-//			if( corr->u[i].real() > 0 ){ 
-
-//			double coef = sqrt( fabs(corr->u[i].real()) );
 
 			for(int k = 0; k < 8; k++){
 				double rand = distribution(*generator);
@@ -1369,52 +1362,6 @@ template<class T, int t> int lfield<T,t>::setGaussianModel(lfield<T,1>* corr, ga
 			this->u[i*t+8] += -2.0*n[7]/sqrt(3.0); //std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
 
 		
-
-/*
-		}
-
-		if( corr->u[i].real() < 0 ){ 
-
-			double coef = sqrt( fabs(corr->u[i].real()) );
-
-			for(int k = 0; k < 8; k++)
-                		n[k] = coef * distribution(*generator); 
-
-			this->u[i*t+1] += std::complex<double>(0.0, n[0]);
-			this->u[i*t+3] += std::complex<double>(0.0, n[0]);
-
-	
-			this->u[i*t+1] -= std::complex<double>(n[1], 0.0);
-			this->u[i*t+3] += std::complex<double>(n[1], 0.0);
-
-
-			this->u[i*t+0] += std::complex<double>(0.0, n[2]);
-			this->u[i*t+4] -= std::complex<double>(0.0, n[2]);
-
-
-       			this->u[i*t+2] += std::complex<double>(0.0, n[3]);
-			this->u[i*t+6] += std::complex<double>(0.0, n[3]);
-
-
-       			this->u[i*t+2] -= std::complex<double>(n[4], 0.0);
-			this->u[i*t+6] += std::complex<double>(n[4], 0.0);
-
-
-	       		this->u[i*t+5] += std::complex<double>(0.0, n[5]);
-			this->u[i*t+7] += std::complex<double>(0.0, n[5]);
-
-
-       			this->u[i*t+5] -= std::complex<double>(n[6], 0.0);
-			this->u[i*t+7] += std::complex<double>(n[6], 0.0);
-
-
-       			this->u[i*t+0] += std::complex<double>(0.0, n[7]/sqrt(3.0));
-			this->u[i*t+4] += std::complex<double>(0.0, n[7]/sqrt(3.0));
-			this->u[i*t+8] += std::complex<double>(0.0, -2.0*n[7]/sqrt(3.0));
-
-		}
-*/
-
 		}
 
 	}else{
@@ -1426,93 +1373,6 @@ template<class T, int t> int lfield<T,t>::setGaussianModel(lfield<T,1>* corr, ga
 
 return 1;
 }
-
-
-
-/********************************************//**
- * Method to set the values of lfield object with gaussian distribution in the SU(3) group. Thread parallelized. Not used in physical application.
- ***********************************************/
-template<class T, int t> int lfield<T,t>::setGaussianModel(momenta* mom, double rr){
-
-	if(t == 9){
-
-	const double EPS = 10e-12;
-
-	// 0 1 2
-	// 3 4 5
-	// 6 7 8
-
-
-        const double coef = - rr * rr * M_PI * M_PI;
-        const double coef2 = rr/sqrt(2.0);
-
-        //F[ exp(-x^2/b^2) ] = sqrt( b^2/2 ) exp( - b^2 pi^2 k^2 )
-        //
-        //	this->u[i*t+0] = coef2 * exp( coef * mom->phat2(i);
-        //
-
-	#pragma omp parallel for simd default(shared)
-	for(int i = 0; i < Nxl*Nyl; i++){
-
-		static __thread std::ranlux24* generator = nullptr;
-	        if (!generator){
-		  	 std::hash<std::thread::id> hasher;
-			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
-		}
-    		std::normal_distribution<double> distribution{0.0,1.0};
-
-	    	//set to zero
-	    	for(int j = 0; j < t; j++)
-			this->u[i*t+j] = 0.0;
-
-	    	double n[8];
-
-		for(int k = 0; k < 8; k++)
-                	n[k] = sqrt( coef2 * exp( coef * mom->phat2(i) ) ) * distribution(*generator); 
-
-		this->u[i*t+1] += std::complex<double>(n[0],0.0);
-		this->u[i*t+3] += std::complex<double>(n[0],0.0);
-
-
-		this->u[i*t+1] += std::complex<double>(0.0,n[1]);
-		this->u[i*t+3] -= std::complex<double>(0.0,n[1]);
-
-
-		this->u[i*t+0] += std::complex<double>(n[2],0.0);
-		this->u[i*t+4] -= std::complex<double>(n[2],0.0);
-
-
-       		this->u[i*t+2] += std::complex<double>(n[3],0.0);
-		this->u[i*t+6] += std::complex<double>(n[3],0.0);
-
-
-       		this->u[i*t+2] += std::complex<double>(0.0,n[4]);
-		this->u[i*t+6] -= std::complex<double>(0.0,n[4]);
-
-
-       		this->u[i*t+5] += std::complex<double>(n[5],0.0);
-		this->u[i*t+7] += std::complex<double>(n[5],0.0);
-
-
-       		this->u[i*t+5] += std::complex<double>(0.0,n[6]);
-		this->u[i*t+7] -= std::complex<double>(0.0,n[6]);
-
-
-       		this->u[i*t+0] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		this->u[i*t+4] += std::complex<double>(n[7]/sqrt(3.0),0.0);
-		this->u[i*t+8] += std::complex<double>(-2.0*n[7]/sqrt(3.0),0.0);
-	}
-
-	}else{
-
-		printf("Invalid lfield classes for setGaussian function\n");
-
-	}
-
-
-return 1;
-}
-
 
 
 /********************************************//**
