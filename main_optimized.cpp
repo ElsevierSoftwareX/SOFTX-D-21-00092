@@ -228,40 +228,41 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
         clock_gettime(CLOCK_MONOTONIC, &starti);
 
-	for(int rap = 0; rap < rapidities; rap++){
+	uf.setToUnit();
 
-		uf.setToUnit();
+	if( cnfg->InitialConditionChoice == GAUSSIAN_CONDITION ){
 
-		if( cnfg->InitialConditionChoice == GAUSSIAN_CONDITION ){
-
-	    		for(int i = 0; i < Gaussianmodel->NyGet(); i++){
+    		for(int i = 0; i < Gaussianmodel->NyGet(); i++){
 	
-				f.setGaussianModel(initial_corr, Gaussianmodel);
+			f.setGaussianModel(initial_corr, Gaussianmodel);
 
-				fourier2->execute2D(&f,0);
-	
-				uf *= f;
-    			}
+			fourier2->execute2D(&f,0);
 
-		}else if( cnfg->InitialConditionChoice == MV_CONDITION ){
-
-		    	for(int i = 0; i < MVmodel->NyGet(); i++){
-		
-				f.setMVModel(MVmodel);
-
-				fourier2->execute2D(&f,1);
-
-				f.solvePoisson(cnfg->mass, MVmodel->gGet(), momtable);
-
-				fourier2->execute2D(&f,0);
-	
-				uf *= f;
-    			}
+			uf *= f;
 		}
 
-		MPI_Barrier(MPI_COMM_WORLD);
+	}else if( cnfg->InitialConditionChoice == MV_CONDITION ){
 
-		uf_global.allgather(&uf, mpi);
+	    	for(int i = 0; i < MVmodel->NyGet(); i++){
+		
+			f.setMVModel(MVmodel);
+
+			fourier2->execute2D(&f,1);
+
+			f.solvePoisson(cnfg->mass, MVmodel->gGet(), momtable);
+
+			fourier2->execute2D(&f,0);
+	
+			uf *= f;
+    		}
+	}
+
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	uf_global.allgather(&uf, mpi);
+
+	for(int rap = 0; rap < rapidities; rap++){
 
 		evolution[rap].set(uf_global);
 	}
@@ -301,7 +302,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 					printf("running evolution step for scale %i\n", rr[rap]);
 
-					generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
+					generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg, langevin-rr_rap[rap]);
 										
 					xi_global_x.allgather(&xi_local_x, mpi);
 					xi_global_y.allgather(&xi_local_y, mpi);

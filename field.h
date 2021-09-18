@@ -3054,7 +3054,7 @@ return 1;
 /********************************************//**
  * Method for generation of the noise vectors with a gaussian distribution in the Lie algebra. Implementation of Eqs. 24 ad 25 of arxiv XXXXXX
 *************************************************/
-template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, mpi_class* mpi, config* cnfg){
+template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, mpi_class* mpi, config* cnfg, int langevin_step){
 
 	if(t == 9){
 
@@ -3069,8 +3069,10 @@ template<class T, int t> int generate_gaussian(lfield<T,t>* xi_local_x, lfield<T
 
 		static __thread std::ranlux24* generator = nullptr;
 	        if (!generator){
-		  	 std::hash<std::thread::id> hasher;
-			 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+		//  	 std::hash<std::thread::id> hasher;
+		//	 generator = new std::ranlux24(clock() + hasher(std::this_thread::get_id()));
+		//
+			 generator = new std::ranlux24(mpi->getSeed() + omp_get_num_threads()*langevin_step + omp_get_thread_num());
 		}
 		std::normal_distribution<double> distribution{0.0,1.0};	
   

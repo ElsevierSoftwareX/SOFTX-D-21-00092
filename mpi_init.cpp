@@ -33,11 +33,14 @@
 
 #include "config.h"
 
+#include <time.h>
+
 int mpi_class::mpi_init(config *cnfg) {
 
     int proc_x = proc_grid[0];
     int proc_y = proc_grid[1];
 
+    seed = (rank+1)*clock();
 
     pos_x = rank/(proc_y);
     pos_y = rank - pos_x * (proc_y);

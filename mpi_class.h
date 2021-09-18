@@ -43,6 +43,8 @@ private:
 
     int proc_grid[2];
 
+    int seed;
+
     MPI_Comm row_comm;
     MPI_Comm col_comm;
 
@@ -106,6 +108,10 @@ public:
 	return size;
     }
 
+    int getSeed(){
+
+	return seed;
+    }
 
 
     MPI_Comm getRowComm(){
