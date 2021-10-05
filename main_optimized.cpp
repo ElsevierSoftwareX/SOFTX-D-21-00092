@@ -312,7 +312,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 						}else{
 							generate_gaussian(&xi_local_x, &xi_local_y, mpi, cnfg);
 						}
-
+						
 						//----------MOMENTUM SPACE EVOLUTION-------------
 
 						if( cnfg->EvolutionChoice == MOMENTUM_EVOLUTION ){
@@ -322,7 +322,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 					        	        fourier2->execute2D(&xi_local_y, 1);
 							}
 
-							prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
+							prepare_A_local(&A_local, &xi_local_x, &xi_local_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice, Gaussianmodel->RGet());
 
 				                	fourier2->execute2D(&A_local, 0);
 					                fourier2->execute2D(&xi_local_x, 0);
@@ -333,7 +333,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 					                fourier2->execute2D(&uxiulocal_x, 1);
 				        	        fourier2->execute2D(&uxiulocal_y, 1);
 
-				       			prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice);
+				       			prepare_A_local(&B_local, &uxiulocal_x, &uxiulocal_y, momtable, mpi, cnfg->CouplingChoice, cnfg->KernelChoice, Gaussianmodel->RGet());
 
 				                	fourier2->execute2D(&B_local, 0);
 
@@ -378,7 +378,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 							MPI_Barrier(MPI_COMM_WORLD);
 
 						}//end if position space evolution
-
+						
 						//-----------UPDATE WILSON LINES-----------------
 
 						update_uf(&uftmp, &B_local, &A_local, cnfg->step);
@@ -390,8 +390,8 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 				        	std::cout<<"Evolution time: " << elapsede << std::endl;
 
-
-						if( (langevin == 100) || (langevin == 200) || (langevin == 500) ){
+						
+						if( (langevin == 500) ){ //|| (langevin == 800) ){ //|| (langevin == 600) || (langevin == 800) ){
 
 							printf("RESOLUTION REDUCTION!!!!\n");
 							printf("fine-graining at langevin step = %i\n", langevin);
@@ -403,12 +403,12 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 						        uf_copy_global.reduce_position(&uftmp, mpi);
 
 						}
-
+						
 					    	//-------------------------------------------------------
 						//------CORRELATION FUNCTION-----------------------------
 						//-------------------------------------------------------
 
-						if( langevin % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
+						if( (langevin+1) % (int)(cnfg->langevin_steps / cnfg->measurements) == 0 ){
 
 							int time = (int)(langevin * cnfg->measurements / cnfg->langevin_steps);
 

@@ -2883,7 +2883,7 @@ return 1;
 /********************************************//**
  * Optimized method for the evaluation of the A and B matrices. Operates on the first argument, takes the xi_x, xi_y and momenta. Construction of the JIMWLK kernel is performed here due to optimization reasons. Implementation of Eqs. 35 ad 38 of arxiv XXXXXX
 *************************************************/
-template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom, mpi_class* mpi, Coupling p, Kernel kk){
+template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* xi_local_x, lfield<T,t>* xi_local_y, momenta* mom, mpi_class* mpi, Coupling p, Kernel kk, double RR){
 
         #pragma omp parallel for simd collapse(2) default(shared)
         for(int ix = 0; ix < A_local->getNxl(); ix++){
@@ -2916,7 +2916,7 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 			if( kk == LINEAR_KERNEL ){
 
 				if( p == SQRT_COUPLING_CONSTANT ){
-					coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow(((px*px+py*py)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+					coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow(((px*px+py*py)*RR*RR)/0.375/0.375,1.0/0.2) , 0.2) ) );
 				}
 				if( p == NOISE_COUPLING_CONSTANT ){
 					coupling_constant = 1.0;
@@ -2934,7 +2934,7 @@ template<class T, int t> int prepare_A_local(lfield<T,t>* A_local, lfield<T,t>* 
 			if( kk == SIN_KERNEL ){
 
 				if( p == SQRT_COUPLING_CONSTANT ){
-					coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*Nx*Ny)/6.0/6.0,1.0/0.2) , 0.2) ) );
+					coupling_constant = 4.0*M_PI/( (11.0-2.0*3.0/3.0)*log( pow( pow(15.0*15.0/6.0/6.0,1.0/0.2) + pow((mom->phat2(i)*RR*RR)/0.375/0.375,1.0/0.2) , 0.2) ) );
 				}
 				if( p == NOISE_COUPLING_CONSTANT ){
 					coupling_constant = 1.0;
