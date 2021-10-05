@@ -3204,7 +3204,7 @@ return 1;
  * Optimized method for the evaluation of the A and B matrices. Operates on the seven and eight arguments, takes the xi_x, xi_y, positions and the actual Wilson line field uf_global. Construction of the JIMWLK kernel is performed here due to optimization reasons. Used in the position space construction. Implementation of Eqs. 34 ad 38 of arxiv XXXXXX in position space, without Fourier transforms
 *************************************************/
 template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, int y_global, gfield<T,t>* xi_global_x, gfield<T,t>* xi_global_y, 
-				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable, int rr, Coupling p, Kernel kk){
+				lfield<T,t>* A_local, lfield<T,t>* B_local, gfield<T,t>* uf_global, positions* postable, int rr, Coupling p, Kernel kk, double RR){
 
 	double sumAlocalRe[9];
 	double sumAlocalIm[9];
@@ -3286,7 +3286,7 @@ template<class T, int t> int prepare_A_and_B_local(int x, int y, int x_global, i
 			double sqrt_coupling_constant;
 
 			if( p == SQRT_COUPLING_CONSTANT ){
-				sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(6.0*6.0*rrrmin/Nx/Ny,1.0/0.2) , 0.2 ) )) );
+				sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(0.375*0.375*rrrmin/RR/RR,1.0/0.2) , 0.2 ) )) );
 			}
 			if( p == NOISE_COUPLING_CONSTANT ){
 				sqrt_coupling_constant = 1.0;

@@ -370,7 +370,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                 	        				        int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
 									prepare_A_and_B_local(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, 
-											&B_local, &uf_global, &postable, rr_hatta, cnfg->CouplingChoice, cnfg->KernelChoice);
+											&B_local, &uf_global, &postable, rr_hatta, cnfg->CouplingChoice, cnfg->KernelChoice, Gaussianmodel->RGet());
 
                         					}
                 					}
