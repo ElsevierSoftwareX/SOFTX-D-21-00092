@@ -320,7 +320,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
       				        		int y_global = y + mpi->getPosY()*cnfg->Nyl;
 
 							prepare_A_and_B_local_with_history(x, y, x_global, y_global, &xi_global_x, &xi_global_y, &A_local, 
-								&B_local, &uf_global, &postable, rr, rap, rapidities, cnfg->CouplingChoice, cnfg->KernelChoice, evolution, langevin, cnfg->step);
+								&B_local, &uf_global, &postable, rr, rap, rapidities, cnfg->CouplingChoice, cnfg->KernelChoice, evolution, langevin, cnfg->step, Gaussianmodel->RGet());
 
        						}
                				}
