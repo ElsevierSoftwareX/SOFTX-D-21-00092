@@ -3694,4 +3694,41 @@ template<class T, int t> int print_position_space(int measurement, lfield<T,t>* 
 return 1;
 }
 
+
+/********************************************//**
+ * Main output function. Each MPI node prints its part of the correlation function to a file of provided name. Function prints the rapidity step, the correlation in position space and its standard deviation. The statistics is passed through stat argument.
+ *  *  ***********************************************/
+template<class T, int t> int print_position(int measurement, lfield<T,t>* sum, lfield<T,t>* err, momenta* mom, double stat, mpi_class* mpi, std::string const &fileroot){
+
+
+        FILE* f;
+        char filename[500];
+
+        sprintf(filename, "%s_%i_%i_mpi%i_r%i.dat", fileroot.c_str(), Nx, Ny, mpi->getSize(), mpi->getRank());
+
+        f = fopen(filename, "a+");
+
+        for(int xx = 0; xx < sum->getNxl(); xx++){
+                for(int yy = 0; yy < sum->getNyl(); yy++){
+
+                        int i = xx*(sum->getNyl())+yy;
+
+                        if( fabs(xx + mpi->getPosX()*(sum->getNxl()) - yy - mpi->getPosY()*(sum->getNyl())) <= 4 ){
+
+                                double c =  (sum->u[i*t+0].real())/stat;
+                                double ce = (err->u[i*t+0].real())/stat;
+
+                                int xglob = xx+(mpi->getPosX()*(sum->getNxl()));
+                                int yglob = yy+(mpi->getPosY()*(sum->getNyl()));
+
+                                fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xglob, yglob, 1.0*sqrt(xglob*xglob+yglob*yglob), c, sqrt(stat*stat*ce - stat*stat*c*c)/stat/sqrt(stat));
+                        }
+                }
+        }
+
+        fclose(f);
+
+return 1;
+}
+
 #endif
