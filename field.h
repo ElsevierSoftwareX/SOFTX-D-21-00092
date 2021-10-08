@@ -2467,8 +2467,8 @@ if( mpi->getPosX() == xr/(sum->getNxl()) && mpi->getPosY() == yr/(sum->getNyl())
 
 	//printf("(rank( %i, %i) : trace = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), trace/(1.0*Nx*Ny), xr_local, yr_local);
 
-	sum->u[(xr_local*NNy+yr_local)*1+0] += trace/(1.0*Nx*Ny);
-	err->u[(xr_local*NNy+yr_local)*1+0] += pow(trace/(1.0*Nx*Ny),2.0);
+	sum->u[(xr_local*NNy+yr_local)*1+0] += trace/(16.0*Nxg*Nyg);
+	err->u[(xr_local*NNy+yr_local)*1+0] += pow(trace/(16.0*Nxg*Nyg),2.0);
 
 	//printf("(rank( %i, %i) : sum = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), sum->u[(xr_local*NNy+yr_local)*1+0].real(), xr_local, yr_local);
 	//printf("(rank( %i, %i) : err = %f at site %i %i\n", mpi->getPosX(), mpi->getPosY(), err->u[(xr_local*NNy+yr_local)*1+0].real(), xr_local, yr_local);
