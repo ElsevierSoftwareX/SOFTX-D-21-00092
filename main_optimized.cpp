@@ -164,11 +164,16 @@ int main(int argc, char *argv[]) {
 //
 //
 
-for(int scale_ix = 0; scale_ix <= 6; scale_ix+=1){
+{{
+
+int scale_ix = 2;
+int scale_iy = 3;
+
+//for(int scale_ix = 0; scale_ix <= 6; scale_ix+=1){
 //int scale_iy = 0; //scale_ix;
 //{
 //for(int scale_iy = 0; scale_iy < 1; scale_iy+=1){
-for(int scale_iy = scale_ix+1; scale_iy <= 6; scale_iy+=1){
+//for(int scale_iy = scale_ix+1; scale_iy <= 6; scale_iy+=1){
 //    int ix = 2;
 //    int iy = 2;
 
