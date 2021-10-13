@@ -2558,8 +2558,10 @@ template<class T, int t> int lfield<T,t>::setCorrelationsGaussian(momenta* mom, 
 			if( y_global > Ny/2 )
 				y_global -= Ny;
 
-			this->u[i*t+0] = exp(-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr));
-//			this->u[i*t+0] = (-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr));
+			this->u[i*t+0] = exp(-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr) );
+			//this->u[i*t+0] = exp(-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr) * log( 10.0*rr/sqrt(pow(x_global, 2.0) + pow(y_global, 2.0)) + 2.718281828) );
+
+		//			this->u[i*t+0] = (-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr));
 
 		}
 	}
@@ -3519,11 +3521,31 @@ template<class T, int t> int prepare_A_and_B_local_with_history(int x, int y, in
 				const double lambda = pow(15.0*15.0/6.0/6.0,1.0/0.2);
 
 				double sqrt_coupling_constant;
+
+				//double coupling_constant_rr = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(0.375*0.375*rr_current/RR/RR,1.0/0.2) , 0.2 ) ) );
+				//double coupling_constant_xz = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(0.375*0.375*rrr/RR/RR,1.0/0.2) , 0.2 ) ) );
+
+				double coupling_constant_rr = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( 1.26/(0.375*0.375*rr_current/RR/RR) ) );
+				double coupling_constant_xz = 4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( 1.26/(0.375*0.375*rrr/RR/RR) ) );
+
+
+				double factor = 1.0;
+
+				const double b = (11.0*3.0 - 2.0*3.0)/12.0/M_PI;
+				const double bbar = M_PI*b/3.0;
+				const double A1 = (11.0/12.0 + 3.0/6.0/27.0);		
+
+				if( coupling_constant_rr < coupling_constant_xz ){
+					factor = pow( coupling_constant_rr / coupling_constant_xz , A1/2.0/bbar);
+				}else{
+					factor = pow( coupling_constant_rr / coupling_constant_xz , -A1/2.0/bbar);
+				}
 	
 				if( p == SQRT_COUPLING_CONSTANT || p == HATTA_COUPLING_CONSTANT){
 					if(fabs(rrrmin) > 10e-6 ){
-						sqrt_coupling_constant = sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(0.375*0.375*rrrmin/RR/RR,1.0/0.2) , 0.2 ) )) );
-					}else{
+						//sqrt_coupling_constant = factor * sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( pow( lambda + 1.26/pow(0.375*0.375*rrrmin/RR/RR,1.0/0.2) , 0.2 ) )) );
+						sqrt_coupling_constant = factor * sqrt(4.0*M_PI/(  (11.0-2.0*3.0/3.0) * log( 1.26/(0.375*0.375*rrrmin/RR/RR) ) ) );
+				}else{
 						sqrt_coupling_constant = 0.0;
 					}
 				}
