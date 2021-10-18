@@ -2514,7 +2514,8 @@ template<class T, int t> int lfield<T,t>::setCorrelationsGaussian(momenta* mom, 
 			if( y_global > Ny/2 )
 				y_global -= Ny;
 
-			this->u[i*t+0] = exp(-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr));
+			//this->u[i*t+0] = exp(-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr));
+			this->u[i*t+0] = exp(-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr) * log( 1.0*rr/(sqrt(pow(x_global, 2.0) + pow(y_global, 2.0)) + 0.00001) + 2.718281828) );
 //			this->u[i*t+0] = (-(pow(x_global, 2.0) + pow(y_global, 2.0))/(rr*rr));
 
 		}
@@ -3416,6 +3417,87 @@ template<class T, int t> int print_position(int measurement, lfield<T,t>* sum, l
 
                                 fprintf(f, "%i %i %i \t %f %e %e\n", measurement, xglob, yglob, 1.0*sqrt(xglob*xglob+yglob*yglob), c, sqrt(stat*stat*ce - stat*stat*c*c)/stat/sqrt(stat));
                         }
+                }
+        }
+
+        fclose(f);
+
+return 1;
+}
+
+
+/********************************************//**
+ * 
+ * ***********************************************/
+template<class T, int t> int writeData(std::string const &fileroot, lfield<T,t>* uf, mpi_class* mpi){
+
+
+        FILE* f;
+        char filename[500];
+
+        sprintf(filename, "%s_%i_%i_mpi%i_r%i.dat", fileroot.c_str(), Nx, Ny, mpi->getSize(), mpi->getRank());
+
+        f = fopen(filename, "w+");
+
+        for(int xx = 0; xx < uf->getNxl(); xx++){
+                for(int yy = 0; yy < uf->getNyl(); yy++){
+
+                        int i = xx*(uf->getNyl())+yy;
+
+                        int xglob = xx+(mpi->getPosX()*(uf->getNxl()));
+                        int yglob = yy+(mpi->getPosY()*(uf->getNyl()));
+
+                        fprintf(f, "%i %i %i %i %i %i ", xx, yy, mpi->getPosX(), mpi->getPosY(), xglob, yglob);
+
+			for(int k = 0; k < t; k++){
+                                 fprintf(f, "%e %e ", uf->u[i*t+k].real(), uf->u[i*t+k].imag());
+                       	}
+                        fprintf(f, "\n");
+                }
+        }
+
+        fclose(f);
+
+return 1;
+}
+
+/********************************************//**
+ * 
+ * ***********************************************/
+template<class T, int t> int readData(std::string const &fileroot, lfield<T,t>* uf, mpi_class* mpi){
+
+
+        FILE* f;
+        char filename[500];
+
+        sprintf(filename, "%s_%i_%i_mpi%i_r%i.dat", fileroot.c_str(), Nx, Ny, mpi->getSize(), mpi->getRank());
+
+        f = fopen(filename, "r+");
+
+        for(int xx = 0; xx < uf->getNxl(); xx++){
+                for(int yy = 0; yy < uf->getNyl(); yy++){
+
+                        int i = xx*(uf->getNyl())+yy;
+
+                        int xglob = xx+(mpi->getPosX()*(uf->getNxl()));
+                        int yglob = yy+(mpi->getPosY()*(uf->getNyl()));
+
+			int xxr, yyr, xmpi, ympi, xglobr, yglobr;
+
+                        fscanf(f, "%i %i %i %i %i %i ", &xxr, &yyr, &xmpi, &ympi, &xglobr, &yglobr);
+
+			if( (xx != xxr) || (yy != yyr) || (mpi->getPosX() != xmpi) || (mpi->getPosY() != ympi) || (xglob != xglobr) || (yglob != yglobr) ){
+				printf("Reading data mismatch. Aborting.\n");
+				exit(1);
+			}
+
+			double re, im;
+
+			for(int k = 0; k < t; k++){
+                        	fscanf(f, "%lf %lf ", &re, &im);
+				uf->u[i*t+k] = std::complex<double>(re, im);
+                       	}
+                        fscanf(f, "\n");
                 }
         }
 

@@ -116,15 +116,15 @@ int main(int argc, char *argv[]) {
     lfield<double,9> f(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> uf(cnfg->Nxl, cnfg->Nyl);
 
-    gfield<double,9> uf_global(Nx, Ny);
-    gfield<double,9> uf_copy_global(Nx, Ny);
+//    gfield<double,9> uf_global(Nx, Ny);
+//    gfield<double,9> uf_copy_global(Nx, Ny);
 
     //evolution
     lfield<double,9> xi_local_x(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> xi_local_y(cnfg->Nxl, cnfg->Nyl);
 
-    gfield<double,9> xi_global_x(Nx, Ny);
-    gfield<double,9> xi_global_y(Nx, Ny);
+//    gfield<double,9> xi_global_x(Nx, Ny);
+//    gfield<double,9> xi_global_y(Nx, Ny);
 
     lfield<double,9> A_local(cnfg->Nxl, cnfg->Nyl);
     lfield<double,9> B_local(cnfg->Nxl, cnfg->Nyl);
@@ -185,6 +185,72 @@ if( cnfg->InitialConditionChoice == GAUSSIAN_CONDITION ){
 
 }
 
+//-------------------------------------------------------
+//------FILE NAME----------------------------------------
+//-------------------------------------------------------
+
+	std::string file_name = cnfg->file_name;
+	std::string file_name_data_output = cnfg->file_name;
+
+                if(cnfg->InitialConditionChoice == GAUSSIAN_CONDITION){
+                        file_name += "_GAUSSIAN_CONDITION_";
+                        file_name_data_output += "_GAUSSIAN_CONDITION_";
+		}
+
+                if(cnfg->InitialConditionChoice == MV_CONDITION){
+                        file_name += "_MV_CONDITION_";
+                        file_name_data_output += "_MV_CONDITION_";
+		}
+
+                if(cnfg->EvolutionChoice == MOMENTUM_EVOLUTION){
+                        file_name += "_MOMENTUM_EVOLUTION_";
+                        file_name_data_output += "_MOMENTUM_EVOLUTION_";
+		}
+               
+                if(cnfg->EvolutionChoice == POSITION_EVOLUTION){
+                        file_name += "_POSITION_EVOLUTION_";
+                        file_name_data_output += "_POSITION_EVOLUTION_";
+		}
+  
+		if(cnfg->EvolutionChoice == NO_EVOLUTION){
+                        file_name += "_NO_EVOLUTION_";
+                        file_name_data_output += "_NO_EVOLUTION_";
+		}
+             
+                if(cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT){
+                        file_name += "SQRT_COUPLING_CONSTANT_";
+                        file_name_data_output += "SQRT_COUPLING_CONSTANT_";
+		}
+                
+                if(cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT){
+                         file_name += "NOISE_COUPLING_CONSTANT_";
+                         file_name_data_output += "NOISE_COUPLING_CONSTANT_";            
+		}
+
+                if(cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT){
+                        file_name += "HATTA_COUPLING_CONSTANT_";
+                        file_name_data_output += "HATTA_COUPLING_CONSTANT_";
+		}
+  
+		if(cnfg->CouplingChoice == NO_COUPLING_CONSTANT){
+                         file_name += "NO_COUPLING_CONSTANT_";
+                         file_name_data_output += "NO_COUPLING_CONSTANT_";
+		}
+          
+                if(cnfg->KernelChoice == LINEAR_KERNEL){
+                        file_name += "LINEAR_KERNEL";
+                        file_name_data_output += "LINEAR_KERNEL";
+                }
+
+                if(cnfg->KernelChoice == SIN_KERNEL){
+                        file_name += "SIN_KERNEL";
+                        file_name_data_output += "SIN_KERNEL";
+		}
+
+		file_name_data_output += "partial_evolution";               
+
+	std::cout << "pelna nazwa pliku z korelatorem: " << file_name << "\n";
+	std::cout << "pelna nazwa pliku z polem linii Wilsona: " << file_name_data_output << "\n";
 
 //-------------------------------------------------------
 //------MAIN STAT LOOP-----------------------------------
@@ -201,54 +267,59 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	printf("Gatherting stat sample no. %i\n", stat);
 
-	//-------------------------------------------------------
-	//------INITIAL STATE------------------------------------
-	//-------------------------------------------------------
+	if(cnfg->ContinuationChoice == NO){
 
-        struct timespec starti, finishi;
-        double elapsedi;
+		//-------------------------------------------------------
+		//------INITIAL STATE------------------------------------
+		//-------------------------------------------------------
 
-        clock_gettime(CLOCK_MONOTONIC, &starti);
+        	struct timespec starti, finishi;
+	        double elapsedi;
 
-	uf.setToUnit();
+        	clock_gettime(CLOCK_MONOTONIC, &starti);
 
-	if( cnfg->InitialConditionChoice == GAUSSIAN_CONDITION ){
+		uf.setToUnit();
 
-	    	for(int i = 0; i < Gaussianmodel->NyGet(); i++){
+		if( cnfg->InitialConditionChoice == GAUSSIAN_CONDITION ){
+
+	    		for(int i = 0; i < Gaussianmodel->NyGet(); i++){
 	
-			f.setGaussianModel(initial_corr, Gaussianmodel);
+				f.setGaussianModel(initial_corr, Gaussianmodel);
 
-			fourier2->execute2D(&f,0);
+				fourier2->execute2D(&f,0);
 
-			uf *= f;
-    		}
+				uf *= f;
+    			}
 
-	}else if( cnfg->InitialConditionChoice == MV_CONDITION ){
+		}else if( cnfg->InitialConditionChoice == MV_CONDITION ){
 
-	    	for(int i = 0; i < MVmodel->NyGet(); i++){
+		    	for(int i = 0; i < MVmodel->NyGet(); i++){
 	
-			f.setMVModel(MVmodel);
+				f.setMVModel(MVmodel);
 
-			fourier2->execute2D(&f,1);
+				fourier2->execute2D(&f,1);
 
-			f.solvePoisson(cnfg->mass, MVmodel->gGet(), momtable);
+				f.solvePoisson(cnfg->mass, MVmodel->gGet(), momtable);
 
-			fourier2->execute2D(&f,0);
+				fourier2->execute2D(&f,0);
 
-			uf *= f;
-    		}
+				uf *= f;
+	    		}
+		}	
 
+	        clock_gettime(CLOCK_MONOTONIC, &finishi);
 
-	}	
+        	elapsedi = (finishi.tv_sec - starti.tv_sec);
+	        elapsedi += (finishi.tv_nsec - starti.tv_nsec) / 1000000000.0;
 
+        	std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
-        clock_gettime(CLOCK_MONOTONIC, &finishi);
+	} //if not continuation, (then we have to generate initial condition)
+	if( cnfg->ContinuationChoice == YES ){
 
-        elapsedi = (finishi.tv_sec - starti.tv_sec);
-        elapsedi += (finishi.tv_nsec - starti.tv_nsec) / 1000000000.0;
+		readData(file_name_data_output, &uf, mpi);
 
-        std::cout<<"Initial condition time: " << elapsedi << std::endl;
-
+	}
 
 	//-------------------------------------------------------
 	//---------------IF EVOLUTION----------------------------
@@ -344,7 +415,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 						//----------POSITION SPACE EVOLUTION-------------
 				
 						if( cnfg->EvolutionChoice == POSITION_EVOLUTION ){
-
+/*
 				                	printf("gathering local xi to global\n");
 					                xi_global_x.allgather(&xi_local_x, mpi);
 				        	        xi_global_y.allgather(&xi_local_y, mpi);
@@ -375,7 +446,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
                         					}
                 					}
 
-							MPI_Barrier(MPI_COMM_WORLD);
+*/							MPI_Barrier(MPI_COMM_WORLD);
 
 						}//end if position space evolution
 						
@@ -392,7 +463,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 						
 						if( (langevin == 500) ){ //|| (langevin == 800) ){ //|| (langevin == 600) || (langevin == 800) ){
-
+/*
 							printf("RESOLUTION REDUCTION!!!!\n");
 							printf("fine-graining at langevin step = %i\n", langevin);
 
@@ -401,7 +472,7 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 						        uf_global.fine_grain(uf_copy_global);
 
 						        uf_copy_global.reduce_position(&uftmp, mpi);
-
+*/
 						}
 						
 					    	//-------------------------------------------------------
@@ -433,11 +504,11 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 								corr_global->reduce(&sum[time], &err[time], mpi);
 		
 							}else{
-
+/*
 					        	        uf_copy_global.allgather(&uf_copy, mpi);
 
 								uf_copy_global.average_reduce_hatta(&sum[time], &err[time], mpi, ix, iy);
-							}
+*/							}
 							
 						}
 
@@ -448,6 +519,12 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
     	}//if evolution
 
+
+	if( cnfg->ContinuationOutputChoice == YES ){
+
+		writeData(file_name_data_output, &uftmp, mpi);
+
+	}
 
 	//if no evolution - compute correlation function directly from initial condition
 	if( cnfg->EvolutionChoice == NO_EVOLUTION ){
@@ -486,47 +563,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 //------------------------------------------------------
 //----------WRITE DOWN CORRELATION FNUCTION TO FILE-----
 //------------------------------------------------------
-
-	std::string file_name = cnfg->file_name;
-
-                if(cnfg->InitialConditionChoice == GAUSSIAN_CONDITION)
-                        file_name += "_GAUSSIAN_CONDITION_";
-
-                if(cnfg->InitialConditionChoice == MV_CONDITION)
-                        file_name += "_MV_CONDITION_";
-
-
-                if(cnfg->EvolutionChoice == MOMENTUM_EVOLUTION)
-                        file_name += "_MOMENTUM_EVOLUTION_";
-               
-                if(cnfg->EvolutionChoice == POSITION_EVOLUTION)
-                        file_name += "_POSITION_EVOLUTION_";
-  
-		if(cnfg->EvolutionChoice == NO_EVOLUTION)
-                        file_name += "_NO_EVOLUTION_";
-             
-
-                if(cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT)
-                        file_name += "SQRT_COUPLING_CONSTANT_";
-                
-                if(cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT)
-                        file_name += "NOISE_COUPLING_CONSTANT_";
-                
-                if(cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT)
-                        file_name += "HATTA_COUPLING_CONSTANT_";
-  
-		if(cnfg->CouplingChoice == NO_COUPLING_CONSTANT)
-                        file_name += "NO_COUPLING_CONSTANT_";
-             
-
-                if(cnfg->KernelChoice == LINEAR_KERNEL)
-                        file_name += "LINEAR_KERNEL";
-                
-                if(cnfg->KernelChoice == SIN_KERNEL)
-                        file_name += "SIN_KERNEL";
-               
-	std::cout << "pelna nazwa pliku: " << file_name << "\n";
-
 
     for(int i = 0; i < cnfg->measurements; i++){
 	    printf("iterator = %i\n", i);
