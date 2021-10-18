@@ -43,6 +43,8 @@ enum Kernel { LINEAR_KERNEL, SIN_KERNEL };
 
 enum InitialCondition { GAUSSIAN_CONDITION, MV_CONDITION };
 
+enum Choice { YES, NO };
+
 class config{
 
 public:
@@ -78,6 +80,12 @@ public:
 	
 	InitialCondition InitialConditionChoice = GAUSSIAN_CONDITION;
 
+        Choice ContinuationChoice = NO;
+
+        Choice ContinuationOutputChoice = NO;
+
+        Choice AdaptiveResolutionChoice = NO;
+
 	int read_config_from_file(std::string file_name_cnfg){
 
 		FILE *f;
@@ -85,6 +93,10 @@ public:
 		
 		char str_file_name[200];
 		char str_condition[200];
+                char str_continuation[200];
+                char str_continuation_output[200];
+                char str_adaptive_resolution[200];
+
 
 		f = fopen(file_name_cnfg.c_str(), "r+");		
 	
@@ -117,6 +129,34 @@ public:
 
 		
                 file_name.assign(str_file_name);
+
+
+                fscanf(f, "continuation = %s\n", &str_continuation[0]);
+                printf("SETUP: continuation = %s\n", str_continuation);
+                if(strcmp(str_continuation, "YES") == 0){
+                        ContinuationChoice = YES;
+                }
+                if(strcmp(str_continuation, "NO") == 0){
+                        ContinuationChoice = NO;
+                }
+                fscanf(f, "startingS = %i\n", &startingS);
+                printf("SETUP: startingS = %i\n", startingS);
+                fscanf(f, "continuationOutput = %s\n", &str_continuation_output[0]);
+                printf("SETUP: continuationOutput = %s\n", str_continuation_output);
+                if(strcmp(str_continuation_output, "YES") == 0){
+                        ContinuationOutputChoice = YES;
+                }
+                if(strcmp(str_continuation_output, "NO") == 0){
+                        ContinuationOutputChoice = NO;
+                }
+                fscanf(f, "adaptiveResolution = %s\n", &str_adaptive_resolution[0]);
+                printf("SETUP: adaptiveResolution = %s\n", str_adaptive_resolution);
+                if(strcmp(str_adaptive_resolution, "YES") == 0){
+                        AdaptiveResolutionChoice = YES;
+                }
+                if(strcmp(str_adaptive_resolution, "NO") == 0){
+                        AdaptiveResolutionChoice = NO;
+                }
 
 
 		fscanf(f, "langevin_steps = %i\n", &langevin_steps);
