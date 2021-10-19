@@ -28,7 +28,7 @@
 #ifndef H_CONFIG
 #define H_CONFIG
 
-#define Nx 1024
+#define Nx 2048
 #define Ny Nx
 
 #include <iostream>
@@ -71,6 +71,7 @@ public:
 	int langevin_steps = 100;
 	int measurements = 100;
 	double step = 0.0004;
+	int startingS = 0;
 
 	Evolution EvolutionChoice = MOMENTUM_EVOLUTION;
 

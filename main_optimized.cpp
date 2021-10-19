@@ -156,6 +156,47 @@ int main(int argc, char *argv[]) {
     std::vector<lfield<double,1>> sum(cnfg->measurements, zero);
     std::vector<lfield<double,1>> err(cnfg->measurements, zero);
 
+
+    std::string file_name = cnfg->file_name;
+
+                if(cnfg->InitialConditionChoice == GAUSSIAN_CONDITION)
+                        file_name += "_GAUSSIAN_CONDITION_";
+
+                if(cnfg->InitialConditionChoice == MV_CONDITION)
+                        file_name += "_MV_CONDITION_";
+
+                if(cnfg->EvolutionChoice == MOMENTUM_EVOLUTION)
+                        file_name += "_MOMENTUM_EVOLUTION_";
+               
+                if(cnfg->EvolutionChoice == POSITION_EVOLUTION)
+                        file_name += "_POSITION_EVOLUTION_";
+  
+		if(cnfg->EvolutionChoice == NO_EVOLUTION)
+                        file_name += "_NO_EVOLUTION_";
+             
+                if(cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT)
+                        file_name += "SQRT_COUPLING_CONSTANT_";
+                
+                if(cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT)
+                        file_name += "NOISE_COUPLING_CONSTANT_";
+                
+                if(cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT)
+                        file_name += "HATTA_COUPLING_CONSTANT_";
+  
+		if(cnfg->CouplingChoice == NO_COUPLING_CONSTANT)
+                        file_name += "NO_COUPLING_CONSTANT_";
+
+                if(cnfg->KernelChoice == LINEAR_KERNEL)
+                        file_name += "LINEAR_KERNEL";
+                
+                if(cnfg->KernelChoice == SIN_KERNEL)
+                        file_name += "SIN_KERNEL";
+               
+    std::cout << "pelna nazwa pliku: " << file_name << "\n";
+
+    std::string file_name_output = file_name;
+    file_name_output += "_partial_evolution";
+
 //-------------------------------------------------------
 //-------KEEPING U HISTORY-------------------------------
 //-------------------------------------------------------
@@ -207,8 +248,8 @@ if( cnfg->InitialConditionChoice == GAUSSIAN_CONDITION ){
 
 }
 
-    std::vector<gfield<double,9>> evolution(rapidities, uf_global_zero);
-    std::vector<gfield<double,9>> evolution_tmp(rapidities, uf_global_zero);
+std::vector<gfield<double,9>> evolution(rapidities, uf_global_zero);
+std::vector<gfield<double,9>> evolution_tmp(rapidities, uf_global_zero);
 
 //-------------------------------------------------------
 //------MAIN STAT LOOP-----------------------------------
@@ -225,68 +266,82 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
 	printf("Gatherting stat sample no. %i\n", stat);
 
-	//-------------------------------------------------------
-	//------INITIAL STATE------------------------------------
-	//-------------------------------------------------------
+	if(cnfg->ContinuationChoice == NO){
 
-        struct timespec starti, finishi;
-        double elapsedi;
+		//-------------------------------------------------------
+		//------INITIAL STATE------------------------------------
+		//-------------------------------------------------------
 
-        clock_gettime(CLOCK_MONOTONIC, &starti);
+	        struct timespec starti, finishi;
+        	double elapsedi;
 
-	uf.setToUnit();
+	        clock_gettime(CLOCK_MONOTONIC, &starti);
 
-	if( cnfg->InitialConditionChoice == GAUSSIAN_CONDITION ){
+		uf.setToUnit();
 
-    		for(int i = 0; i < Gaussianmodel->NyGet(); i++){
+		if( cnfg->InitialConditionChoice == GAUSSIAN_CONDITION ){
+
+    			for(int i = 0; i < Gaussianmodel->NyGet(); i++){
 	
-			f.setGaussianModel(initial_corr, Gaussianmodel);
+				f.setGaussianModel(initial_corr, Gaussianmodel);
 
-			fourier2->execute2D(&f,0);
+				fourier2->execute2D(&f,0);
 
-			uf *= f;
+				uf *= f;
+			}
+
+		}else if( cnfg->InitialConditionChoice == MV_CONDITION ){
+
+		    	for(int i = 0; i < MVmodel->NyGet(); i++){
+		
+				f.setMVModel(MVmodel);
+
+				fourier2->execute2D(&f,1);
+
+				f.solvePoisson(cnfg->mass, MVmodel->gGet(), momtable);
+
+				fourier2->execute2D(&f,0);
+	
+				uf *= f;
+    			}
 		}
 
-	}else if( cnfg->InitialConditionChoice == MV_CONDITION ){
-
-	    	for(int i = 0; i < MVmodel->NyGet(); i++){
-		
-			f.setMVModel(MVmodel);
-
-			fourier2->execute2D(&f,1);
-
-			f.solvePoisson(cnfg->mass, MVmodel->gGet(), momtable);
-
-			fourier2->execute2D(&f,0);
+		MPI_Barrier(MPI_COMM_WORLD);
 	
-			uf *= f;
-    		}
-	}
+		uf_global.allgather(&uf, mpi);
 
+		for(int rap = 0; rap < rapidities; rap++){
 
-	MPI_Barrier(MPI_COMM_WORLD);
+			evolution[rap].set(uf_global);
+		}
 
-	uf_global.allgather(&uf, mpi);
+	        clock_gettime(CLOCK_MONOTONIC, &finishi);
 
-	for(int rap = 0; rap < rapidities; rap++){
+		elapsedi = (finishi.tv_sec - starti.tv_sec);
+	        elapsedi += (finishi.tv_nsec - starti.tv_nsec) / 1000000000.0;
 
-		evolution[rap].set(uf_global);
-	}
+        	std::cout<<"Initial condition time: " << elapsedi << std::endl;
 
+        } //if not continuation, (then we have to generate initial condition)
+        if( cnfg->ContinuationChoice == YES ){
 
-        clock_gettime(CLOCK_MONOTONIC, &finishi);
+		for(int rap = 0; rap < rapidities; rap++){
 
-        elapsedi = (finishi.tv_sec - starti.tv_sec);
-        elapsedi += (finishi.tv_nsec - starti.tv_nsec) / 1000000000.0;
+	                readData(file_name_output, &uf, mpi, rap);
 
-        std::cout<<"Initial condition time: " << elapsedi << std::endl;
+			uf_global.allgather(&uf, mpi);
+
+			evolution[rap].set(uf_global);
+
+		}
+        }
 
 	if( cnfg->EvolutionChoice == POSITION_EVOLUTION ){
 
 		//----------------------------------------------------------------
 		//------------MAIN EVOLUTION LOOP---------------------------------
 	        //----------------------------------------------------------------
-	        for(int langevin = 0; langevin < cnfg->langevin_steps; langevin++){
+	        for(int langevin = cnfg->startingS; langevin < cnfg->startingS + cnfg->langevin_steps; langevin++){
 
 			printf("langevin step %i\n", langevin);
 
@@ -329,24 +384,19 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 
        						}
                				}
-/*
-						if( (langevin == 100) || (langevin == 200) || (langevin == 500) ){
 
-							printf("RESOLUTION REDUCTION!!!!\n");
-							printf("fine-graining at langevin step = %i\n", langevin);
+					if( cnfg->AdaptiveResolutionChoice == YES ){
 
-						        uf_global.allgather(&uftmp, mpi);
+						printf("RESOLUTION REDUCTION!!!!\n");
+						printf("fine-graining at langevin step = %i\n", langevin);
+
+					        uf_global.allgather(&uftmp, mpi);
 	
-						        uf_global.fine_grain(uf_copy_global);
+					        uf_global.fine_grain(uf_copy_global);
 
-						        uf_copy_global.reduce_position(&uftmp, mpi);
+					        uf_copy_global.reduce_position(&uftmp, mpi);
+					}
 
-						}
-*/
-					    	//-------------------------------------------------------
-						//------CORRELATION FUNCTION-----------------------------
-						//-------------------------------------------------------
-						//
 					MPI_Barrier(MPI_COMM_WORLD);
 	
 					//-----------UPDATE WILSON LINES-----------------
@@ -392,6 +442,17 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 		}//end evolution loop
 	}
 
+        if( cnfg->ContinuationOutputChoice == YES ){
+
+		for(int rap = 0; rap < rapidities; rap++){
+			
+			evolution[rap].reduce_position(&uf, mpi);
+
+	                writeData(file_name_output, &uf, mpi, rap);
+		}
+
+        }
+
 	//if no evolution - compute correlation function directly from initial condition
 	if( cnfg->EvolutionChoice == NO_EVOLUTION ){
 
@@ -435,46 +496,6 @@ for(int stat = 0; stat < cnfg->stat; stat++){
 //------------------------------------------------------
 //----------WRITE DOWN CORRELATION FNUCTION TO FILE-----
 //------------------------------------------------------
-
-	std::string file_name = cnfg->file_name;
-
-                if(cnfg->InitialConditionChoice == GAUSSIAN_CONDITION)
-                        file_name += "_GAUSSIAN_CONDITION_";
-
-                if(cnfg->InitialConditionChoice == MV_CONDITION)
-                        file_name += "_MV_CONDITION_";
-
-
-                if(cnfg->EvolutionChoice == MOMENTUM_EVOLUTION)
-                        file_name += "_MOMENTUM_EVOLUTION_";
-               
-                if(cnfg->EvolutionChoice == POSITION_EVOLUTION)
-                        file_name += "_POSITION_EVOLUTION_";
-  
-		if(cnfg->EvolutionChoice == NO_EVOLUTION)
-                        file_name += "_NO_EVOLUTION_";
-             
-
-                if(cnfg->CouplingChoice == SQRT_COUPLING_CONSTANT)
-                        file_name += "SQRT_COUPLING_CONSTANT_";
-                
-                if(cnfg->CouplingChoice == NOISE_COUPLING_CONSTANT)
-                        file_name += "NOISE_COUPLING_CONSTANT_";
-                
-                if(cnfg->CouplingChoice == HATTA_COUPLING_CONSTANT)
-                        file_name += "HATTA_COUPLING_CONSTANT_";
-  
-		if(cnfg->CouplingChoice == NO_COUPLING_CONSTANT)
-                        file_name += "NO_COUPLING_CONSTANT_";
-             
-
-                if(cnfg->KernelChoice == LINEAR_KERNEL)
-                        file_name += "LINEAR_KERNEL";
-                
-                if(cnfg->KernelChoice == SIN_KERNEL)
-                        file_name += "SIN_KERNEL";
-               
-	std::cout << "pelna nazwa pliku: " << file_name << "\n";
 
 
     for(int i = 0; i < cnfg->measurements; i++){
